@@ -64,9 +64,9 @@ interface StudentListRow {
             </label>
             <div class="date-inputs">
               <span class="date-label">From</span>
-              <input type="text" class="input-text date-box" [(ngModel)]="fromDate" />
+              <input type="date" class="input-text date-box" [(ngModel)]="fromDate" />
               <span class="date-label">To</span>
-              <input type="text" class="input-text date-box" [(ngModel)]="toDate" />
+              <input type="date" class="input-text date-box" [(ngModel)]="toDate" />
             </div>
           </div>
 
@@ -142,9 +142,15 @@ interface StudentListRow {
             <tbody>
               <tr *ngFor="let s of filteredStudents">
                 <td class="col-sl red-text">{{ s.slNo }}</td>
-                <td class="col-name blue-text-bold">{{ s.name }}</td>
+                <td class="col-name">
+                  <a [routerLink]="['/students/detail', s.name]" [queryParams]="{ tab: 'course' }" class="blue-text-bold student-name-link">
+                    {{ s.name }}
+                  </a>
+                </td>
                 <td class="col-followup">
-                  <a routerLink="/students/follow-up" class="followup-link">FollowUp</a>
+                  <a [routerLink]="['/students/detail', s.name]" [queryParams]="{ tab: 'followup' }" class="followup-link">
+                    FollowUp
+                  </a>
                 </td>
                 <td class="col-note dark-text">{{ s.note }}</td>
                 <td class="col-mobile red-text">{{ s.mobile }}</td>
@@ -168,7 +174,6 @@ interface StudentListRow {
             <button type="button" class="pager-btn" (click)="prevPage()">&lt;</button>
             <button type="button" class="pager-btn" (click)="nextPage()">&gt;</button>
           </div>
-          <div class="copyright-caption">By UFS Technologies</div>
         </div>
       </div>
     </div>
@@ -272,7 +277,7 @@ interface StudentListRow {
     }
 
     .date-box {
-      width: 105px;
+      width: 135px;
       text-align: center;
       font-size: 0.8rem;
     }
@@ -316,15 +321,29 @@ interface StudentListRow {
     }
 
     .filter-row-3 {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      display: flex;
+      align-items: center;
+      width: 100%;
       gap: 1.25rem;
-      padding-top: 0.5rem;
-      border-top: 1px dashed #e2e8f0;
+      padding-top: 0.85rem;
+      margin-top: 0.5rem;
+      border-top: 1px dashed #cbd5e1;
+      box-sizing: border-box;
     }
 
-    .filter-col .filter-select {
+    .filter-col {
+      flex: 1 1 0;
+      min-width: 0;
       width: 100%;
+      display: flex;
+    }
+
+    .filter-col .filter-select,
+    .filter-select {
+      width: 100% !important;
+      min-width: 0 !important;
+      box-sizing: border-box !important;
+      height: 36px;
     }
 
     /* Common Input / Select */
@@ -395,7 +414,7 @@ interface StudentListRow {
 
     .naipunya-table {
       width: max-content;
-      min-width: 1650px;
+      min-width: 2400px;
       border-collapse: separate;
       border-spacing: 0;
       font-size: 0.84rem;
@@ -413,7 +432,7 @@ interface StudentListRow {
       text-align: left;
       font-weight: 600;
       color: #ffffff;
-      padding: 0.75rem 0.75rem;
+      padding: 0.85rem 1rem;
       font-size: 0.82rem;
       white-space: nowrap;
       border-bottom: 1px solid #0b62b6;
@@ -421,7 +440,7 @@ interface StudentListRow {
     }
 
     .naipunya-table tbody td {
-      padding: 0.75rem 0.75rem;
+      padding: 0.85rem 1rem;
       border-bottom: 1px solid #e5e7eb;
       font-size: 0.82rem;
       vertical-align: middle;
@@ -433,17 +452,18 @@ interface StudentListRow {
       background-color: #f9fafb;
     }
 
-    .col-sl { width: 45px; }
-    .col-name { min-width: 210px; }
-    .col-followup { width: 90px; }
-    .col-note { min-width: 160px; }
-    .col-mobile { width: 115px; }
-    .col-remark { min-width: 160px; }
-    .col-date { width: 110px; }
-    .col-dept { width: 110px; }
-    .col-status { width: 110px; }
-    .col-to { width: 80px; }
-    .col-from { width: 80px; }
+    /* Generous column widths so on initial load: Sl No, Name, and FollowUp fill the screen, and scrolling right reveals Note, Mobile, Remark, etc. */
+    .col-sl { width: 70px; min-width: 70px; }
+    .col-name { width: 450px; min-width: 450px; }
+    .col-followup { width: 140px; min-width: 140px; }
+    .col-note { width: 280px; min-width: 280px; }
+    .col-mobile { width: 200px; min-width: 200px; }
+    .col-remark { width: 280px; min-width: 280px; }
+    .col-date { width: 200px; min-width: 200px; }
+    .col-dept { width: 200px; min-width: 200px; }
+    .col-status { width: 180px; min-width: 180px; }
+    .col-to { width: 160px; min-width: 160px; }
+    .col-from { width: 160px; min-width: 160px; }
 
     /* Custom Colors matching reference screenshot */
     .red-text {
@@ -455,6 +475,15 @@ interface StudentListRow {
       color: #2563eb;
       font-weight: 600;
       letter-spacing: 0.01em;
+    }
+
+    .student-name-link {
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .student-name-link:hover {
+      text-decoration: underline;
     }
 
     .dark-text {
@@ -515,18 +544,16 @@ interface StudentListRow {
       background-color: #f1f5f9;
     }
 
-    .copyright-caption {
-      font-size: 0.72rem;
-      color: #64748b;
-    }
-
     @media (max-width: 1024px) {
       .filter-row-1 {
         flex-direction: column;
         align-items: flex-start;
       }
       .filter-row-3 {
-        grid-template-columns: 1fr 1fr;
+        flex-wrap: wrap;
+      }
+      .filter-col {
+        min-width: 200px;
       }
     }
   `]
@@ -536,10 +563,10 @@ export class StudentListComponent implements OnInit {
   searchQuery = '';
   enquiryType = 'All';
   dateFilterEnabled = true;
-  fromDate = '01-Aug-2026';
-  toDate = '24-Nov-2026';
+  fromDate = '2026-08-01';
+  toDate = '2026-11-24';
 
-  showAdvanced = true;
+  showAdvanced = false;
   selectedBranch = 'All Branches';
   selectedDept = 'All Departments';
   selectedStatus = 'All Statuses';

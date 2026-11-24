@@ -154,7 +154,7 @@ import { MockDataService } from '../../core/mock-data.service';
                 <label class="field-label">Date</label>
                 <div class="field-control">
                   <input
-                    type="text"
+                    type="date"
                     class="input-text"
                     [(ngModel)]="student.date"
                   />
@@ -251,7 +251,7 @@ import { MockDataService } from '../../core/mock-data.service';
               <label class="field-label required">Next Follow up Date</label>
               <div class="field-control">
                 <input
-                  type="text"
+                  type="date"
                   class="input-text"
                   [(ngModel)]="student.nextFollowupDate"
                 />
@@ -550,9 +550,10 @@ export class StudentCreateComponent implements OnInit {
 
   ngOnInit() {
     const today = new Date();
-    const day = String(today.getDate()).padStart(2, '0');
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const formatted = `${day}-${months[today.getMonth()]}-${today.getFullYear()}`;
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const formatted = `${yyyy}-${mm}-${dd}`;
     this.student.date = formatted;
     this.student.nextFollowupDate = formatted;
   }

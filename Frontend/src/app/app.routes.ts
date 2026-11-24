@@ -25,6 +25,10 @@ export const routes: Routes = [
         path: 'students/follow-up',
         loadComponent: () => import('./features/students/student-followup.component').then(m => m.StudentFollowupComponent)
       },
+      {
+        path: 'students/detail/:name',
+        loadComponent: () => import('./features/students/student-detail.component').then(m => m.StudentDetailComponent)
+      },
 
       // 2. Accounts
       {
