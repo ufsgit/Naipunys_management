@@ -120,7 +120,7 @@ interface StudentListRow {
         </div>
       </div>
 
-      <!-- Data Table Card with Horizontal Scroll -->
+      <!-- Data Table Card with Dual Scroll Viewport -->
       <div class="table-card">
         <div class="table-scroll-container">
           <table class="naipunya-table">
@@ -168,7 +168,7 @@ interface StudentListRow {
             <button type="button" class="pager-btn" (click)="prevPage()">&lt;</button>
             <button type="button" class="pager-btn" (click)="nextPage()">&gt;</button>
           </div>
-          <div class="copyright-caption">Naipunya System</div>
+          <div class="copyright-caption">By UFS Technologies</div>
         </div>
       </div>
     </div>
@@ -354,21 +354,59 @@ interface StudentListRow {
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
     }
 
+    /* Vertical & Horizontal Scroll Container */
     .table-scroll-container {
       width: 100%;
-      overflow-x: auto;
+      height: 380px;
+      max-height: 380px;
+      overflow-x: scroll;
+      overflow-y: scroll;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      position: relative;
+    }
+
+    /* Distinct Windows-style scrollbars matching the video */
+    .table-scroll-container::-webkit-scrollbar {
+      width: 14px;
+      height: 14px;
+    }
+
+    .table-scroll-container::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    .table-scroll-container::-webkit-scrollbar-thumb {
+      background: #888888;
+      border: 2px solid #f1f1f1;
+      border-radius: 4px;
+    }
+
+    .table-scroll-container::-webkit-scrollbar-thumb:hover {
+      background: #555555;
+    }
+
+    .table-scroll-container::-webkit-scrollbar-button {
+      background-color: #e2e8f0;
+      display: block;
+      height: 14px;
+      width: 14px;
     }
 
     .naipunya-table {
-      width: 100%;
-      min-width: 1100px;
-      border-collapse: collapse;
+      width: max-content;
+      min-width: 1650px;
+      border-collapse: separate;
+      border-spacing: 0;
       font-size: 0.84rem;
     }
 
-    /* Blue Table Header matching screenshot */
+    /* Blue Table Header matching screenshot - Sticky on top */
     .table-header-row {
       background-color: #0b62b6;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
     .naipunya-table thead th {
@@ -378,19 +416,25 @@ interface StudentListRow {
       padding: 0.75rem 0.75rem;
       font-size: 0.82rem;
       white-space: nowrap;
-      border: none;
+      border-bottom: 1px solid #0b62b6;
+      background-color: #0b62b6;
     }
 
     .naipunya-table tbody td {
-      padding: 0.85rem 0.75rem;
-      border-bottom: 1px solid #f1f5f9;
+      padding: 0.75rem 0.75rem;
+      border-bottom: 1px solid #e5e7eb;
       font-size: 0.82rem;
       vertical-align: middle;
       white-space: nowrap;
+      background-color: #ffffff;
     }
 
-    .col-sl { width: 50px; }
-    .col-name { min-width: 200px; }
+    .naipunya-table tbody tr:hover td {
+      background-color: #f9fafb;
+    }
+
+    .col-sl { width: 45px; }
+    .col-name { min-width: 210px; }
     .col-followup { width: 90px; }
     .col-note { min-width: 160px; }
     .col-mobile { width: 115px; }
@@ -441,8 +485,8 @@ interface StudentListRow {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 0.75rem;
-      margin-top: 1.75rem;
+      gap: 0.6rem;
+      margin-top: 1.5rem;
     }
 
     .arrow-pager {
@@ -472,7 +516,7 @@ interface StudentListRow {
     }
 
     .copyright-caption {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: #64748b;
     }
 
@@ -504,11 +548,11 @@ export class StudentListComponent implements OnInit {
   allStudents: StudentListRow[] = [
     {
       slNo: 1,
-      name: 'PRIYANKA CLEMENT',
-      note: 'IELTS ACADEMIC',
-      mobile: '8891460293',
-      remark: 'IELTS ACADEMIC',
-      nextFollowUp: '19-Nov-2026',
+      name: 'JUSTIN K G',
+      note: 'IELTS 1 MONTH',
+      mobile: '9995914160',
+      remark: 'IELTS 1 MONTH',
+      nextFollowUp: '24-Nov-2026',
       department: 'Admission',
       status: 'Interested',
       to: 'DIVYA',
@@ -516,6 +560,18 @@ export class StudentListComponent implements OnInit {
     },
     {
       slNo: 2,
+      name: 'PRIYANKA CLEMENT',
+      note: 'NICE',
+      mobile: '8891460293',
+      remark: 'NICE',
+      nextFollowUp: '19-Nov-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 3,
       name: 'ROBBIN CHIRACKAL JOSEPH',
       note: 'IELTS 1 MONTH',
       mobile: '9895162325',
@@ -527,7 +583,7 @@ export class StudentListComponent implements OnInit {
       from: 'DIVYA'
     },
     {
-      slNo: 3,
+      slNo: 4,
       name: 'ANJANA BINDHU',
       note: 'UK VISITING VISA',
       mobile: '9544669647',
@@ -539,7 +595,7 @@ export class StudentListComponent implements OnInit {
       from: 'DIVYA'
     },
     {
-      slNo: 4,
+      slNo: 5,
       name: 'AWIN SANTHOSH',
       note: 'NZ DEPENDENT VISA',
       mobile: '9072933600',
@@ -551,8 +607,8 @@ export class StudentListComponent implements OnInit {
       from: 'DIVYA'
     },
     {
-      slNo: 5,
-      name: 'FR. BENNY VARGHESE',
+      slNo: 6,
+      name: 'FR. BENNY VARGHESE THOPPIPARAMBIL',
       note: 'IELTS 1 MONTH',
       mobile: '7025714977',
       remark: 'IELTS 1 MONTH',
@@ -563,7 +619,7 @@ export class StudentListComponent implements OnInit {
       from: 'DIVYA'
     },
     {
-      slNo: 6,
+      slNo: 7,
       name: 'MIKAH SUBIN ARACKAL',
       note: 'UK DEPENDENT VISA',
       mobile: '8593956865',
@@ -575,7 +631,7 @@ export class StudentListComponent implements OnInit {
       from: 'DIVYA'
     },
     {
-      slNo: 7,
+      slNo: 8,
       name: 'MARIAN JOSEPH ARACKAL',
       note: 'IELTS 1 MONTH',
       mobile: '9447617828',
@@ -587,12 +643,84 @@ export class StudentListComponent implements OnInit {
       from: 'DIVYA'
     },
     {
-      slNo: 8,
+      slNo: 9,
       name: 'EMMANUEL CHRISTIE BENHAR',
       note: 'IELTS 3 MONTHS',
       mobile: '9072070780',
       remark: 'IELTS 3 MONTHS',
       nextFollowUp: '31-Aug-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 10,
+      name: 'LAKSHMI N BIJU',
+      note: 'IELTS 1 MONTH EXTN',
+      mobile: '8075863539',
+      remark: 'IELTS 1 MONTH EXTN',
+      nextFollowUp: '31-Aug-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 11,
+      name: 'ALFIN SHINIL',
+      note: 'IELTS 2 MONTH',
+      mobile: '8330055882',
+      remark: 'IELTS 2 MONTH',
+      nextFollowUp: '31-Aug-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 12,
+      name: 'MANUEL VATTISERRY VARGHESE',
+      note: 'GERMANY',
+      mobile: '6238209350',
+      remark: 'GERMANY',
+      nextFollowUp: '29-Aug-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 13,
+      name: 'SHARON PUTHENPURAKKAL JOSEPH',
+      note: 'GERMANY',
+      mobile: '9037068928',
+      remark: 'GERMANY',
+      nextFollowUp: '17-Aug-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 14,
+      name: 'Rahan Jude',
+      note: 'IELTS 1 MONTH',
+      mobile: '7994241436',
+      remark: 'IELTS 1 MONTH',
+      nextFollowUp: '17-Aug-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 15,
+      name: 'AKHIL BABU',
+      note: 'GERMANY',
+      mobile: '7034653432',
+      remark: 'GERMANY',
+      nextFollowUp: '14-Aug-2026',
       department: 'Admission',
       status: 'Interested',
       to: 'DIVYA',
