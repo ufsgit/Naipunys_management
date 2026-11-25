@@ -60,27 +60,41 @@ export interface Branch {
   status: 'Active' | 'Inactive';
 }
 
+export interface BranchAccountConfig {
+  branch: string;
+  selected: boolean;
+  opening: number;
+  type: string;
+}
+
 export interface Account {
   id: string;
-  code: string;
+  code?: string;
   name: string;
-  type: 'Bank' | 'Cash' | 'Asset' | 'Income' | 'Expense';
-  branch: string;
-  openingBalance: number;
-  currentBalance: number;
-  status: 'Active' | 'Inactive';
+  details?: string;
+  description?: string;
+  type?: 'Bank' | 'Cash' | 'Asset' | 'Income' | 'Expense' | string;
+  branch?: string;
+  openingBalance?: number;
+  currentBalance?: number;
+  status?: 'Active' | 'Inactive';
+  branchConfigs?: BranchAccountConfig[];
 }
 
 export interface Receipt {
   id: string;
   receiptNo: string;
   date: string;
+  from?: string;
   studentId: string;
   studentName: string;
   course: string;
   branch: string;
   amount: number;
-  paymentMode: 'Cash' | 'Bank Transfer' | 'Cheque' | 'UPI';
+  voucherNo?: string | number;
+  details?: string;
+  toAccount?: string;
+  paymentMode: 'Cash' | 'Bank Transfer' | 'Cheque' | 'UPI' | string;
   referenceNo?: string;
   remark?: string;
 }
@@ -197,11 +211,8 @@ export class MockDataService {
 
   // 6. Receipts
   private receipts: Receipt[] = [
-    { id: '1', receiptNo: 'RCP-2026-001', date: '2026-01-10', studentId: 'STU-1001', studentName: 'Rahul Krishnan', course: 'Full Stack Web Development', branch: 'Main Campus - Kochi', amount: 45000, paymentMode: 'Bank Transfer', referenceNo: 'TXN98765432', remark: 'Full course fee paid' },
-    { id: '2', receiptNo: 'RCP-2026-002', date: '2026-01-15', studentId: 'STU-1002', studentName: 'Sneha Thomas', course: 'Data Science & Machine Learning', branch: 'Main Campus - Kochi', amount: 35000, paymentMode: 'UPI', referenceNo: 'UPI12345678', remark: 'Installment 1 paid' },
-    { id: '3', receiptNo: 'RCP-2026-003', date: '2026-02-01', studentId: 'STU-1003', studentName: 'Arjun Pillai', course: 'Digital Marketing Specialist', branch: 'Trivandrum City Branch', amount: 15000, paymentMode: 'Cash', remark: 'Part payment 1' },
-    { id: '4', receiptNo: 'RCP-2026-004', date: '2026-02-12', studentId: 'STU-1004', studentName: 'Devika Mohan', course: 'Graphic & UI/UX Design', branch: 'Calicut Campus', amount: 35000, paymentMode: 'Cheque', referenceNo: 'CHQ-452101', remark: 'Cheque cleared' },
-    { id: '5', receiptNo: 'RCP-2026-005', date: '2026-02-20', studentId: 'STU-1005', studentName: 'Fahad Mohammed', course: 'Certified Financial Accounting', branch: 'Main Campus - Kochi', amount: 16000, paymentMode: 'Bank Transfer', referenceNo: 'TXN55443322', remark: 'Term 1 fee' }
+    { id: '1', receiptNo: '1', voucherNo: '1', date: '19-Nov-2026', from: 'MEERA NAIR', studentId: 'STU-1001', studentName: 'MEERA NAIR', course: 'IELTS CRASH', branch: 'Ernakulam', amount: 5000, paymentMode: 'Bank Transfer', toAccount: 'HDFC Current Account', details: 'QR CODE BY BANK - IELTS COURSE FEE' },
+    { id: '2', receiptNo: '2', voucherNo: '2', date: '21-Nov-2026', from: 'ANANYA KRISHNAN', studentId: 'STU-1002', studentName: 'ANANYA KRISHNAN', course: 'OET', branch: 'Ernakulam', amount: 7500, paymentMode: 'UPI', toAccount: 'SBI Fee Collection', details: 'OET ADMISSION INSTALLMENT' }
   ];
   private receipts$ = new BehaviorSubject<Receipt[]>(this.receipts);
 
@@ -216,11 +227,9 @@ export class MockDataService {
 
   // 8. Accounts
   private accounts: Account[] = [
-    { id: '1', code: 'ACC-101', name: 'SBI Current Account (Main)', type: 'Bank', branch: 'Main Campus - Kochi', openingBalance: 250000, currentBalance: 420000, status: 'Active' },
-    { id: '2', code: 'ACC-102', name: 'HDFC Collection Account', type: 'Bank', branch: 'Main Campus - Kochi', openingBalance: 180000, currentBalance: 310000, status: 'Active' },
-    { id: '3', code: 'ACC-103', name: 'Campus Petty Cash', type: 'Cash', branch: 'Main Campus - Kochi', openingBalance: 25000, currentBalance: 14500, status: 'Active' },
-    { id: '4', code: 'ACC-104', name: 'Trivandrum Operational Cash', type: 'Cash', branch: 'Trivandrum City Branch', openingBalance: 15000, currentBalance: 9800, status: 'Active' },
-    { id: '5', code: 'ACC-105', name: 'Course Tuition Revenue', type: 'Income', branch: 'Main Campus - Kochi', openingBalance: 0, currentBalance: 560000, status: 'Active' }
+    { id: '1', code: 'ACC-101', name: 'CASH IN HAND', details: 'Front-desk petty & fee cash', description: 'Front-desk petty cash and daily cash collection', type: 'Cash', branch: 'Ernakulam', openingBalance: 25000, currentBalance: 25000, status: 'Active' },
+    { id: '2', code: 'ACC-102', name: 'HDFC Current Account', details: 'A/C •••• 4821 • Ravipuram', description: 'Main HDFC operating account', type: 'Bank', branch: 'Kaloor', openingBalance: 180000, currentBalance: 180000, status: 'Active' },
+    { id: '3', code: 'ACC-103', name: 'SBI Fee Collection', details: 'A/C •••• 9104 • UPI Gateway', description: 'SBI UPI and online fee collection', type: 'Bank', branch: 'Ernakulam', openingBalance: 250000, currentBalance: 250000, status: 'Active' }
   ];
   private accounts$ = new BehaviorSubject<Account[]>(this.accounts);
 

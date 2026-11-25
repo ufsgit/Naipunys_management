@@ -1,283 +1,618 @@
-import { IconComponent, ModalComponent, ConfirmDialogComponent, PageHeaderComponent, PaginationComponent, FilterBarComponent } from '../../shared/index';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MockDataService, Course, Department } from '../../core/mock-data.service';
+import { IconComponent } from '../../shared/components/icon.component';
+
+export interface CourseBranchFee {
+  slNo: number;
+  branch: string;
+  fees: string | number;
+}
+
+export interface CourseItem {
+  slNo: number;
+  name: string;
+  fees: number;
+  hasDelete: boolean;
+  hasEdit: boolean;
+}
 
 @Component({
   selector: 'app-course-setup',
   standalone: true,
-  imports: [
-    PageHeaderComponent,
-    FilterBarComponent,
-    PaginationComponent,
-    CommonModule,
-    FormsModule,
-    ModalComponent,
-    ConfirmDialogComponent,
-    IconComponent
-  ],
+  imports: [CommonModule, FormsModule, IconComponent],
   template: `
-    <app-page-header
-      title="Course Setup"
-      icon="book-open"
-      [breadcrumbs]="[{ label: 'Settings' }, { label: 'Course Setup' }]"
-    >
-      <button type="button" class="btn btn-primary" (click)="openAddModal()">
-        <app-icon name="plus" [size]="16"></app-icon>
-        <span>Add New Course</span>
-      </button>
-    </app-page-header>
-
-    <app-filter-bar
-      placeholder="Search courses by name or code..."
-      (search)="onSearch($event)"
-      (export)="exportData()"
-    >
-      <div filters class="filter-group">
-        <select class="form-select" [(ngModel)]="selectedDept" (ngModelChange)="applyFilters()">
-          <option value="">All Departments</option>
-          <option *ngFor="let d of departments" [value]="d.name">{{ d.name }}</option>
-        </select>
+    <div class="course-page-container">
+      <!-- Header -->
+      <div class="course-header">
+        <h1 class="page-title">Course</h1>
+        <button type="button" class="btn-create" (click)="openCreateModal()">CREATE</button>
       </div>
-    </app-filter-bar>
 
-    <div class="card">
-      <div class="table-responsive">
-        <table class="data-table">
+      <!-- Course Table Card -->
+      <div class="table-card">
+        <table class="course-table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Course Code</th>
-              <th>Course Name</th>
-              <th>Department</th>
-              <th>Duration</th>
-              <th style="text-align: right;">Course Fee (₹)</th>
-              <th>Status</th>
-              <th style="text-align: right;">Actions</th>
+              <th style="width: 70px;">Sl No</th>
+              <th>Course</th>
+              <th style="width: 140px;">Fees</th>
+              <th style="width: 80px; text-align: center;">Edit</th>
+              <th style="width: 80px; text-align: center;">Delete</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let c of pagedCourses; let i = index">
-              <td>{{ (currentPage - 1) * pageSize + i + 1 }}</td>
-              <td><strong>{{ c.code }}</strong></td>
-              <td><strong>{{ c.name }}</strong></td>
-              <td>{{ c.department }}</td>
-              <td>{{ c.duration }}</td>
-              <td style="text-align: right; font-weight: 700; color: var(--color-primary);">₹{{ c.fee | number }}</td>
-              <td>
-                <span class="badge" [ngClass]="c.status === 'Active' ? 'badge-success' : 'badge-danger'">
-                  {{ c.status }}
-                </span>
+            <tr *ngFor="let c of courses; let i = index">
+              <td class="text-secondary">{{ c.slNo }}</td>
+              <td class="font-bold text-dark">{{ c.name }}</td>
+              <td class="text-dark">{{ c.fees }}</td>
+              <td style="text-align: center;">
+                <button
+                  type="button"
+                  class="btn-action-edit"
+                  [ngClass]="getEditClass(i)"
+                  (click)="openEditModal(c)"
+                  title="Edit Course"
+                >
+                  <app-icon name="edit" [size]="14"></app-icon>
+                </button>
               </td>
-              <td style="text-align: right;">
-                <div class="table-actions" style="justify-content: flex-end;">
-                  <button type="button" class="btn btn-sm btn-secondary" (click)="openEditModal(c)" title="Edit">
-                    <app-icon name="edit" [size]="14"></app-icon>
-                  </button>
-                  <button type="button" class="btn btn-sm btn-danger" (click)="openDeleteConfirm(c)" title="Delete">
-                    <app-icon name="trash-2" [size]="14"></app-icon>
-                  </button>
-                </div>
+              <td style="text-align: center;">
+                <button
+                  type="button"
+                  class="btn-action-delete"
+                  [ngClass]="getDeleteClass(i)"
+                  (click)="deleteCourse(c)"
+                  title="Delete Course"
+                >
+                  <app-icon name="trash-2" [size]="14"></app-icon>
+                </button>
               </td>
             </tr>
-            <tr *ngIf="filteredCourses.length === 0">
-              <td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                No courses found.
-              </td>
+            <tr *ngIf="courses.length === 0">
+              <td colspan="5" class="empty-state">No courses available.</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <app-pagination
-        [totalItems]="filteredCourses.length"
-        [pageSize]="pageSize"
-        [currentPage]="currentPage"
-        (pageChange)="currentPage = $event"
-      ></app-pagination>
-    </div>
-
-    <!-- Add/Edit Modal -->
-    <app-modal
-      [isOpen]="isModalOpen"
-      [title]="isEditMode ? 'Edit Course' : 'Create New Course'"
-      (closeEvent)="isModalOpen = false"
-      (confirmEvent)="saveCourse()"
-    >
-      <div modal-body>
-        <div class="form-grid-2">
-          <div class="form-group full-width">
-            <label class="form-label required">Course Name</label>
-            <input type="text" class="form-control" [(ngModel)]="currentForm.name" placeholder="Full course title" />
+      <!-- Create / Edit Course Modal matching Image 5 exactly -->
+      <div class="modal-backdrop" *ngIf="isModalOpen" (click)="closeModal()">
+        <div class="modal-dialog" (click)="$event.stopPropagation()">
+          <!-- Modal Blue Header -->
+          <div class="modal-header">
+            <h3 class="modal-title">Course</h3>
+            <button type="button" class="modal-close-btn" (click)="closeModal()">✕</button>
           </div>
 
-          <div class="form-group">
-            <label class="form-label required">Department</label>
-            <select class="form-select" [(ngModel)]="currentForm.department">
-              <option *ngFor="let d of departments" [value]="d.name">{{ d.name }}</option>
-            </select>
+          <!-- Modal Body Form -->
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Course</label>
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="courseForm.name"
+                placeholder="Enter course name"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Book Amount</label>
+              <input
+                type="number"
+                class="form-input"
+                [(ngModel)]="courseForm.bookAmount"
+              />
+            </div>
+
+            <!-- Branch Fees Table -->
+            <div class="fees-section">
+              <label class="form-label">Fees</label>
+              <div class="fees-table-card">
+                <table class="fees-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 70px;">Sl No</th>
+                      <th>Branch</th>
+                      <th style="width: 170px;">Fees</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let b of branchFees">
+                      <td class="text-secondary">{{ b.slNo }}</td>
+                      <td class="branch-name">{{ b.branch }}</td>
+                      <td>
+                        <input
+                          type="text"
+                          class="fee-input"
+                          [(ngModel)]="b.fees"
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label required">Duration</label>
-            <input type="text" class="form-control" [(ngModel)]="currentForm.duration" placeholder="e.g. 6 Months" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label required">Fee (₹)</label>
-            <input type="number" class="form-control" [(ngModel)]="currentForm.fee" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label required">Status</label>
-            <select class="form-select" [(ngModel)]="currentForm.status">
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
+          <!-- Modal Footer Actions -->
+          <div class="modal-footer">
+            <button type="button" class="btn-modal-save" (click)="saveCourse()">SAVE</button>
+            <button type="button" class="btn-modal-cancel" (click)="closeModal()">CANCEL</button>
           </div>
         </div>
       </div>
-    </app-modal>
+    </div>
+  `,
+  styles: [`
+    .course-page-container {
+      padding: 1.75rem 2.25rem;
+      background-color: #f8fafc;
+      min-height: calc(100vh - 56px);
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
 
-    <!-- Delete Confirmation Dialog -->
-    <app-confirm-dialog
-      [isOpen]="isDeleteModalOpen"
-      title="Delete Course"
-      [message]="'Are you sure you want to delete course ' + courseToDelete?.name + '?'"
-      (confirmEvent)="confirmDelete()"
-      (cancelEvent)="isDeleteModalOpen = false"
-    ></app-confirm-dialog>
-  `
+    .course-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+
+    .btn-create {
+      background-color: #16a34a;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      letter-spacing: 0.05em;
+      padding: 0.55rem 1.4rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      transition: background-color 0.15s ease;
+    }
+
+    .btn-create:hover {
+      background-color: #15803d;
+    }
+
+    /* Table Card */
+    .table-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    .course-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .course-table thead tr {
+      background-color: #ffffff;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .course-table th {
+      padding: 0.95rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .course-table tbody tr {
+      border-bottom: 1px solid #f1f5f9;
+      transition: background-color 0.15s ease;
+    }
+
+    .course-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .course-table tbody tr:hover {
+      background-color: #fafbfc;
+    }
+
+    .course-table td {
+      padding: 1.1rem 1.25rem;
+      font-size: 0.85rem;
+      color: #334155;
+    }
+
+    .font-bold {
+      font-weight: 600;
+    }
+
+    .text-dark {
+      color: #1e293b;
+    }
+
+    .text-secondary {
+      color: #64748b;
+    }
+
+    /* Action Buttons (Square with rounded corners matching Accounts/Receipts reference) */
+    .btn-action-edit,
+    .btn-action-delete {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-purple {
+      background-color: #7c3aed;
+      border: none;
+      color: #ffffff;
+    }
+    .btn-purple:hover {
+      background-color: #6d28d9;
+    }
+
+    .btn-blue {
+      background-color: #2563eb;
+      border: none;
+      color: #ffffff;
+    }
+    .btn-blue:hover {
+      background-color: #1d4ed8;
+    }
+
+    .btn-del-white {
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #64748b;
+    }
+    .btn-del-white:hover {
+      border-color: #ef4444;
+      color: #ef4444;
+      background-color: #fef2f2;
+    }
+
+    .btn-del-brown {
+      background-color: #c2410c;
+      border: none;
+      color: #ffffff;
+    }
+    .btn-del-brown:hover {
+      background-color: #9a3412;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem;
+      color: #94a3b8;
+    }
+
+    /* Modal Backdrop & Dialog */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1.5rem;
+      animation: fadeIn 0.15s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-dialog {
+      background: #ffffff;
+      width: 580px;
+      max-width: 95vw;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+      animation: zoomIn 0.15s ease-out;
+    }
+
+    @keyframes zoomIn {
+      from { opacity: 0; transform: scale(0.97); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-header {
+      background-color: #2563eb;
+      color: #ffffff;
+      padding: 0.9rem 1.35rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin: 0;
+      color: #ffffff;
+    }
+
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 1.15rem;
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 1;
+      opacity: 0.85;
+      padding: 0.2rem;
+    }
+
+    .modal-close-btn:hover {
+      opacity: 1;
+    }
+
+    .modal-body {
+      padding: 1.5rem 1.6rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+      max-height: 75vh;
+      overflow-y: auto;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .form-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .form-input {
+      width: 100%;
+      height: 38px;
+      padding: 0 0.85rem;
+      font-size: 0.85rem;
+      color: #1e293b;
+      background-color: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .form-input:focus {
+      border-color: #3b82f6;
+    }
+
+    .fees-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+    }
+
+    .fees-table-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .fees-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .fees-table thead tr {
+      background-color: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .fees-table th {
+      padding: 0.65rem 0.85rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .fees-table tbody tr {
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .fees-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .fees-table td {
+      padding: 0.55rem 0.85rem;
+      font-size: 0.825rem;
+      color: #334155;
+      vertical-align: middle;
+    }
+
+    .branch-name {
+      font-weight: 500;
+      color: #1e293b;
+    }
+
+    .fee-input {
+      width: 100%;
+      height: 32px;
+      padding: 0 0.6rem;
+      font-size: 0.825rem;
+      color: #1e293b;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      box-sizing: border-box;
+      outline: none;
+    }
+
+    .fee-input:focus {
+      border-color: #3b82f6;
+    }
+
+    /* Modal Footer */
+    .modal-footer {
+      padding: 1rem 1.6rem;
+      display: flex;
+      justify-content: flex-start;
+      gap: 0.85rem;
+      border-top: 1px solid #f1f5f9;
+      background-color: #ffffff;
+    }
+
+    .btn-modal-save {
+      background-color: #16a34a;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      letter-spacing: 0.05em;
+      padding: 0.55rem 1.75rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .btn-modal-save:hover {
+      background-color: #15803d;
+    }
+
+    .btn-modal-cancel {
+      background-color: #ffffff;
+      color: #334155;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      letter-spacing: 0.05em;
+      padding: 0.55rem 1.75rem;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-modal-cancel:hover {
+      background-color: #f8fafc;
+      border-color: #94a3b8;
+    }
+  `]
 })
 export class CourseSetupComponent implements OnInit {
-  allCourses: Course[] = [];
-  filteredCourses: Course[] = [];
-  departments: Department[] = [];
+  courses: CourseItem[] = [
+    { slNo: 1, name: 'A01 IELTS REGULAR', fees: 0, hasDelete: true, hasEdit: true },
+    { slNo: 2, name: 'A02 IELTS 2 MONTHS', fees: 0, hasDelete: true, hasEdit: true },
+    { slNo: 3, name: 'A03 IELTS CRASH', fees: 0, hasDelete: true, hasEdit: true },
+    { slNo: 4, name: 'A04 IELTS Extn (ONE MONTH)', fees: 0, hasDelete: true, hasEdit: true },
+    { slNo: 5, name: 'A05 IELTS Extn (2 WEEKS)', fees: 0, hasDelete: true, hasEdit: true },
+    { slNo: 6, name: 'A06 OET', fees: 0, hasDelete: true, hasEdit: true },
+    { slNo: 7, name: 'A07 COMMUNICATIVE ENGLISH 1 MONTH', fees: 0, hasDelete: true, hasEdit: true },
+    { slNo: 8, name: 'A08 OET (2 Weeks)', fees: 0, hasDelete: true, hasEdit: true }
+  ];
 
-  searchTerm = '';
-  selectedDept = '';
+  getEditClass(index: number): string {
+    return index % 2 === 1 ? 'btn-blue' : 'btn-purple';
+  }
 
-  currentPage = 1;
-  pageSize = 5;
+  getDeleteClass(index: number): string {
+    return index % 2 === 1 ? 'btn-del-brown' : 'btn-del-white';
+  }
 
   isModalOpen = false;
   isEditMode = false;
-  isDeleteModalOpen = false;
-  courseToDelete: Course | null = null;
 
-  currentForm: {
-    id: string;
-    name: string;
-    department: string;
-    duration: string;
-    fee: number;
-    status: 'Active' | 'Inactive';
-  } = {
-    id: '',
+  courseForm = {
     name: '',
-    department: '',
-    duration: '6 Months',
-    fee: 40000,
-    status: 'Active'
+    bookAmount: 0
   };
 
-  constructor(private mockDataService: MockDataService) {}
+  branchFees: CourseBranchFee[] = [
+    { slNo: 1, branch: 'Ernakulam', fees: '' },
+    { slNo: 2, branch: 'Kaloor', fees: '' },
+    { slNo: 3, branch: 'Angamaly', fees: '' },
+    { slNo: 4, branch: 'Thrikkakara', fees: '' },
+    { slNo: 5, branch: 'Pala', fees: '' },
+    { slNo: 6, branch: 'Naipunya Overseas', fees: '' }
+  ];
 
-  ngOnInit() {
-    this.mockDataService.getCourses().subscribe(c => {
-      this.allCourses = c;
-      this.applyFilters();
-    });
-    this.mockDataService.getDepartments().subscribe(d => {
-      this.departments = d;
-      if (d.length > 0 && !this.currentForm.department) {
-        this.currentForm.department = d[0].name;
-      }
-    });
-  }
+  ngOnInit() {}
 
-  onSearch(term: string) {
-    this.searchTerm = term.toLowerCase();
-    this.applyFilters();
-  }
-
-  applyFilters() {
-    this.filteredCourses = this.allCourses.filter(c => {
-      const matchesSearch =
-        !this.searchTerm ||
-        c.name.toLowerCase().includes(this.searchTerm) ||
-        c.code.toLowerCase().includes(this.searchTerm);
-
-      const matchesDept = !this.selectedDept || c.department === this.selectedDept;
-
-      return matchesSearch && matchesDept;
-    });
-    this.currentPage = 1;
-  }
-
-  get pagedCourses(): Course[] {
-    const start = (this.currentPage - 1) * this.pageSize;
-    return this.filteredCourses.slice(start, start + this.pageSize);
-  }
-
-  openAddModal() {
+  openCreateModal() {
     this.isEditMode = false;
-    this.currentForm = {
-      id: '',
+    this.courseForm = {
       name: '',
-      department: this.departments[0]?.name || '',
-      duration: '6 Months',
-      fee: 40000,
-      status: 'Active'
+      bookAmount: 0
     };
+    this.resetBranchFees();
     this.isModalOpen = true;
   }
 
-  openEditModal(c: Course) {
+  openEditModal(c: CourseItem) {
     this.isEditMode = true;
-    this.currentForm = { ...c };
+    this.courseForm = {
+      name: c.name,
+      bookAmount: 0
+    };
+    this.resetBranchFees();
     this.isModalOpen = true;
   }
 
-  saveCourse() {
-    if (this.isEditMode) {
-      this.mockDataService.updateCourse(this.currentForm.id, this.currentForm);
-    } else {
-      this.mockDataService.addCourse({
-        name: this.currentForm.name,
-        department: this.currentForm.department,
-        duration: this.currentForm.duration,
-        fee: Number(this.currentForm.fee),
-        status: this.currentForm.status
-      });
-    }
+  closeModal() {
     this.isModalOpen = false;
   }
 
-  openDeleteConfirm(c: Course) {
-    this.courseToDelete = c;
-    this.isDeleteModalOpen = true;
+  resetBranchFees() {
+    this.branchFees = [
+      { slNo: 1, branch: 'Ernakulam', fees: '' },
+      { slNo: 2, branch: 'Kaloor', fees: '' },
+      { slNo: 3, branch: 'Angamaly', fees: '' },
+      { slNo: 4, branch: 'Thrikkakara', fees: '' },
+      { slNo: 5, branch: 'Pala', fees: '' },
+      { slNo: 6, branch: 'Naipunya Overseas', fees: '' }
+    ];
   }
 
-  confirmDelete() {
-    if (this.courseToDelete) {
-      this.mockDataService.deleteCourse(this.courseToDelete.id);
-      this.isDeleteModalOpen = false;
-      this.courseToDelete = null;
+  saveCourse() {
+    if (!this.courseForm.name.trim()) return;
+
+    this.courses.push({
+      slNo: this.courses.length + 1,
+      name: this.courseForm.name,
+      fees: 0,
+      hasDelete: true,
+      hasEdit: false
+    });
+
+    this.closeModal();
+  }
+
+  deleteCourse(c: CourseItem) {
+    if (confirm(`Are you sure you want to delete ${c.name}?`)) {
+      this.courses = this.courses.filter(item => item !== c);
     }
-  }
-
-  exportData() {
-    const csvContent = 'data:text/csv;charset=utf-8,' +
-      'Code,Name,Department,Duration,Fee,Status\n' +
-      this.filteredCourses.map(c => `${c.code},"${c.name}","${c.department}","${c.duration}",${c.fee},${c.status}`).join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Courses_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   }
 }

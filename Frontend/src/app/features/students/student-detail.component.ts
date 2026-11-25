@@ -10,8 +10,8 @@ import { MockDataService } from '../../core/mock-data.service';
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="student-detail-page">
-      <!-- Top Sub-Navigation Tabs & Student Name Header -->
-      <div class="student-tabs-bar">
+      <!-- Top Sub-Navigation Tabs & Student Name Header (Only for Student Profile: Details & Course) -->
+      <div class="student-tabs-bar" *ngIf="activeTab !== 'followup'">
         <div class="tabs-group">
           <button
             type="button"
@@ -37,18 +37,6 @@ import { MockDataService } from '../../core/mock-data.service';
               <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
             </svg>
             <span>Course</span>
-          </button>
-
-          <button
-            type="button"
-            class="tab-btn"
-            [class.active]="activeTab === 'followup'"
-            (click)="setTab('followup')"
-          >
-            <svg class="tab-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-            </svg>
-            <span>Student Follow-up</span>
           </button>
         </div>
 
@@ -177,194 +165,190 @@ import { MockDataService } from '../../core/mock-data.service';
       </div>
 
       <!-- ========================================== -->
-      <!-- TAB 2: Course & Fee Receipt (Row-wise)     -->
+      <!-- TAB 2: Course & Fee Receipt (Row-wise Side-by-Side matching Image 1) -->
       <!-- ========================================== -->
-      <div *ngIf="activeTab === 'course'">
-        <!-- 1. Course Panel (Top Row) -->
-        <div class="panel-box">
-          <div class="panel-header">
-            <span class="panel-title">Course</span>
-          </div>
-          <div class="panel-body">
-            <div class="form-columns-2">
-              <!-- Left Column -->
-              <div class="column-group">
-                <div class="field-row">
-                  <label class="field-label">Course</label>
-                  <div class="field-control">
-                    <select class="input-select" [(ngModel)]="courseData.course">
-                      <option value="E01 IELTS CRASH">E01 IELTS CRASH</option>
-                      <option value="E19 NICE">E19 NICE</option>
-                      <option value="IELTS ACADEMIC">IELTS ACADEMIC</option>
-                      <option value="IELTS 1 MONTH">IELTS 1 MONTH</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="field-row">
-                  <label class="field-label">Batch</label>
-                  <div class="field-control">
-                    <select class="input-select" [(ngModel)]="courseData.batch">
-                      <option value="Select">Select</option>
-                      <option value="Batch A">Batch A</option>
-                      <option value="Batch B">Batch B</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="field-row">
-                  <label class="field-label">Book Amount</label>
-                  <div class="field-control flex-row-align">
-                    <input
-                      type="number"
-                      class="input-text flex-1"
-                      [(ngModel)]="courseData.bookAmount"
-                      (ngModelChange)="onFeeCalculationChange()"
-                    />
-                    <input
-                      type="checkbox"
-                      class="styled-checkbox"
-                      [(ngModel)]="courseData.bookAmountChecked"
-                      (ngModelChange)="onFeeCalculationChange()"
-                    />
-                  </div>
-                </div>
-
-                <div class="field-row">
-                  <label class="field-label">Total Fees</label>
-                  <div class="field-control">
-                    <input type="number" class="input-text" [(ngModel)]="courseData.totalFees" />
-                  </div>
-                </div>
-
-                <div class="field-row">
-                  <label class="field-label">Exam & Fee</label>
-                  <div class="field-control check-group-inline">
-                    <label class="checkbox-inline">
-                      <input type="checkbox" [(ngModel)]="courseData.examDateBooked" />
-                      <span>Exam Date Booked</span>
-                    </label>
-                    <label class="checkbox-inline">
-                      <input type="checkbox" [(ngModel)]="courseData.feesPayment" />
-                      <span>Fees Payment</span>
-                    </label>
-                    <label class="checkbox-inline">
-                      <input type="checkbox" [(ngModel)]="courseData.speakingDate" />
-                      <span>Speaking Date</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div class="field-row">
-                  <label class="field-label">Passport Number</label>
-                  <div class="field-control">
-                    <input type="text" class="input-text" [(ngModel)]="courseData.passportNumber" />
-                  </div>
-                </div>
-
-                <div class="field-row">
-                  <label class="field-label">Photo</label>
-                  <div class="field-control photo-upload-box">
-                    <input type="file" class="file-input-btn" />
-                    <button type="button" class="user-camera-btn">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                      </svg>
-                    </button>
-                  </div>
+      <div *ngIf="activeTab === 'course'" class="course-tab-container">
+        <div class="course-receipt-split-grid">
+          <!-- 1. Left Side: Course Panel -->
+          <div class="course-left-panel">
+            <h3 class="panel-section-title">Course</h3>
+            
+            <div class="vertical-form-stack">
+              <!-- 1. Course -->
+              <div class="field-row">
+                <label class="field-label">Course</label>
+                <div class="field-control">
+                  <select class="input-select" [(ngModel)]="courseData.course">
+                    <option value="E01 IELTS CRASH">E01 IELTS CRASH</option>
+                    <option value="E19 NICE">E19 NICE</option>
+                    <option value="IELTS ACADEMIC">IELTS ACADEMIC</option>
+                    <option value="IELTS 1 MONTH">IELTS 1 MONTH</option>
+                  </select>
                 </div>
               </div>
 
-              <!-- Right Column -->
-              <div class="column-group">
-                <div class="field-row">
-                  <label class="field-label">Course Type</label>
-                  <div class="field-control">
-                    <select class="input-select" [(ngModel)]="courseData.courseType">
-                      <option value="Select">Select</option>
-                      <option value="Regular">Regular</option>
-                      <option value="Crash">Crash</option>
-                    </select>
-                  </div>
+              <!-- 2. Course Type -->
+              <div class="field-row">
+                <label class="field-label">Course Type</label>
+                <div class="field-control">
+                  <select class="input-select" [(ngModel)]="courseData.courseType">
+                    <option value="Select">Select</option>
+                    <option value="Regular">Regular</option>
+                    <option value="Crash">Crash</option>
+                  </select>
                 </div>
+              </div>
 
-                <div class="field-row">
-                  <label class="field-label">Fees</label>
-                  <div class="field-control">
-                    <input
-                      type="number"
-                      class="input-text"
-                      [(ngModel)]="courseData.fees"
-                      (ngModelChange)="onFeeCalculationChange()"
-                    />
-                  </div>
+              <!-- 3. Batch -->
+              <div class="field-row">
+                <label class="field-label">Batch</label>
+                <div class="field-control">
+                  <select class="input-select" [(ngModel)]="courseData.batch">
+                    <option value="Select">Select</option>
+                    <option value="Batch A">Batch A</option>
+                    <option value="Batch B">Batch B</option>
+                  </select>
                 </div>
+              </div>
 
-                <div class="field-row">
-                  <label class="field-label">Discount</label>
-                  <div class="field-control">
-                    <input
-                      type="number"
-                      class="input-text"
-                      [(ngModel)]="courseData.discount"
-                      (ngModelChange)="onFeeCalculationChange()"
-                    />
-                  </div>
+              <!-- 4. Fees -->
+              <div class="field-row">
+                <label class="field-label">Fees</label>
+                <div class="field-control">
+                  <input
+                    type="number"
+                    class="input-text"
+                    [(ngModel)]="courseData.fees"
+                    (ngModelChange)="onFeeCalculationChange()"
+                  />
                 </div>
+              </div>
 
-                <div class="field-row">
-                  <label class="field-label">Status</label>
-                  <div class="field-control">
-                    <select class="input-select" [(ngModel)]="courseData.status">
-                      <option value="Select">Select</option>
-                      <option value="Enrolled">Enrolled</option>
-                      <option value="Pending">Pending</option>
-                    </select>
-                  </div>
+              <!-- 5. Book Amount + Checkbox -->
+              <div class="field-row">
+                <label class="field-label">Book Amount</label>
+                <div class="field-control book-amount-control">
+                  <input
+                    type="number"
+                    class="input-text"
+                    [(ngModel)]="courseData.bookAmount"
+                    (ngModelChange)="onFeeCalculationChange()"
+                  />
+                  <input
+                    type="checkbox"
+                    class="styled-checkbox"
+                    [(ngModel)]="courseData.bookAmountChecked"
+                    (ngModelChange)="onFeeCalculationChange()"
+                  />
                 </div>
+              </div>
 
-                <div class="field-row">
-                  <label class="field-label">Score</label>
-                  <div class="field-control score-box-row">
-                    <span class="score-label">L</span>
-                    <input type="number" class="score-input" [(ngModel)]="courseData.scoreL" />
-                    <span class="score-label">R</span>
-                    <input type="number" class="score-input" [(ngModel)]="courseData.scoreR" />
-                    <span class="score-label">W</span>
-                    <input type="number" class="score-input" [(ngModel)]="courseData.scoreW" />
-                    <span class="score-label">S</span>
-                    <input type="number" class="score-input" [(ngModel)]="courseData.scoreS" />
-                    <span class="score-label">O</span>
-                    <input type="number" class="score-input" [(ngModel)]="courseData.scoreO" />
-                  </div>
+              <!-- 6. Discount -->
+              <div class="field-row">
+                <label class="field-label">Discount</label>
+                <div class="field-control">
+                  <input
+                    type="number"
+                    class="input-text"
+                    [(ngModel)]="courseData.discount"
+                    (ngModelChange)="onFeeCalculationChange()"
+                  />
                 </div>
+              </div>
 
-                <div class="field-row">
-                  <label class="field-label">Student Id Number</label>
-                  <div class="field-control flex-row-align">
-                    <input type="text" class="input-text flex-1" [(ngModel)]="courseData.studentIdNumber" />
-                    <button type="button" class="btn-generate-blue" (click)="generateId()">Generate</button>
-                  </div>
+              <!-- 7. Total Fees (Readonly / Calculated) -->
+              <div class="field-row">
+                <label class="field-label">Total Fees</label>
+                <div class="field-control">
+                  <input type="number" class="input-text readonly-input" [(ngModel)]="courseData.totalFees" readonly />
+                </div>
+              </div>
+
+              <!-- 8. Status -->
+              <div class="field-row">
+                <label class="field-label">Status</label>
+                <div class="field-control">
+                  <select class="input-select" [(ngModel)]="courseData.status">
+                    <option value="Select">Select</option>
+                    <option value="Enrolled">Enrolled</option>
+                    <option value="Pending">Pending</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 9. Exam Date Booked -->
+              <div class="field-row">
+                <label class="field-label">Exam Date Booked</label>
+                <div class="field-control">
+                  <input type="checkbox" class="styled-checkbox" [(ngModel)]="courseData.examDateBooked" />
+                </div>
+              </div>
+
+              <!-- 10. Fees Payment -->
+              <div class="field-row">
+                <label class="field-label">Fees Payment</label>
+                <div class="field-control">
+                  <input type="checkbox" class="styled-checkbox" [(ngModel)]="courseData.feesPayment" />
+                </div>
+              </div>
+
+              <!-- 11. Speaking Date -->
+              <div class="field-row">
+                <label class="field-label">Speaking Date</label>
+                <div class="field-control">
+                  <input type="checkbox" class="styled-checkbox" [(ngModel)]="courseData.speakingDate" />
+                </div>
+              </div>
+
+              <!-- 12. Score: L R W S O -->
+              <div class="field-row">
+                <label class="field-label">Score</label>
+                <div class="field-control score-box-row">
+                  <span class="score-label">L</span>
+                  <input type="number" class="score-input" [(ngModel)]="courseData.scoreL" />
+                  <span class="score-label">R</span>
+                  <input type="number" class="score-input" [(ngModel)]="courseData.scoreR" />
+                  <span class="score-label">W</span>
+                  <input type="number" class="score-input" [(ngModel)]="courseData.scoreW" />
+                  <span class="score-label">S</span>
+                  <input type="number" class="score-input" [(ngModel)]="courseData.scoreS" />
+                  <span class="score-label">O</span>
+                  <input type="number" class="score-input" [(ngModel)]="courseData.scoreO" />
+                </div>
+              </div>
+
+              <!-- 13. Passport Number -->
+              <div class="field-row">
+                <label class="field-label">Passport Number</label>
+                <div class="field-control">
+                  <input type="text" class="input-text" [(ngModel)]="courseData.passportNumber" />
+                </div>
+              </div>
+
+              <!-- 14. Student Id Number + Generate Button -->
+              <div class="field-row">
+                <label class="field-label">Student Id Number</label>
+                <div class="field-control flex-row-align">
+                  <input type="text" class="input-text flex-1" [(ngModel)]="courseData.studentIdNumber" />
+                  <button type="button" class="btn-generate-blue" (click)="generateId()">Generate</button>
+                </div>
+              </div>
+
+              <!-- 15. Photo Upload + Box -->
+              <div class="field-row photo-field-row">
+                <label class="field-label">Photo</label>
+                <div class="field-control">
+                  <input type="file" class="file-input-btn" />
+                  <div class="photo-preview-placeholder"></div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Course Action Footer -->
-        <div class="action-footer right-align-footer">
-          <button type="button" class="btn-action btn-delete-red" (click)="onDelete()">DELETE</button>
-          <button type="button" class="btn-action btn-new-green" (click)="onNew()">NEW</button>
-          <button type="button" class="btn-action btn-save-purple" (click)="onSave()">SAVE</button>
-        </div>
+          <!-- 2. Right Side: Fee Receipt Panel -->
+          <div class="receipt-right-panel">
+            <h3 class="panel-section-title">Fee Receipt</h3>
 
-        <!-- 2. Fee Receipt Panel (Bottom Row) -->
-        <div class="panel-box" style="margin-top: 1.5rem;">
-          <div class="panel-header">
-            <span class="panel-title">Fee Receipt</span>
-          </div>
-          <div class="panel-body">
             <!-- Add Receipt Input Line -->
             <div class="fee-receipt-input-grid">
               <div class="fee-col">
@@ -392,51 +376,53 @@ import { MockDataService } from '../../core/mock-data.service';
               </div>
 
               <div class="fee-col-btn">
-                <button type="button" class="btn-add-plus" (click)="addReceiptRow()">+</button>
+                <button type="button" class="btn-add-plus" (click)="addReceiptRow()" title="Add Receipt">+</button>
               </div>
             </div>
 
-            <!-- Receipts Table -->
-            <table class="receipt-table" style="margin-top: 1.25rem;">
-              <thead>
-                <tr>
-                  <th>Receipt Date</th>
-                  <th>Fee Amount</th>
-                  <th>Fees</th>
-                  <th>Description</th>
-                  <th style="text-align: right;">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let r of receiptsList; let idx = index">
-                  <td>{{ r.date }}</td>
-                  <td>{{ r.amount }}</td>
-                  <td>{{ r.type }}</td>
-                  <td>{{ r.description }}</td>
-                  <td style="text-align: right;">
-                    <button type="button" class="icon-link-btn" (click)="editReceipt(idx)" title="Edit">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                      </svg>
-                    </button>
-                    <button type="button" class="icon-link-btn" (click)="deleteReceipt(idx)" title="Delete">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                      </svg>
-                    </button>
-                    <button type="button" class="icon-link-btn" (click)="printReceipt(r)" title="Print">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                        <rect x="6" y="14" width="12" height="8"></rect>
-                      </svg>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <!-- Receipts Table matching exact TrackBox styling -->
+            <div class="receipt-table-scroll">
+              <table class="receipt-table">
+                <thead>
+                  <tr>
+                    <th>Receipt Date</th>
+                    <th>Fee Amount</th>
+                    <th>Fees</th>
+                    <th>Description</th>
+                    <th style="text-align: right; width: 100px;"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let r of receiptsList; let idx = index">
+                    <td>{{ r.date }}</td>
+                    <td>{{ r.amount }}</td>
+                    <td>{{ r.type }}</td>
+                    <td>{{ r.description }}</td>
+                    <td style="text-align: right; white-space: nowrap;">
+                      <button type="button" class="icon-link-btn" (click)="editReceipt(idx)" title="Edit">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                      </button>
+                      <button type="button" class="icon-link-btn" (click)="deleteReceipt(idx)" title="Delete">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                      <button type="button" class="icon-link-btn" (click)="printReceipt(r)" title="Print">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                          <rect x="6" y="14" width="12" height="8"></rect>
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
             <!-- Dynamic Calculated Totals Footer -->
             <div class="receipt-totals-box">
@@ -450,6 +436,13 @@ import { MockDataService } from '../../core/mock-data.service';
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Course Action Footer -->
+        <div class="action-footer right-align-footer mt-4">
+          <button type="button" class="btn-action btn-delete-red" (click)="onDelete()">DELETE</button>
+          <button type="button" class="btn-action btn-new-green" (click)="onNew()">NEW</button>
+          <button type="button" class="btn-action btn-save-purple" (click)="onSave()">SAVE</button>
         </div>
       </div>
 
@@ -910,11 +903,27 @@ import { MockDataService } from '../../core/mock-data.service';
     }
 
     /* Course & Receipt Side-by-Side Split Grid matching Image 1 */
+    .course-tab-container {
+      background: #ffffff;
+      border: 1px solid #e5e9f2;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
     .course-receipt-split-grid {
       display: grid;
       grid-template-columns: 1fr 1.15fr;
-      gap: 1.5rem;
+      gap: 2.5rem;
       align-items: start;
+    }
+
+    .panel-section-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #0f172a;
+      margin: 0 0 1.25rem 0;
+      letter-spacing: -0.01em;
     }
 
     .vertical-form-stack {
@@ -930,10 +939,37 @@ import { MockDataService } from '../../core/mock-data.service';
       gap: 1rem;
     }
 
+    .book-amount-control {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .readonly-input {
+      background-color: #f1f5f9;
+      cursor: not-allowed;
+      color: #334155;
+    }
+
+    .photo-field-row {
+      align-items: flex-start !important;
+    }
+
+    .photo-preview-placeholder {
+      width: 75px;
+      height: 85px;
+      border: 1px solid #cbd5e1;
+      border-radius: 3px;
+      background: #ffffff;
+      margin-top: 0.5rem;
+    }
+
     .receipt-table-scroll {
       width: 100%;
       overflow-x: auto;
       margin-top: 1.25rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
     }
 
     @media (max-width: 1100px) {
@@ -943,11 +979,11 @@ import { MockDataService } from '../../core/mock-data.service';
     }
 
     .btn-add-plus {
-      background-color: #0b62b6;
+      background-color: #2563eb;
       color: #ffffff;
       border: none;
-      width: 38px;
-      height: 38px;
+      width: 36px;
+      height: 36px;
       border-radius: 4px;
       font-size: 1.25rem;
       font-weight: 700;
@@ -959,7 +995,7 @@ import { MockDataService } from '../../core/mock-data.service';
     }
 
     .btn-add-plus:hover {
-      background-color: #084d91;
+      background-color: #1d4ed8;
     }
 
     .receipt-table {
@@ -971,16 +1007,18 @@ import { MockDataService } from '../../core/mock-data.service';
     .receipt-table thead th {
       text-align: left;
       font-weight: 600;
-      color: #334155;
+      background-color: #4b78a4;
+      color: #ffffff;
       padding: 0.65rem 0.75rem;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid #3b668d;
       font-size: 0.82rem;
     }
 
     .receipt-table tbody td {
-      padding: 0.75rem 0.75rem;
+      padding: 0.7rem 0.75rem;
       border-bottom: 1px solid #f1f5f9;
       font-size: 0.82rem;
+      color: #1e293b;
     }
 
     .icon-link-btn {
@@ -1189,7 +1227,7 @@ import { MockDataService } from '../../core/mock-data.service';
   `]
 })
 export class StudentDetailComponent implements OnInit {
-  activeTab: 'details' | 'course' | 'followup' = 'course';
+  activeTab: 'details' | 'course' | 'followup' = 'details';
   studentName = 'PRIYANKA CLEMENT';
 
   // Tab 1: Student Details Model
@@ -1296,8 +1334,10 @@ export class StudentDetailComponent implements OnInit {
     });
 
     this.route.queryParams.subscribe(q => {
-      if (q['tab']) {
+      if (q['tab'] && (q['tab'] === 'details' || q['tab'] === 'course' || q['tab'] === 'followup')) {
         this.activeTab = q['tab'];
+      } else {
+        this.activeTab = 'details';
       }
     });
   }

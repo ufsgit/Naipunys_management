@@ -1,6 +1,6 @@
 import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, RouterOutlet } from '@angular/router';
+import { Router, RouterModule, RouterOutlet } from '@angular/router';
 import { IconComponent } from '../shared/index';
 
 @Component({
@@ -21,21 +21,34 @@ import { IconComponent } from '../shared/index';
 
           <!-- Navigation Menu -->
           <nav class="top-nav-menu">
-            <!-- Create New (Primary blue pill button) -->
-            <a routerLink="/students/create" routerLinkActive="active" class="top-nav-btn-pill">
+            <!-- Create New (Primary blue pill when active, clean subtle pill otherwise) -->
+            <a
+              routerLink="/students/create"
+              class="top-menu-btn"
+              [class.active-create]="isCreateNewActive()"
+            >
               <app-icon name="user-plus" [size]="14"></app-icon>
               <span>Create New</span>
             </a>
 
             <!-- Student List -->
-            <a routerLink="/students/list" routerLinkActive="active" class="top-menu-link">
+            <a
+              routerLink="/students/list"
+              class="top-menu-btn"
+              [class.active-students]="isStudentListActive()"
+            >
               <app-icon name="users" [size]="14"></app-icon>
               <span>Student List</span>
             </a>
 
             <!-- Accounts Dropdown with Rich Colored Contents -->
             <div class="nav-dropdown" [class.open]="activeDropdown === 'accounts'">
-              <button type="button" class="top-menu-dropdown-btn" (click)="toggleDropdown('accounts', $event)">
+              <button
+                type="button"
+                class="top-menu-btn top-menu-dropdown-btn"
+                [class.active-accounts]="isAccountsActive()"
+                (click)="toggleDropdown('accounts', $event)"
+              >
                 <app-icon name="credit-card" [size]="14"></app-icon>
                 <span>Accounts</span>
                 <app-icon name="chevron-down" [size]="12" customClass="dropdown-arrow"></app-icon>
@@ -66,240 +79,162 @@ import { IconComponent } from '../shared/index';
                       </div>
                       <span class="item-label">Receipt Management</span>
                     </a>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                    <a routerLink="/accounts/create" class="mega-item item-hover-green" (click)="closeDropdowns()">
+            <!-- Report Dropdown (Refined with colorful modern badges) -->
+            <div class="nav-dropdown" [class.open]="activeDropdown === 'reports'">
+              <button
+                type="button"
+                class="top-menu-btn top-menu-dropdown-btn"
+                [class.active-reports]="isReportsActive()"
+                (click)="toggleDropdown('reports', $event)"
+              >
+                <app-icon name="pie-chart" [size]="14"></app-icon>
+                <span>Report</span>
+                <app-icon name="chevron-down" [size]="12" customClass="dropdown-arrow"></app-icon>
+              </button>
+
+              <div class="reports-dropdown-panel" *ngIf="activeDropdown === 'reports'" (click)="$event.stopPropagation()">
+                <div class="reports-menu-header">
+                  <div class="reports-header-icon">
+                    <app-icon name="pie-chart" [size]="17"></app-icon>
+                  </div>
+                  <div class="header-text-group">
+                    <h4 class="reports-header-title">Reports & Analytics</h4>
+                  </div>
+                </div>
+
+                <div class="reports-menu-body">
+                  <div class="category-capsule capsule-blue">FEES & FINANCIAL REPORTS</div>
+                  <div class="mega-items-list">
+                    <a routerLink="/reports/fee-receipt" class="mega-item item-hover-green" (click)="closeDropdowns()">
                       <div class="item-icon-badge badge-green">
-                        <app-icon name="plus" [size]="16"></app-icon>
+                        <app-icon name="receipt" [size]="16"></app-icon>
                       </div>
-                      <span class="item-label">Create New Account</span>
-                    </a>
-
-                    <a routerLink="/reports/fee-receipt" class="mega-item item-hover-blue" (click)="closeDropdowns()">
-                      <div class="item-icon-badge badge-blue">
-                        <app-icon name="dollar-sign" [size]="16"></app-icon>
-                      </div>
-                      <span class="item-label">Fee Collection Log</span>
+                      <span class="item-label">Fees Receipt Report</span>
                     </a>
 
                     <a routerLink="/reports/fee-pending" class="mega-item item-hover-rose" (click)="closeDropdowns()">
                       <div class="item-icon-badge badge-rose">
                         <app-icon name="clock" [size]="16"></app-icon>
                       </div>
-                      <span class="item-label">Outstanding Fees Report</span>
+                      <span class="item-label">Fees Pending Report</span>
                     </a>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Report Dropdown (Mega Menu matching reference image with vibrant colored contents) -->
-            <div class="nav-dropdown mega-nav-dropdown" [class.open]="activeDropdown === 'reports'">
-              <button type="button" class="top-menu-dropdown-btn" (click)="toggleDropdown('reports', $event)">
-                <app-icon name="pie-chart" [size]="14"></app-icon>
-                <span>Report</span>
-                <app-icon name="chevron-down" [size]="12" customClass="dropdown-arrow"></app-icon>
-              </button>
-
-              <div class="mega-menu-panel" *ngIf="activeDropdown === 'reports'" (click)="$event.stopPropagation()">
-                <!-- Top Header Bar -->
-                <div class="mega-menu-header">
-                  <div class="header-icon-box">
-                    <app-icon name="sliders" [size]="18"></app-icon>
-                  </div>
-                  <div class="header-text-group">
-                    <h3 class="header-title">Reports & System Analytics</h3>
-                  </div>
-                </div>
-
-                <!-- 4 Categorized Columns -->
-                <div class="mega-menu-grid">
-                  <!-- Column 1: Financial & Fees -->
-                  <div class="mega-column">
-                    <div class="category-capsule capsule-blue">FEES & REVENUE</div>
-                    <div class="mega-items-list">
-                      <a routerLink="/reports/fee-receipt" class="mega-item item-hover-green" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-green">
-                          <app-icon name="receipt" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Fees Receipt Report</span>
-                      </a>
-
-                      <a routerLink="/reports/fee-pending" class="mega-item item-hover-rose" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-rose">
-                          <app-icon name="clock" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Fees Pending Report</span>
-                      </a>
-
-                      <a routerLink="/reports/fee-receipt" class="mega-item item-hover-sky" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-sky">
-                          <app-icon name="credit-card" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Branch Account Statement</span>
-                      </a>
-
-                      <a routerLink="/reports/fee-receipt" class="mega-item item-hover-amber" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-amber">
-                          <app-icon name="dollar-sign" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Daily Collection Log</span>
-                      </a>
-
-                      <a routerLink="/reports/fee-receipt" class="mega-item item-hover-lime" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-lime">
-                          <app-icon name="file-text" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Receipt Type Analysis</span>
-                      </a>
-                    </div>
-                  </div>
-
-                  <!-- Column 2: Academics & Admissions -->
-                  <div class="mega-column">
-                    <div class="category-capsule capsule-purple">ACADEMICS & STUDENTS</div>
-                    <div class="mega-items-list">
-                      <a routerLink="/students/list" class="mega-item item-hover-indigo" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-indigo">
-                          <app-icon name="users" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Student Enrollment Report</span>
-                      </a>
-
-                      <a routerLink="/setup/courses" class="mega-item item-hover-orange" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-orange">
-                          <app-icon name="book-open" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Course Wise Admissions</span>
-                      </a>
-
-                      <a routerLink="/students/list" class="mega-item item-hover-purple" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-purple">
-                          <app-icon name="graduation-cap" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Application Status</span>
-                      </a>
-
-                      <a routerLink="/students/list" class="mega-item item-hover-cyan" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-cyan">
-                          <app-icon name="calendar" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Intake & Batch Overview</span>
-                      </a>
-
-                      <a routerLink="/students/list" class="mega-item item-hover-blue" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-blue">
-                          <app-icon name="award" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Academic Year Audit</span>
-                      </a>
-                    </div>
-                  </div>
-
-                  <!-- Column 3: Leads & Pipeline -->
-                  <div class="mega-column">
-                    <div class="category-capsule capsule-green">LEADS & PIPELINE</div>
-                    <div class="mega-items-list">
-                      <a routerLink="/students/follow-up" class="mega-item item-hover-teal" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-teal">
-                          <app-icon name="activity" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Lead Status Overview</span>
-                      </a>
-
-                      <a routerLink="/students/follow-up" class="mega-item item-hover-pink" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-pink">
-                          <app-icon name="help-circle" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Enquiry Source Report</span>
-                      </a>
-
-                      <a routerLink="/students/follow-up" class="mega-item item-hover-violet" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-violet">
-                          <app-icon name="list" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Follow-up Call Register</span>
-                      </a>
-
-                      <a routerLink="/settings/enquiry-sources" class="mega-item item-hover-yellow" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-yellow">
-                          <app-icon name="folder" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Field Categories</span>
-                      </a>
-
-                      <a routerLink="/reports/fee-receipt" class="mega-item item-hover-emerald" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-emerald">
-                          <app-icon name="check" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Conversion Performance</span>
-                      </a>
-                    </div>
-                  </div>
-
-                  <!-- Column 4: Staff & Operations -->
-                  <div class="mega-column">
-                    <div class="category-capsule capsule-teal">STAFF & OPERATIONS</div>
-                    <div class="mega-items-list">
-                      <a routerLink="/reports/fee-pending" class="mega-item item-hover-emerald" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-emerald">
-                          <app-icon name="briefcase" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Staff Work Report</span>
-                      </a>
-
-                      <a routerLink="/setup/users/list" class="mega-item item-hover-sky" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-sky">
-                          <app-icon name="user-check" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">User Activity Audit</span>
-                      </a>
-
-                      <a routerLink="/departments/list" class="mega-item item-hover-coral" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-coral">
-                          <app-icon name="git-branch" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Department Summary</span>
-                      </a>
-
-                      <a routerLink="/branches/list" class="mega-item item-hover-mint" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-mint">
-                          <app-icon name="building" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Branch Performance</span>
-                      </a>
-
-                      <a routerLink="/reports/fee-receipt" class="mega-item item-hover-softgreen" (click)="closeDropdowns()">
-                        <div class="item-icon-badge badge-softgreen">
-                          <app-icon name="file-spreadsheet" [size]="16"></app-icon>
-                        </div>
-                        <span class="item-label">Excel Export & Audit</span>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Settings Dropdown -->
+            <!-- Settings Dropdown (Only the 9 requested items with modern colorful design) -->
             <div class="nav-dropdown" [class.open]="activeDropdown === 'settings'">
-              <button type="button" class="top-menu-dropdown-btn" (click)="toggleDropdown('settings', $event)">
+              <button
+                type="button"
+                class="top-menu-btn top-menu-dropdown-btn"
+                [class.active-settings]="isSettingsActive()"
+                (click)="toggleDropdown('settings', $event)"
+              >
                 <app-icon name="settings" [size]="14"></app-icon>
                 <span>Settings</span>
                 <app-icon name="chevron-down" [size]="12" customClass="dropdown-arrow"></app-icon>
               </button>
-              <div class="dropdown-flyout" *ngIf="activeDropdown === 'settings'">
-                <div class="flyout-header">COURSE & USERS</div>
-                <a routerLink="/setup/courses" class="flyout-item" (click)="closeDropdowns()">Course Setup</a>
-                <a routerLink="/setup/roles" class="flyout-item" (click)="closeDropdowns()">User Roles</a>
-                <a routerLink="/setup/users/list" class="flyout-item" (click)="closeDropdowns()">User Details</a>
-                <div class="flyout-header">BASIC SETTINGS</div>
-                <a routerLink="/settings/followup-types" class="flyout-item" (click)="closeDropdowns()">Follow-up Types</a>
-                <a routerLink="/settings/enquiry-sources" class="flyout-item" (click)="closeDropdowns()">Enquiry Sources</a>
-                <a routerLink="/settings/status-list" class="flyout-item" (click)="closeDropdowns()">Status Settings</a>
-                <div class="flyout-header">ORGANIZATION</div>
-                <a routerLink="/departments/list" class="flyout-item" (click)="closeDropdowns()">Department Management</a>
-                <a routerLink="/branches/list" class="flyout-item" (click)="closeDropdowns()">Branch Management</a>
-                <a routerLink="/company-info" class="flyout-item" (click)="closeDropdowns()">Company Information</a>
+
+              <div class="settings-dropdown-panel" *ngIf="activeDropdown === 'settings'" (click)="$event.stopPropagation()">
+                <!-- Top Header Bar -->
+                <div class="settings-menu-header">
+                  <div class="settings-header-icon">
+                    <app-icon name="sliders" [size]="18"></app-icon>
+                  </div>
+                  <div class="header-text-group">
+                    <h3 class="settings-header-title">Settings & System Controls</h3>
+                  </div>
+                </div>
+
+                <!-- 3 Categorized Columns with only the 9 requested items -->
+                <div class="settings-menu-grid">
+                  <!-- Column 1: Course & Users -->
+                  <div class="mega-column">
+                    <div class="category-capsule capsule-blue">COURSE & USERS</div>
+                    <div class="mega-items-list">
+                      <a routerLink="/setup/courses" class="mega-item item-hover-orange" (click)="closeDropdowns()">
+                        <div class="item-icon-badge badge-orange">
+                          <app-icon name="book-open" [size]="16"></app-icon>
+                        </div>
+                        <span class="item-label">Course</span>
+                      </a>
+
+                      <a routerLink="/setup/users/list" class="mega-item item-hover-indigo" (click)="closeDropdowns()">
+                        <div class="item-icon-badge badge-indigo">
+                          <app-icon name="users" [size]="16"></app-icon>
+                        </div>
+                        <span class="item-label">User Details</span>
+                      </a>
+
+                      <a routerLink="/setup/roles" class="mega-item item-hover-amber" (click)="closeDropdowns()">
+                        <div class="item-icon-badge badge-amber">
+                          <app-icon name="user-check" [size]="16"></app-icon>
+                        </div>
+                        <span class="item-label">User Role</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  <!-- Column 2: Basic Settings -->
+                  <div class="mega-column">
+                    <div class="category-capsule capsule-green">BASIC SETTINGS</div>
+                    <div class="mega-items-list">
+                      <a routerLink="/settings/followup-types" class="mega-item item-hover-violet" (click)="closeDropdowns()">
+                        <div class="item-icon-badge badge-violet">
+                          <app-icon name="list" [size]="16"></app-icon>
+                        </div>
+                        <span class="item-label">Follow-up Type</span>
+                      </a>
+
+                      <a routerLink="/settings/enquiry-sources" class="mega-item item-hover-pink" (click)="closeDropdowns()">
+                        <div class="item-icon-badge badge-pink">
+                          <app-icon name="help-circle" [size]="16"></app-icon>
+                        </div>
+                        <span class="item-label">Enquiry Source</span>
+                      </a>
+
+                      <a routerLink="/settings/status-list" class="mega-item item-hover-teal" (click)="closeDropdowns()">
+                        <div class="item-icon-badge badge-teal">
+                          <app-icon name="activity" [size]="16"></app-icon>
+                        </div>
+                        <span class="item-label">Status</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  <!-- Column 3: Organization -->
+                  <div class="mega-column">
+                    <div class="category-capsule capsule-teal">ORGANIZATION</div>
+                    <div class="mega-items-list">
+                      <a routerLink="/departments/list" class="mega-item item-hover-purple" (click)="closeDropdowns()">
+                        <div class="item-icon-badge badge-purple">
+                          <app-icon name="git-branch" [size]="16"></app-icon>
+                        </div>
+                        <span class="item-label">Department</span>
+                      </a>
+
+                      <a routerLink="/branches/list" class="mega-item item-hover-cyan" (click)="closeDropdowns()">
+                        <div class="item-icon-badge badge-cyan">
+                          <app-icon name="building" [size]="16"></app-icon>
+                        </div>
+                        <span class="item-label">Branch</span>
+                      </a>
+
+                      <a routerLink="/company-info" class="mega-item item-hover-blue" (click)="closeDropdowns()">
+                        <div class="item-icon-badge badge-blue">
+                          <app-icon name="briefcase" [size]="16"></app-icon>
+                        </div>
+                        <span class="item-label">Company Info</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </nav>
@@ -380,52 +315,95 @@ import { IconComponent } from '../shared/index';
     .top-nav-menu {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 0.65rem;
     }
 
-    /* Primary Active "Create New" Blue Pill Button */
-    .top-nav-btn-pill {
+    /* Common Base Nav Button / Link */
+    .top-menu-btn {
       display: inline-flex;
       align-items: center;
       gap: 0.45rem;
-      padding: 0.42rem 0.95rem;
-      font-size: 0.8125rem;
-      font-weight: 500;
-      color: #ffffff;
-      background-color: #1d4ed8;
-      border-radius: 6px;
-      text-decoration: none;
-      transition: background-color 0.15s ease;
-    }
-    .top-nav-btn-pill:hover {
-      background-color: #1e40af;
-    }
-
-    /* Normal top nav link */
-    .top-menu-link,
-    .top-menu-dropdown-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45rem;
-      padding: 0.35rem 0.5rem;
+      padding: 0.42rem 0.85rem;
       font-size: 0.8125rem;
       font-weight: 500;
       color: #334155;
-      text-decoration: none;
-      border-radius: 4px;
       background: transparent;
       border: none;
+      border-radius: 6px;
+      text-decoration: none;
       cursor: pointer;
-      transition: color 0.15s ease;
+      transition: all 0.15s ease;
       font-family: inherit;
+      white-space: nowrap;
     }
-    .top-menu-link:hover,
-    .top-menu-dropdown-btn:hover {
-      color: #1d4ed8;
+
+    .top-menu-btn:hover {
+      background-color: #f1f5f9;
+      color: #0f172a;
     }
-    .top-menu-link.active {
-      color: #1d4ed8;
+
+    /* 1. Create New Active: Royal Blue */
+    .top-menu-btn.active-create {
+      background-color: #2563eb !important;
+      color: #ffffff !important;
       font-weight: 600;
+      box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+    }
+    .top-menu-btn.active-create:hover {
+      background-color: #1d4ed8 !important;
+    }
+
+    /* 2. Student List Active: Emerald Green */
+    .top-menu-btn.active-students {
+      background-color: #16a34a !important;
+      color: #ffffff !important;
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(22, 163, 74, 0.25);
+    }
+    .top-menu-btn.active-students:hover {
+      background-color: #15803d !important;
+    }
+
+    /* 3. Accounts Active: Amber / Orange */
+    .top-menu-btn.active-accounts {
+      background-color: #ea580c !important;
+      color: #ffffff !important;
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(234, 88, 12, 0.25);
+    }
+    .top-menu-btn.active-accounts:hover {
+      background-color: #c2410c !important;
+    }
+    .top-menu-btn.active-accounts .dropdown-arrow {
+      color: #ffffff !important;
+    }
+
+    /* 4. Report Active: Royal Purple */
+    .top-menu-btn.active-reports {
+      background-color: #7c3aed !important;
+      color: #ffffff !important;
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(124, 58, 237, 0.25);
+    }
+    .top-menu-btn.active-reports:hover {
+      background-color: #6d28d9 !important;
+    }
+    .top-menu-btn.active-reports .dropdown-arrow {
+      color: #ffffff !important;
+    }
+
+    /* 5. Settings Active: Deep Indigo */
+    .top-menu-btn.active-settings {
+      background-color: #4f46e5 !important;
+      color: #ffffff !important;
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(79, 70, 229, 0.25);
+    }
+    .top-menu-btn.active-settings:hover {
+      background-color: #4338ca !important;
+    }
+    .top-menu-btn.active-settings .dropdown-arrow {
+      color: #ffffff !important;
     }
 
     /* Dropdowns */
@@ -440,49 +418,29 @@ import { IconComponent } from '../shared/index';
     .nav-dropdown.open .dropdown-arrow {
       transform: rotate(180deg);
     }
-    .dropdown-flyout {
-      position: absolute;
-      top: calc(100% + 6px);
-      left: 0;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-      min-width: 210px;
-      padding: 0.4rem 0;
-      z-index: 200;
-    }
-    .flyout-header {
-      font-size: 0.65rem;
-      font-weight: 700;
-      color: #94a3b8;
-      letter-spacing: 0.08em;
-      padding: 0.4rem 0.9rem 0.2rem;
-    }
-    .flyout-item {
-      display: block;
-      padding: 0.45rem 0.9rem;
-      font-size: 0.8rem;
-      color: #334155;
-      text-decoration: none;
-      transition: background 0.1s ease;
-    }
-    .flyout-item:hover {
-      background-color: #f8fafc;
-      color: #1d4ed8;
-    }
-
-    /* Mega Menu Dropdown matching reference image */
-    .mega-nav-dropdown {
-      position: relative;
-    }
-
-    .mega-menu-panel {
+    /* Dropdown Panels (Accounts & Reports) matching clean modern theme */
+    .accounts-dropdown-panel,
+    .reports-dropdown-panel {
       position: absolute;
       top: calc(100% + 8px);
-      left: -240px;
-      width: 960px;
-      max-width: 92vw;
+      left: 0;
+      width: 320px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.15), 0 4px 12px rgba(0, 0, 0, 0.04);
+      z-index: 300;
+      overflow: hidden;
+      animation: fadeInMega 0.15s ease-out;
+    }
+
+    /* Settings Mega Dropdown Panel matching reference image */
+    .settings-dropdown-panel {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: -220px;
+      width: 700px;
+      max-width: 90vw;
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 16px;
@@ -490,6 +448,48 @@ import { IconComponent } from '../shared/index';
       z-index: 300;
       overflow: hidden;
       animation: fadeInMega 0.15s ease-out;
+    }
+
+    .settings-menu-header {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 1.1rem 1.6rem;
+      border-bottom: 1px solid #f1f5f9;
+      background: #ffffff;
+    }
+
+    .settings-header-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);
+    }
+
+    .settings-header-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+
+    .settings-menu-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.35rem;
+      padding: 1.35rem 1.6rem 1.6rem;
+      background: #ffffff;
+    }
+
+    .mega-column {
+      display: flex;
+      flex-direction: column;
     }
 
     @keyframes fadeInMega {
@@ -503,19 +503,32 @@ import { IconComponent } from '../shared/index';
       }
     }
 
-    .mega-menu-header {
+    .accounts-menu-header,
+    .reports-menu-header {
       display: flex;
       align-items: center;
-      gap: 0.85rem;
-      padding: 1.1rem 1.6rem;
+      gap: 0.75rem;
+      padding: 0.95rem 1.25rem;
       border-bottom: 1px solid #f1f5f9;
       background: #ffffff;
     }
 
-    .header-icon-box {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
+    .accounts-header-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #059669, #10b981);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
+    }
+
+    .reports-header-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
       color: #ffffff;
       display: flex;
@@ -524,25 +537,19 @@ import { IconComponent } from '../shared/index';
       box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);
     }
 
-    .header-title {
-      font-size: 1.05rem;
+    .accounts-header-title,
+    .reports-header-title {
+      font-size: 0.95rem;
       font-weight: 700;
       color: #0f172a;
       margin: 0;
       letter-spacing: -0.01em;
     }
 
-    .mega-menu-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1.5rem;
-      padding: 1.4rem 1.6rem 1.6rem;
+    .accounts-menu-body,
+    .reports-menu-body {
+      padding: 1.1rem 1.25rem 1.25rem;
       background: #ffffff;
-    }
-
-    .mega-column {
-      display: flex;
-      flex-direction: column;
     }
 
     .category-capsule {
@@ -554,7 +561,7 @@ import { IconComponent } from '../shared/index';
       text-transform: uppercase;
       padding: 0.3rem 0.75rem;
       border-radius: 9999px;
-      margin-bottom: 1.1rem;
+      margin-bottom: 0.9rem;
     }
 
     .capsule-blue { background-color: #eff6ff; color: #2563eb; }
@@ -572,7 +579,7 @@ import { IconComponent } from '../shared/index';
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      padding: 0.45rem 0.55rem;
+      padding: 0.55rem 0.65rem;
       border-radius: 8px;
       text-decoration: none;
       transition: all 0.15s ease;
@@ -604,55 +611,6 @@ import { IconComponent } from '../shared/index';
     .mega-item:hover .item-label {
       color: #0f172a;
       font-weight: 600;
-    }
-
-    /* Accounts Dropdown Panel matching theme */
-    .accounts-dropdown-panel {
-      position: absolute;
-      top: calc(100% + 8px);
-      left: 0;
-      width: 320px;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
-      box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.15), 0 4px 12px rgba(0, 0, 0, 0.04);
-      z-index: 300;
-      overflow: hidden;
-      animation: fadeInMega 0.15s ease-out;
-    }
-
-    .accounts-menu-header {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.95rem 1.25rem;
-      border-bottom: 1px solid #f1f5f9;
-      background: #ffffff;
-    }
-
-    .accounts-header-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #059669, #10b981);
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
-    }
-
-    .accounts-header-title {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: #0f172a;
-      margin: 0;
-      letter-spacing: -0.01em;
-    }
-
-    .accounts-menu-body {
-      padding: 1.1rem 1.25rem 1.25rem;
-      background: #ffffff;
     }
 
     /* Vibrant Colored Item Hover States */
@@ -787,6 +745,35 @@ import { IconComponent } from '../shared/index';
 })
 export class LayoutComponent {
   activeDropdown: string | null = null;
+
+  constructor(public router: Router) {}
+
+  isCreateNewActive(): boolean {
+    return this.router.url.startsWith('/students/create');
+  }
+
+  isStudentListActive(): boolean {
+    return this.router.url.startsWith('/students/list') ||
+           this.router.url.startsWith('/students/detail') ||
+           this.router.url.startsWith('/students/follow-up');
+  }
+
+  isAccountsActive(): boolean {
+    return this.router.url.startsWith('/accounts') ||
+           this.router.url.startsWith('/receipts');
+  }
+
+  isReportsActive(): boolean {
+    return this.router.url.startsWith('/reports');
+  }
+
+  isSettingsActive(): boolean {
+    return this.router.url.startsWith('/setup') ||
+           this.router.url.startsWith('/settings') ||
+           this.router.url.startsWith('/departments') ||
+           this.router.url.startsWith('/branches') ||
+           this.router.url.startsWith('/company-info');
+  }
 
   toggleDropdown(menu: string, event: MouseEvent) {
     event.stopPropagation();

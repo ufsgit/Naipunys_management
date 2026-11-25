@@ -1,130 +1,369 @@
-import { IconComponent, ModalComponent, ConfirmDialogComponent, PageHeaderComponent, } from '../../shared/index';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MockDataService, SettingItem } from '../../core/mock-data.service';
+import { IconComponent } from '../../shared/components/icon.component';
+
+export interface StatusItem {
+  slNo: number;
+  name: string;
+}
 
 @Component({
   selector: 'app-status-settings',
   standalone: true,
-  imports: [
-    PageHeaderComponent,
-    CommonModule,
-    FormsModule,
-    ModalComponent,
-    ConfirmDialogComponent,
-    IconComponent
-  ],
+  imports: [CommonModule, FormsModule, IconComponent],
   template: `
-    <app-page-header
-      title="System Status Configurations"
-      icon="settings"
-      [breadcrumbs]="[{ label: 'Settings' }, { label: 'Status' }]"
-    >
-      <button type="button" class="btn btn-primary" (click)="openAddModal()">
-        <app-icon name="plus" [size]="16"></app-icon>
-        <span>Add Status Option</span>
-      </button>
-    </app-page-header>
+    <div class="settings-page-container">
+      <!-- Title -->
+      <h1 class="page-title">Status</h1>
 
-    <div class="card">
-      <div class="table-responsive">
+      <!-- Inline Create / Edit Card matching Image 3 exactly -->
+      <div class="create-card">
+        <div class="form-row">
+          <div class="field-group">
+            <label class="field-label">Status</label>
+            <input
+              type="text"
+              class="form-input name-input"
+              [(ngModel)]="formName"
+              placeholder="Enter status name"
+              (keyup.enter)="saveItem()"
+            />
+          </div>
+
+          <div class="btn-group">
+            <button type="button" class="btn-save" (click)="saveItem()">SAVE</button>
+            <button type="button" class="btn-cancel" (click)="cancelForm()">CANCEL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table Card matching Image 3 exactly -->
+      <div class="table-card">
         <table class="data-table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Code</th>
-              <th>Status Title</th>
-              <th>Description</th>
-              <th>State</th>
-              <th style="text-align: right;">Actions</th>
+              <th style="width: 70px;">Sl No</th>
+              <th>Status</th>
+              <th style="width: 80px; text-align: center;">Edit</th>
+              <th style="width: 80px; text-align: center;">Delete</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let item of items; let i = index">
-              <td>{{ i + 1 }}</td>
-              <td><strong>{{ item.code }}</strong></td>
-              <td><strong>{{ item.name }}</strong></td>
-              <td>{{ item.description || '-' }}</td>
-              <td><span class="badge badge-success">{{ item.status }}</span></td>
-              <td style="text-align: right;">
-                <div class="table-actions" style="justify-content: flex-end;">
-                  <button type="button" class="btn btn-sm btn-danger" (click)="openDeleteConfirm(item)" title="Delete">
-                    <app-icon name="trash-2" [size]="14"></app-icon>
-                  </button>
-                </div>
+              <td class="text-secondary">{{ item.slNo }}</td>
+              <td class="font-bold text-dark">{{ item.name }}</td>
+              <td style="text-align: center;">
+                <button
+                  type="button"
+                  class="btn-action-edit"
+                  [ngClass]="getEditClass(i)"
+                  (click)="openEdit(item, i)"
+                  title="Edit Status"
+                >
+                  <app-icon name="edit" [size]="14"></app-icon>
+                </button>
               </td>
+              <td style="text-align: center;">
+                <button
+                  type="button"
+                  class="btn-action-delete"
+                  [ngClass]="getDeleteClass(i)"
+                  (click)="deleteItem(item)"
+                  title="Delete Status"
+                >
+                  <app-icon name="trash-2" [size]="14"></app-icon>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="items.length === 0">
+              <td colspan="4" class="empty-state">No status configurations found.</td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
+  `,
+  styles: [`
+    .settings-page-container {
+      padding: 1.75rem 2.25rem;
+      background-color: #f8fafc;
+      min-height: calc(100vh - 56px);
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
 
-    <!-- Modal -->
-    <app-modal
-      [isOpen]="isModalOpen"
-      title="Add Status Configuration"
-      (closeEvent)="isModalOpen = false"
-      (confirmEvent)="saveItem()"
-    >
-      <div modal-body>
-        <div class="form-grid-2">
-          <div class="form-group full-width">
-            <label class="form-label required">Status Name</label>
-            <input type="text" class="form-control" [(ngModel)]="currentForm.name" placeholder="e.g. On Hold" />
-          </div>
-          <div class="form-group full-width">
-            <label class="form-label">Description</label>
-            <input type="text" class="form-control" [(ngModel)]="currentForm.description" placeholder="Short description" />
-          </div>
-        </div>
-      </div>
-    </app-modal>
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 1.25rem 0;
+      letter-spacing: -0.02em;
+    }
 
-    <!-- Delete Confirmation -->
-    <app-confirm-dialog
-      [isOpen]="isDeleteModalOpen"
-      title="Delete Status"
-      [message]="'Are you sure you want to delete status ' + itemToDelete?.name + '?'"
-      (confirmEvent)="confirmDelete()"
-      (cancelEvent)="isDeleteModalOpen = false"
-    ></app-confirm-dialog>
-  `
+    /* Create Card */
+    .create-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 0.95rem 1.4rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    .form-row {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .field-group {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .field-label {
+      font-size: 0.825rem;
+      font-weight: 500;
+      color: #475569;
+      white-space: nowrap;
+    }
+
+    .form-input {
+      height: 36px;
+      padding: 0 0.85rem;
+      font-size: 0.825rem;
+      color: #1e293b;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    .name-input {
+      width: 230px;
+    }
+
+    .form-input:focus {
+      border-color: #3b82f6;
+    }
+
+    .btn-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn-save {
+      background-color: #16a34a;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      letter-spacing: 0.05em;
+      padding: 0.55rem 1.5rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      transition: background-color 0.15s ease;
+    }
+
+    .btn-save:hover {
+      background-color: #15803d;
+    }
+
+    .btn-cancel {
+      background-color: #ffffff;
+      color: #334155;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      letter-spacing: 0.05em;
+      padding: 0.55rem 1.5rem;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-cancel:hover {
+      background-color: #f8fafc;
+      border-color: #94a3b8;
+    }
+
+    /* Table Card */
+    .table-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      overflow-x: auto;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .data-table thead tr {
+      background-color: #ffffff;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .data-table th {
+      padding: 0.95rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .data-table tbody tr {
+      border-bottom: 1px solid #f1f5f9;
+      transition: background-color 0.15s ease;
+    }
+
+    .data-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .data-table tbody tr:hover {
+      background-color: #fafbfc;
+    }
+
+    .data-table td {
+      padding: 1.1rem 1.25rem;
+      font-size: 0.85rem;
+      color: #334155;
+    }
+
+    .font-bold {
+      font-weight: 600;
+    }
+
+    .text-dark {
+      color: #1e293b;
+    }
+
+    .text-secondary {
+      color: #64748b;
+    }
+
+    /* Action Buttons (Square with rounded corners matching Accounts/Receipts reference) */
+    .btn-action-edit,
+    .btn-action-delete {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-purple {
+      background-color: #7c3aed;
+      border: none;
+      color: #ffffff;
+    }
+    .btn-purple:hover {
+      background-color: #6d28d9;
+    }
+
+    .btn-blue {
+      background-color: #2563eb;
+      border: none;
+      color: #ffffff;
+    }
+    .btn-blue:hover {
+      background-color: #1d4ed8;
+    }
+
+    .btn-del-white {
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #64748b;
+    }
+    .btn-del-white:hover {
+      border-color: #ef4444;
+      color: #ef4444;
+      background-color: #fef2f2;
+    }
+
+    .btn-del-brown {
+      background-color: #c2410c;
+      border: none;
+      color: #ffffff;
+    }
+    .btn-del-brown:hover {
+      background-color: #9a3412;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem;
+      color: #94a3b8;
+    }
+  `]
 })
 export class StatusSettingsComponent implements OnInit {
-  items: SettingItem[] = [];
-  isModalOpen = false;
-  isDeleteModalOpen = false;
-  itemToDelete: SettingItem | null = null;
+  items: StatusItem[] = [
+    { slNo: 1, name: 'Interested' },
+    { slNo: 2, name: 'Not Interested' },
+    { slNo: 3, name: 'Payment Pending' },
+    { slNo: 4, name: 'Payment Received' },
+    { slNo: 5, name: 'Unknown' }
+  ];
 
-  currentForm = { name: '', description: '', status: 'Active' as const };
+  formName = '';
+  isEditMode = false;
+  editingItem: StatusItem | null = null;
 
-  constructor(private mockDataService: MockDataService) {}
+  ngOnInit() {}
 
-  ngOnInit() {
-    this.mockDataService.getStatusItems().subscribe(i => this.items = i);
+  getEditClass(index: number): string {
+    return index % 2 === 1 ? 'btn-blue' : 'btn-purple';
   }
 
-  openAddModal() {
-    this.currentForm = { name: '', description: '', status: 'Active' };
-    this.isModalOpen = true;
+  getDeleteClass(index: number): string {
+    return index % 2 === 1 ? 'btn-del-brown' : 'btn-del-white';
+  }
+
+  openEdit(item: StatusItem, index: number) {
+    this.isEditMode = true;
+    this.editingItem = item;
+    this.formName = item.name;
   }
 
   saveItem() {
-    this.mockDataService.addSetting('status', this.currentForm);
-    this.isModalOpen = false;
+    if (!this.formName.trim()) return;
+
+    if (this.isEditMode && this.editingItem) {
+      this.editingItem.name = this.formName.trim();
+    } else {
+      this.items.push({
+        slNo: this.items.length + 1,
+        name: this.formName.trim()
+      });
+    }
+
+    this.cancelForm();
   }
 
-  openDeleteConfirm(item: SettingItem) {
-    this.itemToDelete = item;
-    this.isDeleteModalOpen = true;
+  cancelForm() {
+    this.formName = '';
+    this.isEditMode = false;
+    this.editingItem = null;
   }
 
-  confirmDelete() {
-    if (this.itemToDelete) {
-      this.mockDataService.deleteSetting('status', this.itemToDelete.id);
-      this.isDeleteModalOpen = false;
-      this.itemToDelete = null;
+  deleteItem(item: StatusItem) {
+    if (confirm(`Are you sure you want to delete ${item.name}?`)) {
+      this.items = this.items.filter(i => i !== item);
+      this.items.forEach((it, idx) => it.slNo = idx + 1);
     }
   }
 }

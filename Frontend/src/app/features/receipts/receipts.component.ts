@@ -1,374 +1,781 @@
-import { IconComponent, ModalComponent, ConfirmDialogComponent, PageHeaderComponent, PaginationComponent, FilterBarComponent } from '../../shared/index';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
-import { MockDataService, Receipt, Student, Branch, CompanyInfo } from '../../core/mock-data.service';
+import { IconComponent } from '../../shared/components/icon.component';
+import { MockDataService, Receipt, Account, Branch } from '../../core/mock-data.service';
 
 @Component({
   selector: 'app-receipts',
   standalone: true,
-  imports: [
-    PageHeaderComponent,
-    FilterBarComponent,
-    PaginationComponent,
-    CommonModule,
-    FormsModule,
-    RouterModule,
-    ModalComponent,
-    ConfirmDialogComponent,
-    IconComponent
-  ],
+  imports: [CommonModule, FormsModule, IconComponent],
   template: `
-    <app-page-header
-      title="Receipt Management"
-      icon="receipt"
-      [breadcrumbs]="[{ label: 'Accounts' }, { label: 'Receipt Management' }]"
-    >
-      <button type="button" class="btn btn-primary" (click)="openCollectModal()">
-        <app-icon name="plus" [size]="16"></app-icon>
-        <span>Collect New Receipt</span>
-      </button>
-    </app-page-header>
+    <div class="receipt-page-container">
+      <!-- Title -->
+      <h1 class="page-title">Receipt</h1>
 
-    <!-- Filters -->
-    <app-filter-bar
-      placeholder="Search receipts by receipt no, student name or reference..."
-      (search)="onSearch($event)"
-      (export)="exportData()"
-    >
-      <div filters class="filter-group">
-        <select class="form-select" [(ngModel)]="selectedMode" (ngModelChange)="applyFilters()">
-          <option value="">All Payment Modes</option>
-          <option value="Cash">Cash</option>
-          <option value="Bank Transfer">Bank Transfer</option>
-          <option value="UPI">UPI</option>
-          <option value="Cheque">Cheque</option>
-        </select>
+      <!-- Filter Bar Card matching Image 1 exactly -->
+      <div class="filter-card">
+        <div class="filter-row">
+          <!-- From Date -->
+          <div class="filter-field">
+            <label class="filter-label">From</label>
+            <div class="date-input-wrap">
+              <input type="text" class="filter-input date-input" [(ngModel)]="fromDate" />
+              <app-icon name="calendar" [size]="14" customClass="cal-icon"></app-icon>
+            </div>
+          </div>
 
-        <select class="form-select" [(ngModel)]="selectedBranch" (ngModelChange)="applyFilters()">
-          <option value="">All Branches</option>
-          <option *ngFor="let b of branches" [value]="b.name">{{ b.name }}</option>
-        </select>
+          <!-- To Date -->
+          <div class="filter-field">
+            <label class="filter-label">To</label>
+            <div class="date-input-wrap">
+              <input type="text" class="filter-input date-input" [(ngModel)]="toDate" />
+              <app-icon name="calendar" [size]="14" customClass="cal-icon"></app-icon>
+            </div>
+          </div>
+
+          <!-- Branch -->
+          <div class="filter-field">
+            <label class="filter-label">Branch</label>
+            <select class="filter-select" [(ngModel)]="selectedBranch">
+              <option value="All">All</option>
+              <option *ngFor="let b of branches" [value]="b.name">{{ b.name }}</option>
+            </select>
+          </div>
+
+          <!-- Action Buttons -->
+          <button type="button" class="btn-search" (click)="onSearch()">SEARCH</button>
+          <button type="button" class="btn-new" (click)="openCreateModal()">NEW</button>
+        </div>
       </div>
-    </app-filter-bar>
 
-    <!-- Receipts Table -->
-    <div class="card">
-      <div class="table-responsive">
-        <table class="data-table">
+      <!-- Table Card matching Image 1 exactly -->
+      <div class="table-card">
+        <table class="receipt-table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Receipt No</th>
-              <th>Date</th>
-              <th>Student Name</th>
-              <th>Course</th>
-              <th>Branch</th>
-              <th>Mode</th>
-              <th>Reference No</th>
-              <th style="text-align: right;">Amount (₹)</th>
-              <th style="text-align: right;">Actions</th>
+              <th style="width: 70px;">Sl No</th>
+              <th style="width: 140px;">Date</th>
+              <th style="width: 260px;">From</th>
+              <th style="width: 100px; text-align: right;">Amount</th>
+              <th style="width: 130px; text-align: center;">Voucher No</th>
+              <th>Details</th>
+              <th style="width: 70px; text-align: center;">Edit</th>
+              <th style="width: 70px; text-align: center;">Delete</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let r of pagedReceipts; let i = index">
-              <td>{{ (currentPage - 1) * pageSize + i + 1 }}</td>
-              <td><strong>{{ r.receiptNo }}</strong></td>
-              <td>{{ r.date }}</td>
-              <td>
-                <div style="font-weight: 600;">{{ r.studentName }}</div>
-                <small style="color: var(--text-muted);">{{ r.studentId }}</small>
+            <tr *ngFor="let r of receipts; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td class="text-secondary">{{ r.date }}</td>
+              <td class="font-bold text-dark">{{ r.from || r.studentName }}</td>
+              <td class="font-bold text-dark" style="text-align: right;">{{ r.amount }}</td>
+              <td class="text-center">{{ r.voucherNo || (i + 1) }}</td>
+              <td class="text-secondary">{{ r.details || r.remark }}</td>
+              <td style="text-align: center;">
+                <button
+                  type="button"
+                  class="btn-action-edit"
+                  [ngClass]="getEditClass(i)"
+                  (click)="openEditModal(r)"
+                  title="Edit Receipt"
+                >
+                  <app-icon name="edit" [size]="14"></app-icon>
+                </button>
               </td>
-              <td>{{ r.course }}</td>
-              <td>{{ r.branch.split(' - ')[0] }}</td>
-              <td><span class="badge badge-primary">{{ r.paymentMode }}</span></td>
-              <td>{{ r.referenceNo || '-' }}</td>
-              <td style="text-align: right; font-weight: 700; color: var(--color-primary);">
-                ₹{{ r.amount | number }}
-              </td>
-              <td style="text-align: right;">
-                <div class="table-actions" style="justify-content: flex-end;">
-                  <button type="button" class="btn btn-sm btn-secondary" (click)="openPrintModal(r)" title="View Receipt">
-                    <app-icon name="printer" [size]="14"></app-icon>
-                  </button>
-                  <button type="button" class="btn btn-sm btn-danger" (click)="openDeleteConfirm(r)" title="Delete">
-                    <app-icon name="trash-2" [size]="14"></app-icon>
-                  </button>
-                </div>
+              <td style="text-align: center;">
+                <button
+                  type="button"
+                  class="btn-action-delete"
+                  (click)="deleteReceipt(r)"
+                  title="Delete Receipt"
+                >
+                  <app-icon name="trash-2" [size]="14"></app-icon>
+                </button>
               </td>
             </tr>
-            <tr *ngIf="filteredReceipts.length === 0">
-              <td colspan="10" style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                No receipts found.
-              </td>
+            <tr *ngIf="receipts.length === 0">
+              <td colspan="8" class="empty-state">No receipts found for the selected period.</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <app-pagination
-        [totalItems]="filteredReceipts.length"
-        [pageSize]="pageSize"
-        [currentPage]="currentPage"
-        (pageChange)="currentPage = $event"
-      ></app-pagination>
+      <!-- Total Entries & Amount Summary -->
+      <div class="total-summary-text">
+        Total {{ receipts.length }} Entries , Amount {{ totalAmount }}
+      </div>
+
+      <!-- Receipt Create / Edit Modal (Matching Image 3 Exactly) -->
+      <div class="modal-backdrop" *ngIf="isModalOpen" (click)="closeModal()">
+        <div class="modal-dialog" (click)="$event.stopPropagation()">
+          <!-- Modal Blue Header -->
+          <div class="modal-header">
+            <h3 class="modal-title">Receipt</h3>
+            <button type="button" class="modal-close-btn" (click)="closeModal()">✕</button>
+          </div>
+
+          <!-- Modal Body Form -->
+          <div class="modal-body">
+            <div class="form-row">
+              <label class="form-label">From</label>
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="receiptForm.from"
+                placeholder="Enter payer name"
+              />
+            </div>
+
+            <div class="form-row">
+              <label class="form-label">Date</label>
+              <div class="date-input-wrap modal-date-wrap">
+                <input
+                  type="text"
+                  class="form-input"
+                  [(ngModel)]="receiptForm.date"
+                />
+                <app-icon name="calendar" [size]="14" customClass="cal-icon"></app-icon>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label class="form-label">Amount</label>
+              <input
+                type="number"
+                class="form-input"
+                [(ngModel)]="receiptForm.amount"
+              />
+            </div>
+
+            <div class="form-row">
+              <label class="form-label">Voucher No</label>
+              <div class="voucher-display">{{ receiptForm.voucherNo }}</div>
+            </div>
+
+            <div class="form-row">
+              <label class="form-label">To Account</label>
+              <select class="form-select" [(ngModel)]="receiptForm.toAccount">
+                <option value="">Select</option>
+                <option *ngFor="let acc of accounts" [value]="acc.name">{{ acc.name }}</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label class="form-label">Details</label>
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="receiptForm.details"
+                placeholder="Enter transaction details"
+              />
+            </div>
+          </div>
+
+          <!-- Modal Footer Actions (SAVE, CANCEL, CLOSE) -->
+          <div class="modal-footer">
+            <button type="button" class="btn-modal-save" (click)="saveReceipt()">SAVE</button>
+            <button type="button" class="btn-modal-cancel" (click)="closeModal()">CANCEL</button>
+            <button type="button" class="btn-modal-close" (click)="closeModal()">CLOSE</button>
+          </div>
+        </div>
+      </div>
     </div>
+  `,
+  styles: [`
+    .receipt-page-container {
+      padding: 1.75rem 2.25rem;
+      background-color: #f8fafc;
+      min-height: calc(100vh - 56px);
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
 
-    <!-- Collect Receipt Modal -->
-    <app-modal
-      [isOpen]="isCollectModalOpen"
-      title="Collect Fee & Generate Receipt"
-      size="lg"
-      (closeEvent)="isCollectModalOpen = false"
-      (confirmEvent)="saveCollectReceipt()"
-      confirmText="Collect & Print"
-    >
-      <div modal-body>
-        <div class="form-grid-3">
-          <div class="form-group full-width">
-            <label class="form-label required">Select Enrolled Student</label>
-            <select
-              class="form-select"
-              [(ngModel)]="collectForm.selectedStudentName"
-              (ngModelChange)="onStudentSelect($event)"
-            >
-              <option value="" disabled>-- Select Student --</option>
-              <option *ngFor="let s of students" [value]="s.name">
-                {{ s.name }} ({{ s.code }}) - {{ s.course }} [Bal: ₹{{ (s.feesTotal - s.feesPaid) | number }}]
-              </option>
-            </select>
-          </div>
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 1.25rem 0;
+      letter-spacing: -0.02em;
+    }
 
-          <div class="form-group">
-            <label class="form-label required">Receipt Date</label>
-            <input type="date" class="form-control" [(ngModel)]="collectForm.date" />
-          </div>
+    /* Filter Card */
+    .filter-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 0.85rem 1.4rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
 
-          <div class="form-group">
-            <label class="form-label required">Payment Mode</label>
-            <select class="form-select" [(ngModel)]="collectForm.paymentMode">
-              <option value="Cash">Cash</option>
-              <option value="Bank Transfer">Bank Transfer</option>
-              <option value="UPI">UPI</option>
-              <option value="Cheque">Cheque</option>
-            </select>
-          </div>
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
 
-          <div class="form-group">
-            <label class="form-label required">Amount (₹)</label>
-            <input type="number" class="form-control" [(ngModel)]="collectForm.amount" />
-          </div>
+    .filter-field {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
 
-          <div class="form-group">
-            <label class="form-label">Reference / Txn ID</label>
-            <input type="text" class="form-control" [(ngModel)]="collectForm.referenceNo" placeholder="Txn ref" />
-          </div>
+    .filter-label {
+      font-size: 0.825rem;
+      font-weight: 500;
+      color: #475569;
+    }
 
-          <div class="form-group" style="grid-column: span 2;">
-            <label class="form-label">Remarks</label>
-            <input type="text" class="form-control" [(ngModel)]="collectForm.remark" placeholder="e.g. Installment payment" />
-          </div>
-        </div>
-      </div>
-    </app-modal>
+    .date-input-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
 
-    <!-- Printable Receipt Modal -->
-    <app-modal
-      [isOpen]="isPrintModalOpen"
-      title="Fee Receipt Preview"
-      size="lg"
-      (closeEvent)="isPrintModalOpen = false"
-      (confirmEvent)="printReceipt()"
-      confirmText="Print"
-      cancelText="Close"
-    >
-      <div modal-body *ngIf="previewReceipt" class="receipt-paper">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--color-primary); padding-bottom: 0.75rem; margin-bottom: 1rem;">
-          <div>
-            <h2 style="font-size: 1.15rem; color: var(--color-primary); font-weight: 700;">{{ companyInfo?.name }}</h2>
-            <p style="font-size: 0.75rem; color: var(--text-secondary);">{{ companyInfo?.address }}, {{ companyInfo?.city }}</p>
-          </div>
-          <span class="badge badge-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">RECEIPT: {{ previewReceipt.receiptNo }}</span>
-        </div>
+    .filter-input {
+      height: 36px;
+      padding: 0 2rem 0 0.75rem;
+      font-size: 0.825rem;
+      color: #1e293b;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      outline: none;
+      box-sizing: border-box;
+    }
 
-        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; font-size: 0.85rem;">
-          <div>
-            <strong>Student:</strong> {{ previewReceipt.studentName }} ({{ previewReceipt.studentId }})<br />
-            <strong>Course:</strong> {{ previewReceipt.course }}
-          </div>
-          <div style="text-align: right;">
-            <strong>Date:</strong> {{ previewReceipt.date }}<br />
-            <strong>Mode:</strong> {{ previewReceipt.paymentMode }}
-          </div>
-        </div>
+    .date-input {
+      width: 135px;
+    }
 
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.85rem;">
-          <thead>
-            <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
-              <th style="padding: 0.6rem; text-align: left;">Particulars</th>
-              <th style="padding: 0.6rem; text-align: right;">Amount (INR)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="border-bottom: 1px solid #f1f5f9;">
-              <td style="padding: 0.6rem;">Tuition & Training Fees ({{ previewReceipt.remark || 'Term Fee' }})</td>
-              <td style="padding: 0.6rem; text-align: right; font-weight: 700;">₹{{ previewReceipt.amount | number }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </app-modal>
+    .cal-icon {
+      position: absolute;
+      right: 0.6rem;
+      color: #64748b;
+      pointer-events: none;
+    }
 
-    <!-- Delete Confirmation Dialog -->
-    <app-confirm-dialog
-      [isOpen]="isDeleteModalOpen"
-      title="Delete Receipt"
-      [message]="'Are you sure you want to delete receipt ' + receiptToDelete?.receiptNo + '?'"
-      (confirmEvent)="confirmDelete()"
-      (cancelEvent)="isDeleteModalOpen = false"
-    ></app-confirm-dialog>
-  `
+    .filter-select {
+      height: 36px;
+      min-width: 140px;
+      padding: 0 1.75rem 0 0.75rem;
+      font-size: 0.825rem;
+      color: #1e293b;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .filter-input:focus,
+    .filter-select:focus {
+      border-color: #3b82f6;
+    }
+
+    .btn-search {
+      background-color: #2563eb;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      letter-spacing: 0.05em;
+      padding: 0.55rem 1.4rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      transition: background-color 0.15s ease;
+    }
+
+    .btn-search:hover {
+      background-color: #1d4ed8;
+    }
+
+    .btn-new {
+      background-color: #16a34a;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      letter-spacing: 0.05em;
+      padding: 0.55rem 1.4rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      transition: background-color 0.15s ease;
+    }
+
+    .btn-new:hover {
+      background-color: #15803d;
+    }
+
+    /* Table Card */
+    .table-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    .receipt-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .receipt-table thead tr {
+      background-color: #ffffff;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .receipt-table th {
+      padding: 0.95rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .receipt-table tbody tr {
+      border-bottom: 1px solid #f1f5f9;
+      transition: background-color 0.15s ease;
+    }
+
+    .receipt-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .receipt-table tbody tr:hover {
+      background-color: #fafbfc;
+    }
+
+    .receipt-table td {
+      padding: 1.1rem 1.25rem;
+      font-size: 0.85rem;
+      color: #334155;
+    }
+
+    .font-bold {
+      font-weight: 600;
+    }
+
+    .text-dark {
+      color: #1e293b;
+    }
+
+    .text-secondary {
+      color: #64748b;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem;
+      color: #94a3b8;
+    }
+
+    /* Action Buttons (Square with rounded corners matching screenshot) */
+    .btn-action-edit,
+    .btn-action-delete {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-purple {
+      background-color: #7c3aed;
+      color: #ffffff;
+    }
+    .btn-purple:hover {
+      background-color: #6d28d9;
+    }
+
+    .btn-brown {
+      background-color: #c2410c;
+      color: #ffffff;
+    }
+    .btn-brown:hover {
+      background-color: #9a3412;
+    }
+
+    .btn-action-delete {
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #64748b;
+    }
+
+    .btn-action-delete:hover {
+      border-color: #ef4444;
+      color: #ef4444;
+      background-color: #fef2f2;
+    }
+
+    /* Total Summary Text */
+    .total-summary-text {
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+    }
+
+    /* Modal Backdrop & Dialog */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1.5rem;
+      animation: fadeIn 0.15s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-dialog {
+      background: #ffffff;
+      width: 520px;
+      max-width: 95vw;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+      animation: zoomIn 0.15s ease-out;
+    }
+
+    @keyframes zoomIn {
+      from { opacity: 0; transform: scale(0.97); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-header {
+      background-color: #2563eb;
+      color: #ffffff;
+      padding: 0.9rem 1.35rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin: 0;
+      color: #ffffff;
+    }
+
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 1.15rem;
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 1;
+      opacity: 0.85;
+      padding: 0.2rem;
+    }
+
+    .modal-close-btn:hover {
+      opacity: 1;
+    }
+
+    .modal-body {
+      padding: 1.6rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.15rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .form-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .form-input {
+      width: 100%;
+      height: 38px;
+      padding: 0 0.85rem;
+      font-size: 0.85rem;
+      color: #1e293b;
+      background-color: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .form-input:focus {
+      border-color: #3b82f6;
+    }
+
+    .form-input::placeholder {
+      color: #94a3b8;
+    }
+
+    .modal-date-wrap {
+      width: 100%;
+    }
+
+    .modal-date-wrap .form-input {
+      width: 180px;
+    }
+
+    .voucher-display {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .form-select {
+      width: 100%;
+      height: 38px;
+      padding: 0 0.85rem;
+      font-size: 0.85rem;
+      color: #1e293b;
+      background-color: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      box-sizing: border-box;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.15s ease;
+    }
+
+    .form-select:focus {
+      border-color: #3b82f6;
+    }
+
+    /* Modal Footer */
+    .modal-footer {
+      padding: 1rem 1.6rem;
+      display: flex;
+      justify-content: center;
+      gap: 0.85rem;
+      border-top: 1px solid #f1f5f9;
+      background-color: #ffffff;
+    }
+
+    .btn-modal-save {
+      background-color: #16a34a;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      letter-spacing: 0.05em;
+      padding: 0.55rem 1.75rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .btn-modal-save:hover {
+      background-color: #15803d;
+    }
+
+    .btn-modal-cancel {
+      background-color: #ffffff;
+      color: #334155;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      letter-spacing: 0.05em;
+      padding: 0.55rem 1.75rem;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-modal-cancel:hover {
+      background-color: #f8fafc;
+      border-color: #94a3b8;
+    }
+
+    .btn-modal-close {
+      background-color: #2563eb;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      letter-spacing: 0.05em;
+      padding: 0.55rem 1.75rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .btn-modal-close:hover {
+      background-color: #1d4ed8;
+    }
+  `]
 })
 export class ReceiptsComponent implements OnInit {
+  receipts: Receipt[] = [];
   allReceipts: Receipt[] = [];
-  filteredReceipts: Receipt[] = [];
   branches: Branch[] = [];
-  students: Student[] = [];
-  companyInfo: CompanyInfo | null = null;
+  accounts: Account[] = [];
 
-  searchTerm = '';
-  selectedMode = '';
-  selectedBranch = '';
+  fromDate: string = '05-Feb-2026';
+  toDate: string = '23-Nov-2026';
+  selectedBranch: string = 'All';
 
-  currentPage = 1;
-  pageSize = 5;
+  isModalOpen: boolean = false;
+  isEditMode: boolean = false;
 
-  isCollectModalOpen = false;
-  isPrintModalOpen = false;
-  isDeleteModalOpen = false;
-  previewReceipt: Receipt | null = null;
-  receiptToDelete: Receipt | null = null;
-
-  collectForm = {
-    selectedStudentName: '',
-    selectedStudent: null as Student | null,
-    date: new Date().toISOString().slice(0, 10),
-    paymentMode: 'Cash' as const,
-    amount: 10000,
-    referenceNo: '',
-    remark: 'Course Fee Payment'
+  receiptForm: {
+    id: string;
+    from: string;
+    date: string;
+    amount: number;
+    voucherNo: string | number;
+    toAccount: string;
+    details: string;
+  } = {
+    id: '',
+    from: '',
+    date: '24-Nov-2026',
+    amount: 0,
+    voucherNo: 3,
+    toAccount: '',
+    details: ''
   };
 
   constructor(private mockDataService: MockDataService) {}
 
   ngOnInit() {
-    this.mockDataService.getReceipts().subscribe(r => {
-      this.allReceipts = r;
-      this.applyFilters();
+    this.mockDataService.getReceipts().subscribe(rcp => {
+      this.allReceipts = rcp;
+      this.receipts = [...rcp];
     });
-    this.mockDataService.getBranches().subscribe(b => this.branches = b);
-    this.mockDataService.getStudents().subscribe(s => this.students = s);
-    this.mockDataService.getCompanyInfo().subscribe(c => this.companyInfo = c);
-  }
 
-  onStudentSelect(studentName: string) {
-    const s = this.students.find(st => st.name === studentName);
-    if (s) {
-      this.collectForm.selectedStudent = s;
-      const bal = s.feesTotal - s.feesPaid;
-      this.collectForm.amount = bal > 0 ? bal : 5000;
-    }
-  }
-
-  onSearch(term: string) {
-    this.searchTerm = term.toLowerCase();
-    this.applyFilters();
-  }
-
-  applyFilters() {
-    this.filteredReceipts = this.allReceipts.filter(r => {
-      const matchesSearch =
-        !this.searchTerm ||
-        r.receiptNo.toLowerCase().includes(this.searchTerm) ||
-        r.studentName.toLowerCase().includes(this.searchTerm) ||
-        (r.referenceNo && r.referenceNo.toLowerCase().includes(this.searchTerm));
-
-      const matchesMode = !this.selectedMode || r.paymentMode === this.selectedMode;
-      const matchesBranch = !this.selectedBranch || r.branch === this.selectedBranch;
-
-      return matchesSearch && matchesMode && matchesBranch;
+    this.mockDataService.getBranches().subscribe(b => {
+      this.branches = b;
     });
-    this.currentPage = 1;
+
+    this.mockDataService.getAccounts().subscribe(acc => {
+      this.accounts = acc;
+    });
   }
 
-  get pagedReceipts(): Receipt[] {
-    const start = (this.currentPage - 1) * this.pageSize;
-    return this.filteredReceipts.slice(start, start + this.pageSize);
+  get totalAmount(): number {
+    return this.receipts.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
   }
 
-  openCollectModal() {
-    this.collectForm = {
-      selectedStudentName: '',
-      selectedStudent: null,
-      date: new Date().toISOString().slice(0, 10),
-      paymentMode: 'Cash',
-      amount: 10000,
-      referenceNo: '',
-      remark: 'Course Fee'
+  getEditClass(index: number): string {
+    if (index % 2 === 1) return 'btn-brown';
+    return 'btn-purple';
+  }
+
+  onSearch() {
+    this.receipts = this.allReceipts.filter(r => {
+      if (this.selectedBranch !== 'All' && r.branch && r.branch !== this.selectedBranch) {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  openCreateModal() {
+    this.isEditMode = false;
+    this.receiptForm = {
+      id: '',
+      from: '',
+      date: '24-Nov-2026',
+      amount: 0,
+      voucherNo: this.receipts.length + 1,
+      toAccount: '',
+      details: ''
     };
-    this.isCollectModalOpen = true;
+    this.isModalOpen = true;
   }
 
-  saveCollectReceipt() {
-    if (!this.collectForm.selectedStudent) return;
-    const r = this.mockDataService.addReceipt({
-      date: this.collectForm.date,
-      studentId: this.collectForm.selectedStudent.code,
-      studentName: this.collectForm.selectedStudent.name,
-      course: this.collectForm.selectedStudent.course,
-      branch: this.collectForm.selectedStudent.branch,
-      amount: Number(this.collectForm.amount),
-      paymentMode: this.collectForm.paymentMode,
-      referenceNo: this.collectForm.referenceNo,
-      remark: this.collectForm.remark
-    });
-    this.isCollectModalOpen = false;
-    this.openPrintModal(r);
+  openEditModal(r: Receipt) {
+    this.isEditMode = true;
+    this.receiptForm = {
+      id: r.id,
+      from: r.from || r.studentName || '',
+      date: r.date,
+      amount: r.amount,
+      voucherNo: r.voucherNo || 1,
+      toAccount: r.toAccount || '',
+      details: r.details || r.remark || ''
+    };
+    this.isModalOpen = true;
   }
 
-  openPrintModal(r: Receipt) {
-    this.previewReceipt = r;
-    this.isPrintModalOpen = true;
+  closeModal() {
+    this.isModalOpen = false;
   }
 
-  printReceipt() {
-    window.print();
-  }
+  saveReceipt() {
+    if (!this.receiptForm.from.trim()) return;
 
-  openDeleteConfirm(r: Receipt) {
-    this.receiptToDelete = r;
-    this.isDeleteModalOpen = true;
-  }
-
-  confirmDelete() {
-    if (this.receiptToDelete) {
-      this.mockDataService.deleteReceipt(this.receiptToDelete.id);
-      this.isDeleteModalOpen = false;
-      this.receiptToDelete = null;
+    if (this.isEditMode) {
+      const idx = this.receipts.findIndex(r => r.id === this.receiptForm.id);
+      if (idx !== -1) {
+        this.receipts[idx] = {
+          ...this.receipts[idx],
+          from: this.receiptForm.from,
+          studentName: this.receiptForm.from,
+          date: this.receiptForm.date,
+          amount: Number(this.receiptForm.amount) || 0,
+          voucherNo: this.receiptForm.voucherNo,
+          toAccount: this.receiptForm.toAccount,
+          details: this.receiptForm.details
+        };
+      }
+    } else {
+      const newReceipt: Receipt = {
+        id: (this.receipts.length + 1).toString(),
+        receiptNo: (this.receipts.length + 1).toString(),
+        voucherNo: this.receiptForm.voucherNo,
+        date: this.receiptForm.date,
+        from: this.receiptForm.from,
+        studentId: 'STU-' + (1000 + this.receipts.length + 1),
+        studentName: this.receiptForm.from,
+        course: 'General Course',
+        branch: 'Ernakulam',
+        amount: Number(this.receiptForm.amount) || 0,
+        paymentMode: 'Cash',
+        toAccount: this.receiptForm.toAccount,
+        details: this.receiptForm.details
+      };
+      this.receipts.push(newReceipt);
+      this.allReceipts.push(newReceipt);
     }
+
+    this.closeModal();
   }
 
-  exportData() {
-    const csvContent = 'data:text/csv;charset=utf-8,' +
-      'ReceiptNo,Date,Student,Course,Branch,Mode,Reference,Amount\n' +
-      this.filteredReceipts.map(r => `${r.receiptNo},${r.date},"${r.studentName}","${r.course}","${r.branch}",${r.paymentMode},"${r.referenceNo || ''}",${r.amount}`).join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Receipts_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  deleteReceipt(r: Receipt) {
+    if (confirm(`Are you sure you want to delete receipt #${r.voucherNo || r.receiptNo}?`)) {
+      this.receipts = this.receipts.filter(item => item.id !== r.id);
+      this.allReceipts = this.allReceipts.filter(item => item.id !== r.id);
+    }
   }
 }

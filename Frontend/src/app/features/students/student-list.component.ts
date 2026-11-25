@@ -27,7 +27,7 @@ interface StudentListRow {
 
       <!-- Filter & Search Card -->
       <div class="filter-card">
-        <!-- Row 1: Search Inputs -->
+        <!-- Row 1: Search Inputs + Advanced Search on Right Top -->
         <div class="filter-row-1">
           <div class="search-by-group">
             <span class="filter-label">Search by</span>
@@ -64,18 +64,34 @@ interface StudentListRow {
             </label>
             <div class="date-inputs">
               <span class="date-label">From</span>
-              <input type="date" class="input-text date-box" [(ngModel)]="fromDate" />
+              <div class="date-input-wrap">
+                <input type="text" class="input-text date-box" [(ngModel)]="fromDate" />
+                <svg class="cal-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </div>
               <span class="date-label">To</span>
-              <input type="date" class="input-text date-box" [(ngModel)]="toDate" />
+              <div class="date-input-wrap">
+                <input type="text" class="input-text date-box" [(ngModel)]="toDate" />
+                <svg class="cal-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </div>
             </div>
-          </div>
 
-          <button type="button" class="btn-search-blue" (click)="applyFilters()">SEARCH</button>
+            <button type="button" class="btn-search-blue" (click)="applyFilters()">SEARCH</button>
+          </div>
         </div>
 
-        <!-- Row 2: Advanced Search Button -->
-        <div class="filter-row-2">
-          <button type="button" class="btn-advanced-purple" (click)="toggleAdvanced()">
+        <!-- Row 2: Advanced Search Button matching Image 7 -->
+        <div class="filter-row-adv">
+          <button type="button" class="btn-advanced-blue" (click)="toggleAdvanced()">
             ADVANCED SEARCH
           </button>
         </div>
@@ -143,7 +159,7 @@ interface StudentListRow {
               <tr *ngFor="let s of filteredStudents">
                 <td class="col-sl red-text">{{ s.slNo }}</td>
                 <td class="col-name">
-                  <a [routerLink]="['/students/detail', s.name]" [queryParams]="{ tab: 'course' }" class="blue-text-bold student-name-link">
+                  <a [routerLink]="['/students/detail', s.name]" [queryParams]="{ tab: 'details' }" class="blue-text-bold student-name-link">
                     {{ s.name }}
                   </a>
                 </td>
@@ -180,7 +196,7 @@ interface StudentListRow {
   `,
   styles: [`
     .student-list-page {
-      padding: 1.25rem 2rem 3rem 2rem;
+      padding: 0.85rem 1.25rem 2rem 1.25rem;
       background-color: #f6f8fb;
       min-height: calc(100vh - 60px);
       font-family: inherit;
@@ -208,8 +224,7 @@ interface StudentListRow {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: 1.5rem;
-      margin-bottom: 0.85rem;
+      gap: 1.25rem;
     }
 
     .search-by-group,
@@ -252,7 +267,7 @@ interface StudentListRow {
     .date-range-group {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: 0.75rem;
     }
 
     .date-checkbox-label {
@@ -268,7 +283,7 @@ interface StudentListRow {
     .date-inputs {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.5rem;
     }
 
     .date-label {
@@ -276,18 +291,37 @@ interface StudentListRow {
       color: #475569;
     }
 
+    .date-input-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
     .date-box {
-      width: 135px;
-      text-align: center;
+      width: 125px;
+      padding: 0 1.75rem 0 0.6rem;
+      text-align: left;
       font-size: 0.8rem;
+      height: 34px;
+      color: #1e293b;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+    }
+
+    .cal-icon {
+      position: absolute;
+      right: 0.5rem;
+      color: #64748b;
+      pointer-events: none;
     }
 
     .btn-search-blue {
-      background-color: #1d4ed8;
+      background-color: #0b62b6;
       color: #ffffff;
       border: none;
-      border-radius: 6px;
-      padding: 0.45rem 1.35rem;
+      border-radius: 4px;
+      padding: 0.45rem 1.4rem;
       font-size: 0.82rem;
       font-weight: 700;
       letter-spacing: 0.04em;
@@ -296,28 +330,32 @@ interface StudentListRow {
     }
 
     .btn-search-blue:hover {
-      background-color: #1e40af;
+      background-color: #084d91;
     }
 
-    .filter-row-2 {
-      margin-bottom: 1rem;
+    /* Advanced Search Row matching Image 7 */
+    .filter-row-adv {
+      display: flex;
+      justify-content: center;
+      margin-top: 0.65rem;
     }
 
-    .btn-advanced-purple {
-      background-color: #7c3aed;
+    .btn-advanced-blue {
+      background-color: #0b62b6;
       color: #ffffff;
       border: none;
-      border-radius: 6px;
-      padding: 0.4rem 1.1rem;
-      font-size: 0.75rem;
+      border-radius: 4px;
+      padding: 0.45rem 1.75rem;
+      font-size: 0.8125rem;
       font-weight: 700;
       letter-spacing: 0.04em;
       cursor: pointer;
       transition: background-color 0.15s;
+      white-space: nowrap;
     }
 
-    .btn-advanced-purple:hover {
-      background-color: #6d28d9;
+    .btn-advanced-blue:hover {
+      background-color: #084d91;
     }
 
     .filter-row-3 {
@@ -369,17 +407,17 @@ interface StudentListRow {
       background: #ffffff;
       border: 1px solid #e5e9f2;
       border-radius: 8px;
-      padding: 1.25rem 1.75rem 2rem 1.75rem;
+      padding: 0.85rem 1rem 1.25rem 1rem;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
     }
 
-    /* Vertical & Horizontal Scroll Container */
+    /* Vertical & Horizontal Scroll Container - matching Image 7 */
     .table-scroll-container {
       width: 100%;
-      height: 380px;
-      max-height: 380px;
-      overflow-x: scroll;
-      overflow-y: scroll;
+      min-height: 480px;
+      max-height: 560px;
+      overflow-x: auto;
+      overflow-y: auto;
       border: 1px solid #d1d5db;
       border-radius: 4px;
       position: relative;
@@ -413,11 +451,11 @@ interface StudentListRow {
     }
 
     .naipunya-table {
-      width: max-content;
-      min-width: 2400px;
+      width: 100%;
+      min-width: 1750px;
       border-collapse: separate;
       border-spacing: 0;
-      font-size: 0.84rem;
+      font-size: 0.92rem;
     }
 
     /* Blue Table Header matching screenshot - Sticky on top */
@@ -430,51 +468,53 @@ interface StudentListRow {
 
     .naipunya-table thead th {
       text-align: left;
-      font-weight: 600;
+      font-weight: 700;
       color: #ffffff;
-      padding: 0.85rem 1rem;
-      font-size: 0.82rem;
+      padding: 0.75rem 0.95rem;
+      font-size: 0.95rem;
       white-space: nowrap;
       border-bottom: 1px solid #0b62b6;
       background-color: #0b62b6;
     }
 
     .naipunya-table tbody td {
-      padding: 0.85rem 1rem;
+      padding: 0.65rem 0.95rem;
       border-bottom: 1px solid #e5e7eb;
-      font-size: 0.82rem;
+      font-size: 0.92rem;
       vertical-align: middle;
       white-space: nowrap;
       background-color: #ffffff;
     }
 
     .naipunya-table tbody tr:hover td {
-      background-color: #f9fafb;
+      background-color: #f8fafc;
     }
 
-    /* Generous column widths so on initial load: Sl No, Name, and FollowUp fill the screen, and scrolling right reveals Note, Mobile, Remark, etc. */
-    .col-sl { width: 70px; min-width: 70px; }
-    .col-name { width: 450px; min-width: 450px; }
-    .col-followup { width: 140px; min-width: 140px; }
-    .col-note { width: 280px; min-width: 280px; }
-    .col-mobile { width: 200px; min-width: 200px; }
-    .col-remark { width: 280px; min-width: 280px; }
-    .col-date { width: 200px; min-width: 200px; }
-    .col-dept { width: 200px; min-width: 200px; }
-    .col-status { width: 180px; min-width: 180px; }
-    .col-to { width: 160px; min-width: 160px; }
-    .col-from { width: 160px; min-width: 160px; }
+    /* Spacious neat column widths matching reference */
+    .col-sl { width: 65px; min-width: 65px; text-align: center; }
+    .col-name { width: 250px; min-width: 250px; }
+    .col-followup { width: 110px; min-width: 110px; }
+    .col-note { width: 210px; min-width: 210px; }
+    .col-mobile { width: 150px; min-width: 150px; }
+    .col-remark { width: 210px; min-width: 210px; }
+    .col-date { width: 150px; min-width: 150px; }
+    .col-dept { width: 150px; min-width: 150px; }
+    .col-status { width: 135px; min-width: 135px; }
+    .col-to { width: 125px; min-width: 125px; }
+    .col-from { width: 125px; min-width: 125px; }
 
-    /* Custom Colors matching reference screenshot */
+    /* Custom Colors with increased text size */
     .red-text {
       color: #dc2626;
-      font-weight: 500;
+      font-weight: 600;
+      font-size: 0.92rem;
     }
 
     .blue-text-bold {
-      color: #2563eb;
-      font-weight: 600;
+      color: #0b62b6;
+      font-weight: 700;
       letter-spacing: 0.01em;
+      font-size: 0.92rem;
     }
 
     .student-name-link {
@@ -489,11 +529,13 @@ interface StudentListRow {
     .dark-text {
       color: #1e293b;
       font-weight: 500;
+      font-size: 0.92rem;
     }
 
     .followup-link {
-      color: #2563eb;
-      font-weight: 500;
+      color: #0b62b6;
+      font-weight: 700;
+      font-size: 0.92rem;
       text-decoration: none;
       cursor: pointer;
     }
@@ -514,8 +556,8 @@ interface StudentListRow {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 0.6rem;
-      margin-top: 1.5rem;
+      gap: 0.4rem;
+      margin-top: 1.25rem;
     }
 
     .arrow-pager {
@@ -563,8 +605,8 @@ export class StudentListComponent implements OnInit {
   searchQuery = '';
   enquiryType = 'All';
   dateFilterEnabled = true;
-  fromDate = '2026-08-01';
-  toDate = '2026-11-24';
+  fromDate = '25-Nov-2026';
+  toDate = '25-Nov-2026';
 
   showAdvanced = false;
   selectedBranch = 'All Branches';

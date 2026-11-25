@@ -205,6 +205,43 @@ import { CommonModule } from '@angular/common';
       <g *ngSwitchCase="'folder'">
         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
       </g>
+      <g *ngSwitchCase="'landmark'">
+        <line x1="2" y1="22" x2="22" y2="22"></line>
+        <line x1="6" y1="18" x2="6" y2="11"></line>
+        <line x1="10" y1="18" x2="10" y2="11"></line>
+        <line x1="14" y1="18" x2="14" y2="11"></line>
+        <line x1="18" y1="18" x2="18" y2="11"></line>
+        <polygon points="12 2 20 7 4 7"></polygon>
+      </g>
+      <g *ngSwitchCase="'message-square'">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </g>
+      <g *ngSwitchCase="'tag'">
+        <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"></path>
+        <path d="M7 7h.01"></path>
+      </g>
+      <g *ngSwitchCase="'cpu'">
+        <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+        <rect x="9" y="9" width="6" height="6"></rect>
+        <path d="M15 2v2"></path>
+        <path d="M15 20v2"></path>
+        <path d="M2 15h2"></path>
+        <path d="M2 9h2"></path>
+        <path d="M20 15h2"></path>
+        <path d="M20 9h2"></path>
+        <path d="M9 2v2"></path>
+        <path d="M9 20v2"></path>
+      </g>
+      <g *ngSwitchCase="'code'">
+        <polyline points="16 18 22 12 16 6"></polyline>
+        <polyline points="8 6 2 12 8 18"></polyline>
+      </g>
+      <g *ngSwitchCase="'plug'">
+        <path d="M12 22v-5"></path>
+        <path d="M9 8V2"></path>
+        <path d="M15 8V2"></path>
+        <path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"></path>
+      </g>
       <g *ngSwitchDefault>
         <circle cx="12" cy="12" r="9"></circle>
       </g>

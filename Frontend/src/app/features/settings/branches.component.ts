@@ -1,260 +1,703 @@
-import { IconComponent, ModalComponent, ConfirmDialogComponent, PageHeaderComponent, PaginationComponent, FilterBarComponent } from '../../shared/index';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MockDataService, Branch } from '../../core/mock-data.service';
+import { IconComponent } from '../../shared/components/icon.component';
+
+export interface BranchItem {
+  slNo: number;
+  name: string;
+}
+
+export interface DepartmentOption {
+  slNo: number;
+  selected: boolean;
+  name: string;
+}
 
 @Component({
   selector: 'app-branches',
   standalone: true,
-  imports: [
-    PageHeaderComponent,
-    FilterBarComponent,
-    PaginationComponent,
-    CommonModule,
-    FormsModule,
-    ModalComponent,
-    ConfirmDialogComponent,
-    IconComponent
-  ],
+  imports: [CommonModule, FormsModule, IconComponent],
   template: `
-    <app-page-header
-      title="Branch Management"
-      icon="git-branch"
-      [breadcrumbs]="[{ label: 'Settings' }, { label: 'Branches' }]"
-    >
-      <button type="button" class="btn btn-primary" (click)="openAddModal()">
-        <app-icon name="plus" [size]="16"></app-icon>
-        <span>Create New Branch</span>
-      </button>
-    </app-page-header>
+    <div class="branch-page-container">
+      <!-- Header -->
+      <div class="branch-header">
+        <h1 class="page-title">Branch</h1>
+        <button type="button" class="btn-create" (click)="openCreateModal()">
+          CREATE NEW BRANCH
+        </button>
+      </div>
 
-    <app-filter-bar
-      placeholder="Search branch by name, code or city..."
-      (search)="onSearch($event)"
-      (export)="exportData()"
-    ></app-filter-bar>
-
-    <div class="card">
-      <div class="table-responsive">
+      <!-- Branch Table Card matching Image 5 -->
+      <div class="table-card">
         <table class="data-table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Branch Code</th>
+              <th style="width: 70px;">Sl No</th>
               <th>Branch Name</th>
-              <th>City</th>
-              <th>Phone</th>
-              <th>Address</th>
-              <th>Status</th>
-              <th style="text-align: right;">Actions</th>
+              <th style="width: 80px; text-align: center;">Edit</th>
+              <th style="width: 80px; text-align: center;">Delete</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let b of pagedBranches; let i = index">
-              <td>{{ (currentPage - 1) * pageSize + i + 1 }}</td>
-              <td><strong>{{ b.code }}</strong></td>
-              <td><strong>{{ b.name }}</strong></td>
-              <td>{{ b.city }}</td>
-              <td>{{ b.phone }}</td>
-              <td style="max-width: 250px;">{{ b.address }}</td>
-              <td>
-                <span class="badge" [ngClass]="b.status === 'Active' ? 'badge-success' : 'badge-danger'">
-                  {{ b.status }}
-                </span>
+            <tr *ngFor="let b of branches; let i = index">
+              <td class="text-secondary">{{ b.slNo }}</td>
+              <td class="font-bold text-dark">{{ b.name }}</td>
+              <td style="text-align: center;">
+                <button
+                  type="button"
+                  class="btn-action-edit"
+                  [ngClass]="getEditClass(i)"
+                  (click)="openEditModal(b)"
+                  title="Edit Branch"
+                >
+                  <app-icon name="edit" [size]="14"></app-icon>
+                </button>
               </td>
-              <td style="text-align: right;">
-                <div class="table-actions" style="justify-content: flex-end;">
-                  <button type="button" class="btn btn-sm btn-secondary" (click)="openEditModal(b)" title="Edit">
-                    <app-icon name="edit" [size]="14"></app-icon>
-                  </button>
-                  <button type="button" class="btn btn-sm btn-danger" (click)="openDeleteConfirm(b)" title="Delete">
-                    <app-icon name="trash-2" [size]="14"></app-icon>
-                  </button>
-                </div>
+              <td style="text-align: center;">
+                <button
+                  type="button"
+                  class="btn-action-delete"
+                  [ngClass]="getDeleteClass(i)"
+                  (click)="deleteBranch(b)"
+                  title="Delete Branch"
+                >
+                  <app-icon name="trash-2" [size]="14"></app-icon>
+                </button>
               </td>
             </tr>
-            <tr *ngIf="filteredBranches.length === 0">
-              <td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                No branches found.
-              </td>
+            <tr *ngIf="branches.length === 0">
+              <td colspan="4" class="empty-state">No branches configured.</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <app-pagination
-        [totalItems]="filteredBranches.length"
-        [pageSize]="pageSize"
-        [currentPage]="currentPage"
-        (pageChange)="currentPage = $event"
-      ></app-pagination>
-    </div>
-
-    <!-- Create / Edit Modal -->
-    <app-modal
-      [isOpen]="isModalOpen"
-      [title]="isEditMode ? 'Edit Branch' : 'Create New Branch'"
-      (closeEvent)="isModalOpen = false"
-      (confirmEvent)="saveBranch()"
-    >
-      <div modal-body>
-        <div class="form-grid-2">
-          <div class="form-group full-width">
-            <label class="form-label required">Branch Name</label>
-            <input type="text" class="form-control" [(ngModel)]="currentForm.name" placeholder="Branch Title" />
+      <!-- Branch Details Modal matching Image 1 / Image 9 -->
+      <div class="modal-backdrop" *ngIf="isModalOpen" (click)="closeModal()">
+        <div class="modal-dialog" (click)="$event.stopPropagation()">
+          <!-- Modal Blue Header -->
+          <div class="modal-header">
+            <h3 class="modal-title">Branch Details</h3>
+            <button type="button" class="modal-close-btn" (click)="closeModal()">✕</button>
           </div>
 
-          <div class="form-group">
-            <label class="form-label required">City</label>
-            <input type="text" class="form-control" [(ngModel)]="currentForm.city" placeholder="City" />
-          </div>
+          <!-- Modal Body: 2 Columns (Form on left, Select Departments on right) -->
+          <div class="modal-body">
+            <div class="modal-columns">
+              <!-- Left Column: Form -->
+              <div class="col-form">
+                <div class="form-row">
+                  <label class="form-label required">Branch Name</label>
+                  <input
+                    type="text"
+                    class="form-input"
+                    [(ngModel)]="branchForm.name"
+                    placeholder="Enter branch name"
+                  />
+                </div>
 
-          <div class="form-group">
-            <label class="form-label required">Office Phone</label>
-            <input type="text" class="form-control" [(ngModel)]="currentForm.phone" placeholder="+91 ..." />
-          </div>
+                <div class="form-row">
+                  <label class="form-label required">Address</label>
+                  <div class="address-fields">
+                    <input
+                      type="text"
+                      class="form-input"
+                      [(ngModel)]="branchForm.address"
+                      placeholder="Address"
+                    />
+                    <input
+                      type="text"
+                      class="form-input"
+                      [(ngModel)]="branchForm.location"
+                      placeholder="Location"
+                    />
+                    <input
+                      type="text"
+                      class="form-input"
+                      [(ngModel)]="branchForm.district"
+                      placeholder="District"
+                    />
+                    <input
+                      type="text"
+                      class="form-input"
+                      [(ngModel)]="branchForm.state"
+                      placeholder="State"
+                    />
+                    <input
+                      type="text"
+                      class="form-input"
+                      [(ngModel)]="branchForm.country"
+                      placeholder="Country"
+                    />
+                    <input
+                      type="text"
+                      class="form-input"
+                      [(ngModel)]="branchForm.pincode"
+                      placeholder="Pin Code"
+                    />
+                  </div>
+                </div>
 
-          <div class="form-group full-width">
-            <label class="form-label required">Address</label>
-            <textarea class="form-textarea" [(ngModel)]="currentForm.address" rows="2" placeholder="Full address"></textarea>
-          </div>
+                <div class="form-row">
+                  <label class="form-label required">Phone No.</label>
+                  <input
+                    type="text"
+                    class="form-input"
+                    [(ngModel)]="branchForm.phone"
+                    placeholder="Enter phone number"
+                  />
+                </div>
 
-          <div class="form-group">
-            <label class="form-label required">Status</label>
-            <select class="form-select" [(ngModel)]="currentForm.status">
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
+                <div class="form-row">
+                  <label class="form-label required">E-mail</label>
+                  <input
+                    type="email"
+                    class="form-input"
+                    [(ngModel)]="branchForm.email"
+                    placeholder="Enter email address"
+                  />
+                </div>
+
+                <!-- Form Action Buttons -->
+                <div class="form-btn-row">
+                  <button type="button" class="btn-save" (click)="saveBranch()">SAVE</button>
+                  <button type="button" class="btn-close" (click)="closeModal()">CLOSE</button>
+                </div>
+              </div>
+
+              <!-- Right Column: Select Departments Table -->
+              <div class="col-depts">
+                <div class="section-title">Select Departments</div>
+                <div class="depts-table-card">
+                  <table class="depts-table">
+                    <thead>
+                      <tr>
+                        <th style="width: 55px;">Sl No</th>
+                        <th style="width: 65px; text-align: center;">Select</th>
+                        <th>Department</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let d of departmentOptions">
+                        <td class="text-secondary">{{ d.slNo }}</td>
+                        <td style="text-align: center;">
+                          <input
+                            type="checkbox"
+                            class="custom-chk"
+                            [(ngModel)]="d.selected"
+                          />
+                        </td>
+                        <td class="dept-name">{{ d.name }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </app-modal>
+    </div>
+  `,
+  styles: [`
+    .branch-page-container {
+      padding: 1.75rem 2.25rem;
+      background-color: #f8fafc;
+      min-height: calc(100vh - 56px);
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
 
-    <!-- Delete Confirmation Dialog -->
-    <app-confirm-dialog
-      [isOpen]="isDeleteModalOpen"
-      title="Delete Branch"
-      [message]="'Are you sure you want to delete branch ' + branchToDelete?.name + '?'"
-      (confirmEvent)="confirmDelete()"
-      (cancelEvent)="isDeleteModalOpen = false"
-    ></app-confirm-dialog>
-  `
+    .branch-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+
+    .btn-create {
+      background-color: #16a34a;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      letter-spacing: 0.04em;
+      padding: 0.55rem 1.4rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .btn-create:hover {
+      background-color: #15803d;
+    }
+
+    /* Table Card */
+    .table-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .data-table thead tr {
+      background-color: #ffffff;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .data-table th {
+      padding: 0.95rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .data-table tbody tr {
+      border-bottom: 1px solid #f1f5f9;
+      transition: background-color 0.15s ease;
+    }
+
+    .data-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .data-table tbody tr:hover {
+      background-color: #fafbfc;
+    }
+
+    .data-table td {
+      padding: 1.1rem 1.25rem;
+      font-size: 0.85rem;
+      color: #334155;
+    }
+
+    .font-bold {
+      font-weight: 600;
+    }
+
+    .text-dark {
+      color: #1e293b;
+    }
+
+    .text-secondary {
+      color: #64748b;
+    }
+
+    /* Action Buttons (Purple/Blue edit, White/Brown delete) */
+    .btn-action-edit,
+    .btn-action-delete {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-purple {
+      background-color: #7c3aed;
+      border: none;
+      color: #ffffff;
+    }
+    .btn-purple:hover {
+      background-color: #6d28d9;
+    }
+
+    .btn-blue {
+      background-color: #2563eb;
+      border: none;
+      color: #ffffff;
+    }
+    .btn-blue:hover {
+      background-color: #1d4ed8;
+    }
+
+    .btn-del-white {
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #64748b;
+    }
+    .btn-del-white:hover {
+      border-color: #ef4444;
+      color: #ef4444;
+      background-color: #fef2f2;
+    }
+
+    .btn-del-brown {
+      background-color: #c2410c;
+      border: none;
+      color: #ffffff;
+    }
+    .btn-del-brown:hover {
+      background-color: #9a3412;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem;
+      color: #94a3b8;
+    }
+
+    /* Modal Backdrop & Dialog */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1.5rem;
+      animation: fadeIn 0.15s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-dialog {
+      background: #ffffff;
+      width: 860px;
+      max-width: 95vw;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+      animation: zoomIn 0.15s ease-out;
+    }
+
+    @keyframes zoomIn {
+      from { opacity: 0; transform: scale(0.97); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-header {
+      background-color: #2563eb;
+      color: #ffffff;
+      padding: 0.85rem 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin: 0;
+      color: #ffffff;
+    }
+
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 1.15rem;
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 1;
+      opacity: 0.85;
+      padding: 0.2rem;
+    }
+
+    .modal-close-btn:hover {
+      opacity: 1;
+    }
+
+    .modal-body {
+      padding: 1.75rem 2rem;
+    }
+
+    .modal-columns {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      column-gap: 2.25rem;
+    }
+
+    .col-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      align-items: start;
+      column-gap: 0.75rem;
+    }
+
+    .form-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #334155;
+      padding-top: 0.5rem;
+    }
+
+    .required::after {
+      content: ' *';
+      color: #dc2626;
+    }
+
+    .address-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .form-input {
+      width: 100%;
+      height: 36px;
+      padding: 0 0.85rem;
+      font-size: 0.85rem;
+      color: #1e293b;
+      background-color: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .form-input:focus {
+      border-color: #3b82f6;
+    }
+
+    .form-btn-row {
+      display: flex;
+      gap: 0.85rem;
+      margin-top: 0.75rem;
+      padding-left: calc(110px + 0.75rem);
+    }
+
+    .btn-save {
+      background-color: #16a34a;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      letter-spacing: 0.05em;
+      padding: 0.55rem 1.75rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .btn-save:hover {
+      background-color: #15803d;
+    }
+
+    .btn-close {
+      background-color: #ffffff;
+      color: #334155;
+      font-weight: 700;
+      font-size: 0.8125rem;
+      letter-spacing: 0.05em;
+      padding: 0.55rem 1.75rem;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-close:hover {
+      background-color: #f8fafc;
+      border-color: #94a3b8;
+    }
+
+    /* Right Column: Departments Table */
+    .col-depts {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .section-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 0.25rem;
+    }
+
+    .depts-table-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    .depts-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .depts-table thead tr {
+      background-color: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .depts-table th {
+      padding: 0.65rem 0.85rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .depts-table tbody tr {
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .depts-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .depts-table td {
+      padding: 0.65rem 0.85rem;
+      font-size: 0.825rem;
+      color: #334155;
+      vertical-align: middle;
+    }
+
+    .dept-name {
+      font-weight: 500;
+      color: #1e293b;
+    }
+
+    .custom-chk {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      accent-color: #2563eb;
+    }
+  `]
 })
 export class BranchesComponent implements OnInit {
-  allBranches: Branch[] = [];
-  filteredBranches: Branch[] = [];
+  branches: BranchItem[] = [
+    { slNo: 1, name: 'Ernakulam' },
+    { slNo: 2, name: 'Kaloor' },
+    { slNo: 3, name: 'Angamaly' },
+    { slNo: 4, name: 'Thrikkakara' },
+    { slNo: 5, name: 'Pala' },
+    { slNo: 6, name: 'Naipunya Overseas' }
+  ];
 
-  searchTerm = '';
-  currentPage = 1;
-  pageSize = 5;
+  departmentOptions: DepartmentOption[] = [
+    { slNo: 1, selected: false, name: 'Accounts' },
+    { slNo: 2, selected: false, name: 'Admission' },
+    { slNo: 3, selected: false, name: 'CLOSED' },
+    { slNo: 4, selected: false, name: 'Follow Up' },
+    { slNo: 5, selected: false, name: 'JOINED' },
+    { slNo: 6, selected: false, name: 'Marketing' },
+    { slNo: 7, selected: false, name: 'Visa' }
+  ];
 
   isModalOpen = false;
   isEditMode = false;
-  editingBranchId = '';
-  isDeleteModalOpen = false;
-  branchToDelete: Branch | null = null;
+  editingIndex = -1;
 
-  currentForm: {
-    name: string;
-    city: string;
-    phone: string;
-    address: string;
-    status: 'Active' | 'Inactive';
-  } = {
+  branchForm = {
     name: '',
-    city: '',
-    phone: '',
     address: '',
-    status: 'Active'
+    location: '',
+    district: '',
+    state: '',
+    country: '',
+    pincode: '',
+    phone: '',
+    email: ''
   };
 
-  constructor(private mockDataService: MockDataService) {}
+  ngOnInit() {}
 
-  ngOnInit() {
-    this.mockDataService.getBranches().subscribe(b => {
-      this.allBranches = b;
-      this.applyFilters();
-    });
+  getEditClass(index: number): string {
+    return index % 2 === 1 ? 'btn-blue' : 'btn-purple';
   }
 
-  onSearch(term: string) {
-    this.searchTerm = term.toLowerCase();
-    this.applyFilters();
+  getDeleteClass(index: number): string {
+    return index % 2 === 1 ? 'btn-del-brown' : 'btn-del-white';
   }
 
-  applyFilters() {
-    this.filteredBranches = this.allBranches.filter(b =>
-      !this.searchTerm ||
-      b.name.toLowerCase().includes(this.searchTerm) ||
-      b.code.toLowerCase().includes(this.searchTerm) ||
-      b.city.toLowerCase().includes(this.searchTerm)
-    );
-    this.currentPage = 1;
-  }
-
-  get pagedBranches(): Branch[] {
-    const start = (this.currentPage - 1) * this.pageSize;
-    return this.filteredBranches.slice(start, start + this.pageSize);
-  }
-
-  openAddModal() {
+  openCreateModal() {
     this.isEditMode = false;
-    this.currentForm = {
+    this.editingIndex = -1;
+    this.branchForm = {
       name: '',
-      city: '',
-      phone: '',
       address: '',
-      status: 'Active'
+      location: '',
+      district: '',
+      state: '',
+      country: '',
+      pincode: '',
+      phone: '',
+      email: ''
     };
+    this.departmentOptions.forEach(d => (d.selected = false));
     this.isModalOpen = true;
   }
 
-  openEditModal(b: Branch) {
+  openEditModal(b: BranchItem) {
     this.isEditMode = true;
-    this.editingBranchId = b.id;
-    this.currentForm = {
+    this.editingIndex = this.branches.indexOf(b);
+    this.branchForm = {
       name: b.name,
-      city: b.city,
-      phone: b.phone,
-      address: b.address,
-      status: b.status
+      address: 'Near Metro Station',
+      location: b.name,
+      district: 'Ernakulam',
+      state: 'Kerala',
+      country: 'India',
+      pincode: '682016',
+      phone: '0484 235 8890',
+      email: `${b.name.toLowerCase().replace(/[^a-z]/g, '')}@naipunya.edu.in`
     };
     this.isModalOpen = true;
   }
 
-  saveBranch() {
-    if (this.isEditMode) {
-      this.mockDataService.updateBranch(this.editingBranchId, this.currentForm);
-    } else {
-      this.mockDataService.addBranch(this.currentForm);
-    }
+  closeModal() {
     this.isModalOpen = false;
   }
 
-  openDeleteConfirm(b: Branch) {
-    this.branchToDelete = b;
-    this.isDeleteModalOpen = true;
-  }
+  saveBranch() {
+    if (!this.branchForm.name.trim()) return;
 
-  confirmDelete() {
-    if (this.branchToDelete) {
-      this.mockDataService.deleteBranch(this.branchToDelete.id);
-      this.isDeleteModalOpen = false;
-      this.branchToDelete = null;
+    if (this.isEditMode && this.editingIndex > -1) {
+      this.branches[this.editingIndex] = {
+        slNo: this.branches[this.editingIndex].slNo,
+        name: this.branchForm.name
+      };
+    } else {
+      this.branches.push({
+        slNo: this.branches.length + 1,
+        name: this.branchForm.name
+      });
     }
+
+    this.closeModal();
   }
 
-  exportData() {
-    const csvContent = 'data:text/csv;charset=utf-8,' +
-      'Code,Name,City,Phone,Address,Status\n' +
-      this.filteredBranches.map(b => `${b.code},"${b.name}","${b.city}",${b.phone},"${b.address}",${b.status}`).join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Branches_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  deleteBranch(b: BranchItem) {
+    if (confirm(`Are you sure you want to delete ${b.name}?`)) {
+      this.branches = this.branches.filter(item => item !== b);
+      this.branches.forEach((item, idx) => (item.slNo = idx + 1));
+    }
   }
 }
