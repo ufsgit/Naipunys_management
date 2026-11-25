@@ -2,11 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
-
-export interface EnquirySourceItem {
-  slNo: number;
-  name: string;
-}
+import { MockDataService, EnquirySourceItem } from '../../core/mock-data.service';
 
 @Component({
   selector: 'app-enquiry-sources',
@@ -57,22 +53,20 @@ export interface EnquirySourceItem {
                 <button
                   type="button"
                   class="btn-action-edit"
-                  [ngClass]="getEditClass(i)"
                   (click)="openEdit(item, i)"
                   title="Edit Enquiry Source"
                 >
-                  <app-icon name="edit" [size]="14"></app-icon>
+                  <app-icon name="edit" [size]="15"></app-icon>
                 </button>
               </td>
               <td style="text-align: center;">
                 <button
                   type="button"
                   class="btn-action-delete"
-                  [ngClass]="getDeleteClass(i)"
                   (click)="deleteItem(item)"
                   title="Delete Enquiry Source"
                 >
-                  <app-icon name="trash-2" [size]="14"></app-icon>
+                  <app-icon name="trash-2" [size]="15"></app-icon>
                 </button>
               </td>
             </tr>
@@ -251,56 +245,30 @@ export interface EnquirySourceItem {
       color: #64748b;
     }
 
-    /* Action Buttons (Square with rounded corners matching Accounts/Receipts reference) */
+    /* Action Buttons */
     .btn-action-edit,
     .btn-action-delete {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       border: none;
+      background: transparent;
+      color: #64748b;
       cursor: pointer;
       transition: all 0.15s ease;
     }
 
-    .btn-purple {
-      background-color: #7c3aed;
-      border: none;
-      color: #ffffff;
-    }
-    .btn-purple:hover {
-      background-color: #6d28d9;
+    .btn-action-edit:hover {
+      color: #0b62b6;
+      background-color: #f0f7ff;
     }
 
-    .btn-blue {
-      background-color: #2563eb;
-      border: none;
-      color: #ffffff;
-    }
-    .btn-blue:hover {
-      background-color: #1d4ed8;
-    }
-
-    .btn-del-white {
-      background-color: #ffffff;
-      border: 1px solid #cbd5e1;
-      color: #64748b;
-    }
-    .btn-del-white:hover {
-      border-color: #ef4444;
-      color: #ef4444;
+    .btn-action-delete:hover {
+      color: #dc2626;
       background-color: #fef2f2;
-    }
-
-    .btn-del-brown {
-      background-color: #c2410c;
-      border: none;
-      color: #ffffff;
-    }
-    .btn-del-brown:hover {
-      background-color: #9a3412;
     }
 
     .empty-state {
@@ -311,32 +279,15 @@ export interface EnquirySourceItem {
   `]
 })
 export class EnquirySourcesComponent implements OnInit {
-  items: EnquirySourceItem[] = [
-    { slNo: 1, name: 'Advertisement' },
-    { slNo: 2, name: 'Angamaly ref' },
-    { slNo: 3, name: 'Ernakulam ref' },
-    { slNo: 4, name: 'From Database' },
-    { slNo: 5, name: 'google' },
-    { slNo: 6, name: 'Kaloor ref' },
-    { slNo: 7, name: 'Pala ref' },
-    { slNo: 8, name: 'Phone' },
-    { slNo: 9, name: 'Thrikkakara ref' },
-    { slNo: 10, name: 'Walkin' },
-    { slNo: 11, name: 'Website' }
-  ];
-
+  items: EnquirySourceItem[] = [];
   formName = '';
   isEditMode = false;
   editingItem: EnquirySourceItem | null = null;
 
-  ngOnInit() {}
+  constructor(private mockDataService: MockDataService) {}
 
-  getEditClass(index: number): string {
-    return index % 2 === 1 ? 'btn-blue' : 'btn-purple';
-  }
-
-  getDeleteClass(index: number): string {
-    return index % 2 === 1 ? 'btn-del-brown' : 'btn-del-white';
+  ngOnInit() {
+    this.mockDataService.getEnquirySourceItems().subscribe(data => this.items = data);
   }
 
   openEdit(item: EnquirySourceItem, index: number) {
@@ -349,12 +300,9 @@ export class EnquirySourcesComponent implements OnInit {
     if (!this.formName.trim()) return;
 
     if (this.isEditMode && this.editingItem) {
-      this.editingItem.name = this.formName.trim();
+      this.mockDataService.updateEnquirySourceItem(this.editingItem.slNo, this.formName.trim());
     } else {
-      this.items.push({
-        slNo: this.items.length + 1,
-        name: this.formName.trim()
-      });
+      this.mockDataService.addEnquirySourceItem(this.formName.trim());
     }
 
     this.cancelForm();
@@ -368,8 +316,7 @@ export class EnquirySourcesComponent implements OnInit {
 
   deleteItem(item: EnquirySourceItem) {
     if (confirm(`Are you sure you want to delete ${item.name}?`)) {
-      this.items = this.items.filter(i => i !== item);
-      this.items.forEach((it, idx) => it.slNo = idx + 1);
+      this.mockDataService.deleteEnquirySourceItem(item.slNo);
     }
   }
 }

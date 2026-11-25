@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 
 export interface Student {
   id: string;
@@ -16,6 +15,21 @@ export interface Student {
   feesTotal: number;
   feesPaid: number;
   status: 'Active' | 'Pending' | 'Completed' | 'Transferred';
+}
+
+export interface StudentListRow {
+  slNo: number;
+  name: string;
+  followUp?: string;
+  note: string;
+  mobile: string;
+  remark: string;
+  nextFollowUp: string;
+  department: string;
+  status: string;
+  to: string;
+  from: string;
+  branch?: string;
 }
 
 export interface StudentFollowUp {
@@ -42,12 +56,39 @@ export interface Course {
   status: 'Active' | 'Inactive';
 }
 
+export interface CourseItem {
+  slNo: number;
+  name: string;
+  fees: number;
+  hasDelete: boolean;
+  hasEdit: boolean;
+}
+
+export interface CourseBranchFee {
+  slNo: number;
+  branch: string;
+  fees: string | number;
+}
+
 export interface Department {
   id: string;
   code: string;
   name: string;
   headOfDepartment: string;
   status: 'Active' | 'Inactive';
+}
+
+export interface DepartmentItem {
+  slNo: number;
+  name: string;
+  followUp: string;
+  order: number;
+}
+
+export interface StatusOption {
+  slNo: number;
+  selected: boolean;
+  name: string;
 }
 
 export interface Branch {
@@ -58,6 +99,17 @@ export interface Branch {
   phone: string;
   address: string;
   status: 'Active' | 'Inactive';
+}
+
+export interface BranchItem {
+  slNo: number;
+  name: string;
+}
+
+export interface DepartmentOption {
+  slNo: number;
+  selected: boolean;
+  name: string;
 }
 
 export interface BranchAccountConfig {
@@ -131,6 +183,34 @@ export interface SystemUser {
   status: 'Active' | 'Inactive';
 }
 
+export interface UserRow {
+  slNo: number;
+  userName: string;
+  userType: 'User' | 'Admin' | string;
+  branch: string;
+  phoneNo: string;
+  hasDelete: boolean;
+  hasEdit: boolean;
+}
+
+export interface DepartmentPermRow {
+  slNo: number;
+  branch: string;
+  department: string;
+  view: boolean;
+  viewAll: boolean;
+}
+
+export interface MenuPermRow {
+  slNo: number;
+  menu: string;
+  view: boolean;
+  edit: boolean;
+  delete: boolean;
+  hasEdit?: boolean;
+  hasDelete?: boolean;
+}
+
 export interface SettingItem {
   id: string;
   code: string;
@@ -139,19 +219,28 @@ export interface SettingItem {
   status: 'Active' | 'Inactive';
 }
 
-export interface CompanyInfo {
+export interface FollowupTypeItem {
+  slNo: number;
   name: string;
-  tagline: string;
-  registrationNo: string;
-  taxId: string;
+}
+
+export interface EnquirySourceItem {
+  slNo: number;
+  name: string;
+}
+
+export interface StatusItem {
+  slNo: number;
+  name: string;
+}
+
+export interface CompanyInfo {
+  companyName: string;
+  phoneNo: string;
   email: string;
-  phone: string;
-  website: string;
   address: string;
-  city: string;
-  state: string;
-  pincode: string;
-  currency: string;
+  landPhone: string;
+  website: string;
 }
 
 @Injectable({
@@ -159,47 +248,259 @@ export interface CompanyInfo {
 })
 export class MockDataService {
   // Current active branch
-  private currentBranchSubject = new BehaviorSubject<string>('Main Campus - Kochi');
+  private currentBranchSubject = new BehaviorSubject<string>('Ernakulam');
   currentBranch$ = this.currentBranchSubject.asObservable();
 
-  // 1. Departments
-  private departments: Department[] = [
-    { id: '1', code: 'DEP-01', name: 'Information Technology', headOfDepartment: 'Dr. Ramesh Kumar', status: 'Active' },
-    { id: '2', code: 'DEP-02', name: 'Business Administration', headOfDepartment: 'Prof. Anjali Nair', status: 'Active' },
-    { id: '3', code: 'DEP-03', name: 'Design & Multimedia', headOfDepartment: 'Vikram Seth', status: 'Active' },
-    { id: '4', code: 'DEP-04', name: 'Accounting & Finance', headOfDepartment: 'Suresh Menon', status: 'Active' }
+  // 1. Department Items (Settings Page)
+  private departmentItems: DepartmentItem[] = [
+    { slNo: 1, name: 'Accounts', followUp: 'yes', order: 1 },
+    { slNo: 2, name: 'Admission', followUp: 'yes', order: 2 },
+    { slNo: 3, name: 'CLOSED', followUp: 'no', order: 6 },
+    { slNo: 4, name: 'Follow Up', followUp: 'yes', order: 3 },
+    { slNo: 5, name: 'JOINED', followUp: 'no', order: 7 },
+    { slNo: 6, name: 'Marketing', followUp: 'yes', order: 4 },
+    { slNo: 7, name: 'Visa', followUp: 'yes', order: 5 }
   ];
-  private departments$ = new BehaviorSubject<Department[]>(this.departments);
+  private departmentItems$ = new BehaviorSubject<DepartmentItem[]>(this.departmentItems);
 
-  // 2. Branches
-  private branches: Branch[] = [
-    { id: '1', code: 'BR-KCH', name: 'Main Campus - Kochi', city: 'Kochi', phone: '+91 484 2345678', address: 'MG Road, Kochi, Kerala', status: 'Active' },
-    { id: '2', code: 'BR-TVM', name: 'Trivandrum City Branch', city: 'Trivandrum', phone: '+91 471 2890123', address: 'Statue Junction, Trivandrum', status: 'Active' },
-    { id: '3', code: 'BR-CLT', name: 'Calicut Campus', city: 'Calicut', phone: '+91 495 2765432', address: 'Mavoor Road, Calicut', status: 'Active' }
+  private deptStatusOptions: StatusOption[] = [
+    { slNo: 1, selected: false, name: 'Interested' },
+    { slNo: 2, selected: false, name: 'Not Interested' },
+    { slNo: 3, selected: false, name: 'Payment Pending' },
+    { slNo: 4, selected: false, name: 'Payment Received' },
+    { slNo: 5, selected: false, name: 'Unknown' }
   ];
-  private branches$ = new BehaviorSubject<Branch[]>(this.branches);
+  private deptStatusOptions$ = new BehaviorSubject<StatusOption[]>(this.deptStatusOptions);
 
-  // 3. Courses
-  private courses: Course[] = [
-    { id: '1', code: 'CRS-FSW', name: 'Full Stack Web Development', department: 'Information Technology', duration: '6 Months', fee: 45000, status: 'Active' },
-    { id: '2', code: 'CRS-DS', name: 'Data Science & Machine Learning', department: 'Information Technology', duration: '8 Months', fee: 55000, status: 'Active' },
-    { id: '3', code: 'CRS-DGM', name: 'Digital Marketing Specialist', department: 'Business Administration', duration: '4 Months', fee: 28000, status: 'Active' },
-    { id: '4', code: 'CRS-GDS', name: 'Graphic & UI/UX Design', department: 'Design & Multimedia', duration: '5 Months', fee: 35000, status: 'Active' },
-    { id: '5', code: 'CRS-CFA', name: 'Certified Financial Accounting', department: 'Accounting & Finance', duration: '6 Months', fee: 32000, status: 'Active' }
+  // 2. Branch Items (Settings Page)
+  private branchItems: BranchItem[] = [
+    { slNo: 1, name: 'Ernakulam' },
+    { slNo: 2, name: 'Kaloor' },
+    { slNo: 3, name: 'Angamaly' },
+    { slNo: 4, name: 'Thrikkakara' },
+    { slNo: 5, name: 'Pala' },
+    { slNo: 6, name: 'Naipunya Overseas' }
   ];
-  private courses$ = new BehaviorSubject<Course[]>(this.courses);
+  private branchItems$ = new BehaviorSubject<BranchItem[]>(this.branchItems);
 
-  // 4. Students
-  private students: Student[] = [
-    { id: '1', code: 'STU-1001', name: 'Rahul Krishnan', phone: '9847012345', email: 'rahul.k@example.com', course: 'Full Stack Web Development', branch: 'Main Campus - Kochi', department: 'Information Technology', batch: '2026-Batch A', admissionDate: '2026-01-10', feesTotal: 45000, feesPaid: 45000, status: 'Active' },
-    { id: '2', code: 'STU-1002', name: 'Sneha Thomas', phone: '9847123456', email: 'sneha.t@example.com', course: 'Data Science & Machine Learning', branch: 'Main Campus - Kochi', department: 'Information Technology', batch: '2026-Batch B', admissionDate: '2026-01-15', feesTotal: 55000, feesPaid: 35000, status: 'Active' },
-    { id: '3', code: 'STU-1003', name: 'Arjun Pillai', phone: '9847234567', email: 'arjun.p@example.com', course: 'Digital Marketing Specialist', branch: 'Trivandrum City Branch', department: 'Business Administration', batch: '2026-Batch A', admissionDate: '2026-02-01', feesTotal: 28000, feesPaid: 15000, status: 'Active' },
-    { id: '4', code: 'STU-1004', name: 'Devika Mohan', phone: '9847345678', email: 'devika.m@example.com', course: 'Graphic & UI/UX Design', branch: 'Calicut Campus', department: 'Design & Multimedia', batch: '2026-Batch A', admissionDate: '2026-02-12', feesTotal: 35000, feesPaid: 35000, status: 'Completed' },
-    { id: '5', code: 'STU-1005', name: 'Fahad Mohammed', phone: '9847456789', email: 'fahad.m@example.com', course: 'Certified Financial Accounting', branch: 'Main Campus - Kochi', department: 'Accounting & Finance', batch: '2026-Batch C', admissionDate: '2026-02-20', feesTotal: 32000, feesPaid: 16000, status: 'Active' },
-    { id: '6', code: 'STU-1006', name: 'Ananya Sharma', phone: '9847567890', email: 'ananya.s@example.com', course: 'Full Stack Web Development', branch: 'Trivandrum City Branch', department: 'Information Technology', batch: '2026-Batch B', admissionDate: '2026-03-01', feesTotal: 45000, feesPaid: 20000, status: 'Active' },
-    { id: '7', code: 'STU-1007', name: 'Vishnu Prasad', phone: '9847678901', email: 'vishnu.p@example.com', course: 'Data Science & Machine Learning', branch: 'Calicut Campus', department: 'Information Technology', batch: '2026-Batch A', admissionDate: '2026-03-05', feesTotal: 55000, feesPaid: 10000, status: 'Active' }
+  private branchDeptOptions: DepartmentOption[] = [
+    { slNo: 1, selected: false, name: 'Accounts' },
+    { slNo: 2, selected: false, name: 'Admission' },
+    { slNo: 3, selected: false, name: 'CLOSED' },
+    { slNo: 4, selected: false, name: 'Follow Up' },
+    { slNo: 5, selected: false, name: 'JOINED' },
+    { slNo: 6, selected: false, name: 'Marketing' },
+    { slNo: 7, selected: false, name: 'Visa' }
   ];
-  private students$ = new BehaviorSubject<Student[]>(this.students);
+  private branchDeptOptions$ = new BehaviorSubject<DepartmentOption[]>(this.branchDeptOptions);
+
+  // 3. Course Setup Items
+  private courseItems: CourseItem[] = [
+    { slNo: 1, name: 'A01 IELTS REGULAR', fees: 0, hasDelete: true, hasEdit: true },
+    { slNo: 2, name: 'A02 IELTS 2 MONTHS', fees: 0, hasDelete: true, hasEdit: true },
+    { slNo: 3, name: 'A03 IELTS CRASH', fees: 0, hasDelete: true, hasEdit: true },
+    { slNo: 4, name: 'A04 IELTS Extn (ONE MONTH)', fees: 0, hasDelete: true, hasEdit: true },
+    { slNo: 5, name: 'A05 IELTS Extn (2 WEEKS)', fees: 0, hasDelete: true, hasEdit: true },
+    { slNo: 6, name: 'A06 OET', fees: 0, hasDelete: true, hasEdit: true },
+    { slNo: 7, name: 'A07 COMMUNICATIVE ENGLISH 1 MONTH', fees: 0, hasDelete: true, hasEdit: true },
+    { slNo: 8, name: 'A08 OET (2 Weeks)', fees: 0, hasDelete: true, hasEdit: true }
+  ];
+  private courseItems$ = new BehaviorSubject<CourseItem[]>(this.courseItems);
+
+  private branchFees: CourseBranchFee[] = [
+    { slNo: 1, branch: 'Ernakulam', fees: '' },
+    { slNo: 2, branch: 'Kaloor', fees: '' },
+    { slNo: 3, branch: 'Angamaly', fees: '' },
+    { slNo: 4, branch: 'Thrikkakara', fees: '' },
+    { slNo: 5, branch: 'Pala', fees: '' },
+    { slNo: 6, branch: 'Naipunya Overseas', fees: '' }
+  ];
+  private branchFees$ = new BehaviorSubject<CourseBranchFee[]>(this.branchFees);
+
+  // 4. Student List Records (Exact 15 rows from live Trackbox CRM)
+  private studentListRows: StudentListRow[] = [
+    {
+      slNo: 1,
+      name: 'JUSTIN K G',
+      note: 'IELTS 1 MONTH',
+      mobile: '9995914160',
+      remark: 'IELTS 1 MONTH',
+      nextFollowUp: '24-Nov-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 2,
+      name: 'PRIYANKA CLEMENT',
+      note: 'NICE',
+      mobile: '8891460293',
+      remark: 'NICE',
+      nextFollowUp: '19-Nov-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 3,
+      name: 'ROBBIN CHIRACKAL JOSEPH',
+      note: 'IELTS 1 MONTH',
+      mobile: '9895162325',
+      remark: 'IELTS 1 MONTH',
+      nextFollowUp: '19-Oct-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 4,
+      name: 'ANJANA BINDHU',
+      note: 'UK VISITING VISA',
+      mobile: '9544669647',
+      remark: 'UK VISITING VISA',
+      nextFollowUp: '13-Oct-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 5,
+      name: 'AWIN SANTHOSH',
+      note: 'NZ DEPENDENT VISA',
+      mobile: '9072933600',
+      remark: 'NZ DEPENDENT VISA',
+      nextFollowUp: '10-Oct-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 6,
+      name: 'FR. BENNY VARGHESE THOPPIPARAMBIL',
+      note: 'IELTS 1 MONTH',
+      mobile: '7025714977',
+      remark: 'IELTS 1 MONTH',
+      nextFollowUp: '05-Oct-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 7,
+      name: 'MIKAH SUBIN ARACKAL',
+      note: 'UK DEPENDENT VISA',
+      mobile: '8593956865',
+      remark: 'UK DEPENDENT VISA',
+      nextFollowUp: '14-Sep-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 8,
+      name: 'MARIAN JOSEPH ARACKAL',
+      note: 'IELTS 1 MONTH',
+      mobile: '9447617828',
+      remark: 'IELTS 1 MONTH',
+      nextFollowUp: '07-Sep-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 9,
+      name: 'EMMANUEL CHRISTIE BENHAR',
+      note: 'IELTS 3 MONTHS',
+      mobile: '9072070780',
+      remark: 'IELTS 3 MONTHS',
+      nextFollowUp: '31-Aug-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 10,
+      name: 'LAKSHMI N BIJU',
+      note: 'IELTS 1 MONTH EXTN',
+      mobile: '8075863539',
+      remark: 'IELTS 1 MONTH EXTN',
+      nextFollowUp: '31-Aug-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 11,
+      name: 'ALFIN SHINIL',
+      note: 'IELTS 2 MONTH',
+      mobile: '8330055882',
+      remark: 'IELTS 2 MONTH',
+      nextFollowUp: '31-Aug-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 12,
+      name: 'MANUEL VATTISERRY VARGHESE',
+      note: 'GERMANY',
+      mobile: '6238209350',
+      remark: 'GERMANY',
+      nextFollowUp: '29-Aug-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 13,
+      name: 'SHARON PUTHENPURAKKAL JOSEPH',
+      note: 'GERMANY',
+      mobile: '9037068928',
+      remark: 'GERMANY',
+      nextFollowUp: '17-Aug-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 14,
+      name: 'Rahan Jude',
+      note: 'IELTS 1 MONTH',
+      mobile: '7994241436',
+      remark: 'IELTS 1 MONTH',
+      nextFollowUp: '17-Aug-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    },
+    {
+      slNo: 15,
+      name: 'AKHIL BABU',
+      note: 'GERMANY',
+      mobile: '7034653432',
+      remark: 'GERMANY',
+      nextFollowUp: '14-Aug-2026',
+      department: 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA'
+    }
+  ];
+  private studentListRows$ = new BehaviorSubject<StudentListRow[]>(this.studentListRows);
 
   // 5. Follow-ups
   private followUps: StudentFollowUp[] = [
@@ -218,10 +519,8 @@ export class MockDataService {
 
   // 7. Payments
   private payments: Payment[] = [
-    { id: '1', voucherNo: 'VCH-2026-101', date: '2026-01-05', paidTo: 'Kerala State Electricity Board', category: 'Utilities', account: 'SBT Current A/C', branch: 'Main Campus - Kochi', amount: 8450, paymentMode: 'Bank Transfer', remarks: 'Dec electricity bill' },
-    { id: '2', voucherNo: 'VCH-2026-102', date: '2026-01-12', paidTo: 'Asianet Broadband', category: 'Internet', account: 'Main Petty Cash', branch: 'Main Campus - Kochi', amount: 2400, paymentMode: 'Cash', remarks: 'Campus fiber connection' },
-    { id: '3', voucherNo: 'VCH-2026-103', date: '2026-01-30', paidTo: 'Faculty Remuneration Pool', category: 'Salaries', account: 'SBT Current A/C', branch: 'Main Campus - Kochi', amount: 120000, paymentMode: 'Bank Transfer', remarks: 'Visiting trainers salary' },
-    { id: '4', voucherNo: 'VCH-2026-104', date: '2026-02-04', paidTo: 'Modern Stationeries', category: 'Office Supplies', account: 'Main Petty Cash', branch: 'Trivandrum City Branch', amount: 3100, paymentMode: 'Cash', remarks: 'Notebooks & markers' }
+    { id: '1', voucherNo: 'VCH-2026-101', date: '2026-01-05', paidTo: 'Kerala State Electricity Board', category: 'Utilities', account: 'SBT Current A/C', branch: 'Ernakulam', amount: 8450, paymentMode: 'Bank Transfer', remarks: 'Dec electricity bill' },
+    { id: '2', voucherNo: 'VCH-2026-102', date: '2026-01-12', paidTo: 'Asianet Broadband', category: 'Internet', account: 'Main Petty Cash', branch: 'Ernakulam', amount: 2400, paymentMode: 'Cash', remarks: 'Campus fiber connection' }
   ];
   private payments$ = new BehaviorSubject<Payment[]>(this.payments);
 
@@ -233,193 +532,420 @@ export class MockDataService {
   ];
   private accounts$ = new BehaviorSubject<Account[]>(this.accounts);
 
-  // 9. User Roles
-  private userRoles: UserRole[] = [
-    { id: '1', name: 'Super Administrator', description: 'Full system access across all branches and modules', permissionsCount: 48, status: 'Active' },
-    { id: '2', name: 'Branch Manager', description: 'Branch specific management, admissions and fee approvals', permissionsCount: 32, status: 'Active' },
-    { id: '3', name: 'Accountant / Cashier', description: 'Fee receipt collection, vouchers and financial reporting', permissionsCount: 22, status: 'Active' },
-    { id: '4', name: 'Academic Counselor', description: 'Student enquiry, admission follow-up and registration', permissionsCount: 16, status: 'Active' }
+  // 9. Users & Permissions (Users Table + 40 Dept Perms + 63 Menu Perms)
+  private users: UserRow[] = [
+    { slNo: 1, userName: 'AMALU', userType: 'User', branch: 'Thrikkakara', phoneNo: '', hasDelete: true, hasEdit: true },
+    { slNo: 2, userName: 'ANNIE', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
+    { slNo: 3, userName: 'Athul', userType: 'User', branch: 'Angamaly', phoneNo: '', hasDelete: true, hasEdit: true },
+    { slNo: 4, userName: 'Binijose', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
+    { slNo: 5, userName: 'DIRECTOR', userType: 'Admin', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
+    { slNo: 6, userName: 'DIVYA', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
+    { slNo: 7, userName: 'DRSAJITHA', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
+    { slNo: 8, userName: 'Febi2020', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
+    { slNo: 9, userName: 'Feby', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
+    { slNo: 10, userName: 'FEBY18', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
+    { slNo: 11, userName: 'Frjophy', userType: 'Admin', branch: 'Thrikkakara', phoneNo: '', hasDelete: true, hasEdit: true },
+    { slNo: 12, userName: 'Froly', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
+    { slNo: 13, userName: 'Froly2020', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
+    { slNo: 14, userName: 'Frsebanp', userType: 'Admin', branch: 'Angamaly', phoneNo: '', hasDelete: true, hasEdit: true },
+    { slNo: 15, userName: 'Frshijo', userType: 'Admin', branch: 'Kaloor', phoneNo: '', hasDelete: true, hasEdit: true }
   ];
-  private userRoles$ = new BehaviorSubject<UserRole[]>(this.userRoles);
+  private users$ = new BehaviorSubject<UserRow[]>(this.users);
 
-  // 10. Users
-  private systemUsers: SystemUser[] = [
-    { id: '1', username: 'admin', fullName: 'System Administrator', email: 'admin@naipunyainstitute.org', phone: '+91 9447001122', role: 'Super Administrator', branch: 'Main Campus - Kochi', status: 'Active' },
-    { id: '2', username: 'kavitha.m', fullName: 'Kavitha Madhavan', email: 'kavitha@naipunyainstitute.org', phone: '+91 9447112233', role: 'Branch Manager', branch: 'Main Campus - Kochi', status: 'Active' },
-    { id: '3', username: 'pradeep.k', fullName: 'Pradeep Kumar', email: 'pradeep@naipunyainstitute.org', phone: '+91 9447223344', role: 'Accountant / Cashier', branch: 'Main Campus - Kochi', status: 'Active' },
-    { id: '4', username: 'maya.s', fullName: 'Maya Sreekumar', email: 'maya@naipunyainstitute.org', phone: '+91 9447334455', role: 'Academic Counselor', branch: 'Trivandrum City Branch', status: 'Active' }
+  private departmentPerms: DepartmentPermRow[] = [
+    // Angamaly (1-7)
+    { slNo: 1, branch: 'Angamaly', department: 'Admission', view: false, viewAll: false },
+    { slNo: 2, branch: '', department: 'Accounts', view: false, viewAll: false },
+    { slNo: 3, branch: '', department: 'CLOSED', view: false, viewAll: false },
+    { slNo: 4, branch: '', department: 'Marketing', view: false, viewAll: false },
+    { slNo: 5, branch: '', department: 'Follow Up', view: false, viewAll: false },
+    { slNo: 6, branch: '', department: 'JOINED', view: false, viewAll: false },
+    { slNo: 7, branch: '', department: 'Visa', view: false, viewAll: false },
+    // Ernakulam (8-14)
+    { slNo: 8, branch: 'Ernakulam', department: 'Admission', view: false, viewAll: false },
+    { slNo: 9, branch: '', department: 'Accounts', view: false, viewAll: false },
+    { slNo: 10, branch: '', department: 'CLOSED', view: false, viewAll: false },
+    { slNo: 11, branch: '', department: 'Marketing', view: false, viewAll: false },
+    { slNo: 12, branch: '', department: 'Follow Up', view: false, viewAll: false },
+    { slNo: 13, branch: '', department: 'JOINED', view: false, viewAll: false },
+    { slNo: 14, branch: '', department: 'Visa', view: false, viewAll: false },
+    // Kaloor (15-21)
+    { slNo: 15, branch: 'Kaloor', department: 'Admission', view: false, viewAll: false },
+    { slNo: 16, branch: '', department: 'Accounts', view: false, viewAll: false },
+    { slNo: 17, branch: '', department: 'CLOSED', view: false, viewAll: false },
+    { slNo: 18, branch: '', department: 'Marketing', view: false, viewAll: false },
+    { slNo: 19, branch: '', department: 'Follow Up', view: false, viewAll: false },
+    { slNo: 20, branch: '', department: 'JOINED', view: false, viewAll: false },
+    { slNo: 21, branch: '', department: 'Visa', view: false, viewAll: false },
+    // Naipunya Overseas (22-28)
+    { slNo: 22, branch: 'Naipunya Overseas', department: 'Admission', view: false, viewAll: false },
+    { slNo: 23, branch: '', department: 'Accounts', view: false, viewAll: false },
+    { slNo: 24, branch: '', department: 'CLOSED', view: false, viewAll: false },
+    { slNo: 25, branch: '', department: 'Marketing', view: false, viewAll: false },
+    { slNo: 26, branch: '', department: 'Follow Up', view: false, viewAll: false },
+    { slNo: 27, branch: '', department: 'JOINED', view: false, viewAll: false },
+    { slNo: 28, branch: '', department: 'Visa', view: false, viewAll: false },
+    // Pala (29-34)
+    { slNo: 29, branch: 'Pala', department: 'Admission', view: false, viewAll: false },
+    { slNo: 30, branch: '', department: 'Accounts', view: false, viewAll: false },
+    { slNo: 31, branch: '', department: 'CLOSED', view: false, viewAll: false },
+    { slNo: 32, branch: '', department: 'Marketing', view: false, viewAll: false },
+    { slNo: 33, branch: '', department: 'Follow Up', view: false, viewAll: false },
+    { slNo: 34, branch: '', department: 'JOINED', view: false, viewAll: false },
+    // Thrikkakara (35-40)
+    { slNo: 35, branch: 'Thrikkakara', department: 'Admission', view: false, viewAll: false },
+    { slNo: 36, branch: '', department: 'Accounts', view: false, viewAll: false },
+    { slNo: 37, branch: '', department: 'Follow Up', view: false, viewAll: false },
+    { slNo: 38, branch: '', department: 'JOINED', view: false, viewAll: false },
+    { slNo: 39, branch: '', department: 'Marketing', view: false, viewAll: false },
+    { slNo: 40, branch: '', department: 'Visa', view: false, viewAll: false }
   ];
-  private systemUsers$ = new BehaviorSubject<SystemUser[]>(this.systemUsers);
+  private departmentPerms$ = new BehaviorSubject<DepartmentPermRow[]>(this.departmentPerms);
 
-  // 11. Settings (Follow-up Types, Enquiry Sources, Statuses)
-  private followupTypes: SettingItem[] = [
-    { id: '1', code: 'FT-01', name: 'Phone Call', description: 'Voice discussion with applicant/student', status: 'Active' },
-    { id: '2', code: 'FT-02', name: 'Campus Visit', description: 'In-person meeting at institute office', status: 'Active' },
-    { id: '3', code: 'FT-03', name: 'WhatsApp Message', description: 'Official chat reminder and brochure sharing', status: 'Active' },
-    { id: '4', code: 'FT-04', name: 'Email Follow-up', description: 'Detailed prospectus or fee schedule dispatch', status: 'Active' }
+  private menuPerms: MenuPermRow[] = [
+    { slNo: 1, menu: 'Create New', view: false, edit: false, delete: false, hasDelete: true },
+    { slNo: 2, menu: 'Tab-Qualification', view: false, edit: false, delete: false },
+    { slNo: 3, menu: 'Tab-Course', view: false, edit: false, delete: false },
+    { slNo: 4, menu: 'Tab-Application', view: false, edit: false, delete: false },
+    { slNo: 5, menu: 'Tab-Fund Details', view: false, edit: false, delete: false },
+    { slNo: 6, menu: 'Tab-Invoice Details', view: false, edit: false, delete: false },
+    { slNo: 7, menu: 'Tab-Checklist', view: false, edit: false, delete: false },
+    { slNo: 8, menu: 'Tab-Document', view: false, edit: false, delete: false },
+    { slNo: 9, menu: 'Student List', view: false, edit: false, delete: false },
+    { slNo: 10, menu: 'Task', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 11, menu: 'Report', view: false, edit: false, delete: false },
+    { slNo: 12, menu: 'User Activity Report', view: false, edit: false, delete: false },
+    { slNo: 13, menu: 'Work Report', view: false, edit: false, delete: false },
+    { slNo: 14, menu: 'FollowUp Summary', view: false, edit: false, delete: false },
+    { slNo: 15, menu: 'Enquiry Source Report', view: false, edit: false, delete: false },
+    { slNo: 16, menu: 'Task Report', view: false, edit: false, delete: false },
+    { slNo: 17, menu: 'Fee Payment Report', view: false, edit: false, delete: false },
+    { slNo: 18, menu: 'Application Status Report', view: false, edit: false, delete: false },
+    { slNo: 19, menu: 'Application Details Status Report', view: false, edit: false, delete: false },
+    { slNo: 20, menu: 'Student Report', view: false, edit: false, delete: false },
+    { slNo: 21, menu: 'Login Report', view: false, edit: false, delete: false },
+    { slNo: 22, menu: 'PCC Report', view: false, edit: false, delete: false },
+    { slNo: 23, menu: 'Medical Report', view: false, edit: false, delete: false },
+    { slNo: 24, menu: 'Checklist Report', view: false, edit: false, delete: false },
+    { slNo: 25, menu: 'Invoice Claim Report', view: false, edit: false, delete: false },
+    { slNo: 26, menu: 'Fees Pending Report', view: false, edit: false, delete: false },
+    { slNo: 27, menu: 'Ielts Students Report', view: false, edit: false, delete: false },
+    { slNo: 28, menu: 'Student Registration Report', view: false, edit: false, delete: false },
+    { slNo: 29, menu: 'Data', view: false, edit: false, delete: false },
+    { slNo: 30, menu: 'Import', view: false, edit: false, delete: false },
+    { slNo: 31, menu: 'Import Pool', view: false, edit: false, delete: false },
+    { slNo: 32, menu: 'FileTransfer', view: false, edit: false, delete: false },
+    { slNo: 33, menu: 'Settings', view: false, edit: false, delete: false },
+    { slNo: 34, menu: 'Course', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 35, menu: 'Overseas Course', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 36, menu: 'User Details', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 37, menu: 'Enquiry Source', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 38, menu: 'Status', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 39, menu: 'Stream', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 40, menu: 'FollowUp Type', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 41, menu: 'Country', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 42, menu: 'Level', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 43, menu: 'College', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 44, menu: 'Department', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 45, menu: 'Branch', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 46, menu: 'Checklist Item', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 47, menu: 'Document', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 48, menu: 'User Role', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 49, menu: 'Intake', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 50, menu: 'Place', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 51, menu: 'Company Info', view: false, edit: false, delete: false },
+    { slNo: 52, menu: 'Export', view: false, edit: false, delete: false },
+    { slNo: 53, menu: 'Register', view: false, edit: false, delete: false },
+    { slNo: 54, menu: 'Remove Registration', view: false, edit: false, delete: false },
+    { slNo: 55, menu: 'Course Discount', view: false, edit: false, delete: false },
+    { slNo: 56, menu: 'Generate Button', view: false, edit: false, delete: false },
+    { slNo: 57, menu: 'Receipt Delete', view: false, edit: false, delete: false },
+    { slNo: 58, menu: 'Account', view: false, edit: false, delete: false },
+    { slNo: 59, menu: 'Receipt', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 60, menu: 'Accounts', view: false, edit: false, delete: false },
+    { slNo: 61, menu: 'Payment', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
+    { slNo: 62, menu: 'Branch Account Report', view: false, edit: false, delete: false },
+    { slNo: 63, menu: 'Search All', view: false, edit: false, delete: false }
   ];
-  private followupTypes$ = new BehaviorSubject<SettingItem[]>(this.followupTypes);
+  private menuPerms$ = new BehaviorSubject<MenuPermRow[]>(this.menuPerms);
 
-  private enquirySources: SettingItem[] = [
-    { id: '1', code: 'SRC-01', name: 'Direct Walk-in', description: 'Student came to campus directly', status: 'Active' },
-    { id: '2', code: 'SRC-02', name: 'Website / Online Portal', description: 'Enquiry form submitted via web', status: 'Active' },
-    { id: '3', code: 'SRC-03', name: 'Social Media (Meta/Instagram)', description: 'Lead ad campaign response', status: 'Active' },
-    { id: '4', code: 'SRC-04', name: 'Alumni Referral', description: 'Referred by passed-out student', status: 'Active' },
-    { id: '5', code: 'SRC-05', name: 'Newspaper / Print Media', description: 'Advertisement in daily paper', status: 'Active' }
+  // 10. Settings (Follow-up Types, Enquiry Sources, Statuses)
+  private followupTypeItems: FollowupTypeItem[] = [
+    { slNo: 1, name: 'e-mail' },
+    { slNo: 2, name: 'Incoming Call' },
+    { slNo: 3, name: 'Outgoing Call' },
+    { slNo: 4, name: 'Walkin' }
   ];
-  private enquirySources$ = new BehaviorSubject<SettingItem[]>(this.enquirySources);
+  private followupTypeItems$ = new BehaviorSubject<FollowupTypeItem[]>(this.followupTypeItems);
 
-  private statusItems: SettingItem[] = [
-    { id: '1', code: 'ST-01', name: 'Active', description: 'Current valid record', status: 'Active' },
-    { id: '2', code: 'ST-02', name: 'Pending Verification', description: 'Awaiting administrative check', status: 'Active' },
-    { id: '3', code: 'ST-03', name: 'Course Completed', description: 'Successfully finished training', status: 'Active' },
-    { id: '4', code: 'ST-04', name: 'Transferred', description: 'Shifted to another branch or program', status: 'Active' }
+  private enquirySourceItems: EnquirySourceItem[] = [
+    { slNo: 1, name: 'Advertisement' },
+    { slNo: 2, name: 'Angamaly ref' },
+    { slNo: 3, name: 'Ernakulam ref' },
+    { slNo: 4, name: 'From Database' },
+    { slNo: 5, name: 'google' },
+    { slNo: 6, name: 'Kaloor ref' },
+    { slNo: 7, name: 'Pala ref' },
+    { slNo: 8, name: 'Phone' },
+    { slNo: 9, name: 'Thrikkakara ref' },
+    { slNo: 10, name: 'Walkin' },
+    { slNo: 11, name: 'Website' }
   ];
-  private statusItems$ = new BehaviorSubject<SettingItem[]>(this.statusItems);
+  private enquirySourceItems$ = new BehaviorSubject<EnquirySourceItem[]>(this.enquirySourceItems);
 
-  // 12. Company Information
+  private statusSettingsItems: StatusItem[] = [
+    { slNo: 1, name: 'Interested' },
+    { slNo: 2, name: 'Not Interested' },
+    { slNo: 3, name: 'Payment Pending' },
+    { slNo: 4, name: 'Payment Received' },
+    { slNo: 5, name: 'Unknown' }
+  ];
+  private statusSettingsItems$ = new BehaviorSubject<StatusItem[]>(this.statusSettingsItems);
+
+  // 11. Company Information
   private companyInfo: CompanyInfo = {
-    name: 'Naipunya Institute of Management & Technology',
-    tagline: 'Empowering Careers Through Quality Professional Education',
-    registrationNo: 'REG/KRL/2012/88741',
-    taxId: 'GSTIN32AABCN1234F1Z9',
-    email: 'info@naipunyainstitute.org',
-    phone: '+91 484 2800000 / +91 484 2800001',
-    website: 'https://naipunyainstitute.org',
-    address: 'Naipunya Knowledge Park, Near Infopark Expressway',
-    city: 'Kochi',
-    state: 'Kerala',
-    pincode: '682030',
-    currency: 'INR (₹)'
+    companyName: 'Naipunya Academy of Languages & Skills',
+    phoneNo: '98470 22001',
+    email: 'info@naipunya.edu.in',
+    address: 'MG Road, Ravipuram, Ernakulam, Kochi, Kerala 682016',
+    landPhone: '0484 235 8890',
+    website: 'https://naipunya.edu.in'
   };
   private companyInfo$ = new BehaviorSubject<CompanyInfo>(this.companyInfo);
 
   // Observables
-  getDepartments(): Observable<Department[]> { return this.departments$.asObservable(); }
-  getBranches(): Observable<Branch[]> { return this.branches$.asObservable(); }
-  getCourses(): Observable<Course[]> { return this.courses$.asObservable(); }
-  getStudents(): Observable<Student[]> { return this.students$.asObservable(); }
+  getDepartmentItems(): Observable<DepartmentItem[]> { return this.departmentItems$.asObservable(); }
+  getDeptStatusOptions(): Observable<StatusOption[]> { return this.deptStatusOptions$.asObservable(); }
+  getBranchItems(): Observable<BranchItem[]> { return this.branchItems$.asObservable(); }
+  getBranchDeptOptions(): Observable<DepartmentOption[]> { return this.branchDeptOptions$.asObservable(); }
+  getCourseItems(): Observable<CourseItem[]> { return this.courseItems$.asObservable(); }
+  getBranchFees(): Observable<CourseBranchFee[]> { return this.branchFees$.asObservable(); }
+  getStudentListRows(): Observable<StudentListRow[]> { return this.studentListRows$.asObservable(); }
+  getUserRows(): Observable<UserRow[]> { return this.users$.asObservable(); }
+  getDepartmentPerms(): Observable<DepartmentPermRow[]> { return this.departmentPerms$.asObservable(); }
+  getMenuPerms(): Observable<MenuPermRow[]> { return this.menuPerms$.asObservable(); }
+  getFollowupTypeItems(): Observable<FollowupTypeItem[]> { return this.followupTypeItems$.asObservable(); }
+  getEnquirySourceItems(): Observable<EnquirySourceItem[]> { return this.enquirySourceItems$.asObservable(); }
+  getStatusSettingsItems(): Observable<StatusItem[]> { return this.statusSettingsItems$.asObservable(); }
+  getCompanyInfo(): Observable<CompanyInfo> { return this.companyInfo$.asObservable(); }
   getFollowUps(): Observable<StudentFollowUp[]> { return this.followUps$.asObservable(); }
   getReceipts(): Observable<Receipt[]> { return this.receipts$.asObservable(); }
   getPayments(): Observable<Payment[]> { return this.payments$.asObservable(); }
   getAccounts(): Observable<Account[]> { return this.accounts$.asObservable(); }
-  getUserRoles(): Observable<UserRole[]> { return this.userRoles$.asObservable(); }
-  getSystemUsers(): Observable<SystemUser[]> { return this.systemUsers$.asObservable(); }
-  getFollowupTypes(): Observable<SettingItem[]> { return this.followupTypes$.asObservable(); }
-  getEnquirySources(): Observable<SettingItem[]> { return this.enquirySources$.asObservable(); }
-  getStatusItems(): Observable<SettingItem[]> { return this.statusItems$.asObservable(); }
-  getCompanyInfo(): Observable<CompanyInfo> { return this.companyInfo$.asObservable(); }
+
+  getBranches(): Observable<Branch[]> {
+    return of(this.branchItems.map(b => ({
+      id: String(b.slNo),
+      code: `BR-${b.name.substring(0, 3).toUpperCase()}`,
+      name: b.name,
+      city: b.name,
+      phone: '0484 235 8890',
+      address: 'Main Campus',
+      status: 'Active' as const
+    })));
+  }
+
+  getStudents(): Observable<Student[]> {
+    return of(this.studentListRows.map(s => ({
+      id: String(s.slNo),
+      code: `STU-${1000 + s.slNo}`,
+      name: s.name,
+      phone: s.mobile,
+      email: `${s.name.toLowerCase().replace(/[^a-z]/g, '')}@example.com`,
+      course: s.note || 'IELTS',
+      branch: 'Ernakulam',
+      department: s.department || 'Admission',
+      batch: '2026-Batch A',
+      admissionDate: '2026-01-10',
+      feesTotal: 45000,
+      feesPaid: 25000,
+      status: 'Active' as const
+    })));
+  }
+
+  addStudent(student: any) {
+    this.addStudentListRow({
+      name: student.name || 'New Student',
+      mobile: student.phone || '',
+      note: student.course || '',
+      remark: student.course || '',
+      nextFollowUp: '25-Nov-2026',
+      department: student.department || 'Admission',
+      status: 'Interested',
+      to: 'DIVYA',
+      from: 'DIVYA',
+      branch: student.branch || 'Ernakulam'
+    });
+  }
+
+  getFollowupTypes(): Observable<SettingItem[]> {
+    return of(this.followupTypeItems.map(f => ({
+      id: String(f.slNo),
+      code: `FT-0${f.slNo}`,
+      name: f.name,
+      status: 'Active' as const
+    })));
+  }
+
+  getEnquirySources(): Observable<SettingItem[]> {
+    return of(this.enquirySourceItems.map(e => ({
+      id: String(e.slNo),
+      code: `SRC-0${e.slNo}`,
+      name: e.name,
+      status: 'Active' as const
+    })));
+  }
 
   setBranch(branch: string) {
     this.currentBranchSubject.next(branch);
   }
 
-  // Student Methods
-  addStudent(student: Omit<Student, 'id' | 'code'>): Student {
-    const newStudent: Student = {
-      ...student,
-      id: String(Date.now()),
-      code: `STU-${1000 + this.students.length + 1}`
-    };
-    this.students = [newStudent, ...this.students];
-    this.students$.next([...this.students]);
-    return newStudent;
+  // --- Department CRUD ---
+  addDepartmentItem(item: Omit<DepartmentItem, 'slNo'>) {
+    const newItem: DepartmentItem = { ...item, slNo: this.departmentItems.length + 1 };
+    this.departmentItems = [...this.departmentItems, newItem];
+    this.departmentItems$.next([...this.departmentItems]);
   }
 
-  updateStudent(id: string, updated: Partial<Student>) {
-    this.students = this.students.map(s => s.id === id ? { ...s, ...updated } : s);
-    this.students$.next([...this.students]);
+  updateDepartmentItem(slNo: number, updated: Partial<DepartmentItem>) {
+    this.departmentItems = this.departmentItems.map(d => d.slNo === slNo ? { ...d, ...updated } : d);
+    this.departmentItems$.next([...this.departmentItems]);
   }
 
-  deleteStudent(id: string) {
-    this.students = this.students.filter(s => s.id !== id);
-    this.students$.next([...this.students]);
+  deleteDepartmentItem(slNo: number) {
+    this.departmentItems = this.departmentItems.filter(d => d.slNo !== slNo);
+    this.departmentItems.forEach((d, idx) => d.slNo = idx + 1);
+    this.departmentItems$.next([...this.departmentItems]);
   }
 
-  // Follow-up Methods
-  addFollowUp(item: Omit<StudentFollowUp, 'id'>) {
-    const newItem: StudentFollowUp = { ...item, id: String(Date.now()) };
-    this.followUps = [newItem, ...this.followUps];
-    this.followUps$.next([...this.followUps]);
+  // --- Branch CRUD ---
+  addBranchItem(item: Omit<BranchItem, 'slNo'>) {
+    const newItem: BranchItem = { ...item, slNo: this.branchItems.length + 1 };
+    this.branchItems = [...this.branchItems, newItem];
+    this.branchItems$.next([...this.branchItems]);
   }
 
-  updateFollowUp(id: string, updated: Partial<StudentFollowUp>) {
-    this.followUps = this.followUps.map(f => f.id === id ? { ...f, ...updated } : f);
-    this.followUps$.next([...this.followUps]);
+  updateBranchItem(slNo: number, updated: Partial<BranchItem>) {
+    this.branchItems = this.branchItems.map(b => b.slNo === slNo ? { ...b, ...updated } : b);
+    this.branchItems$.next([...this.branchItems]);
   }
 
-  deleteFollowUp(id: string) {
-    this.followUps = this.followUps.filter(f => f.id !== id);
-    this.followUps$.next([...this.followUps]);
+  deleteBranchItem(slNo: number) {
+    this.branchItems = this.branchItems.filter(b => b.slNo !== slNo);
+    this.branchItems.forEach((b, idx) => b.slNo = idx + 1);
+    this.branchItems$.next([...this.branchItems]);
   }
 
-  // Course Methods
-  addCourse(course: Omit<Course, 'id' | 'code'>): Course {
-    const newCourse: Course = {
-      ...course,
-      id: String(Date.now()),
-      code: `CRS-${course.name.substring(0, 3).toUpperCase()}`
-    };
-    this.courses = [newCourse, ...this.courses];
-    this.courses$.next([...this.courses]);
-    return newCourse;
+  // --- Course CRUD ---
+  addCourseItem(item: Omit<CourseItem, 'slNo'>) {
+    const newItem: CourseItem = { ...item, slNo: this.courseItems.length + 1 };
+    this.courseItems = [...this.courseItems, newItem];
+    this.courseItems$.next([...this.courseItems]);
   }
 
-  updateCourse(id: string, updated: Partial<Course>) {
-    this.courses = this.courses.map(c => c.id === id ? { ...c, ...updated } : c);
-    this.courses$.next([...this.courses]);
+  updateCourseItem(slNo: number, updated: Partial<CourseItem>) {
+    this.courseItems = this.courseItems.map(c => c.slNo === slNo ? { ...c, ...updated } : c);
+    this.courseItems$.next([...this.courseItems]);
   }
 
-  deleteCourse(id: string) {
-    this.courses = this.courses.filter(c => c.id !== id);
-    this.courses$.next([...this.courses]);
+  deleteCourseItem(slNo: number) {
+    this.courseItems = this.courseItems.filter(c => c.slNo !== slNo);
+    this.courseItems.forEach((c, idx) => c.slNo = idx + 1);
+    this.courseItems$.next([...this.courseItems]);
   }
 
-  // Department Methods
-  addDepartment(dept: Omit<Department, 'id' | 'code'>): Department {
-    const newDept: Department = {
-      ...dept,
-      id: String(Date.now()),
-      code: `DEP-0${this.departments.length + 1}`
-    };
-    this.departments = [newDept, ...this.departments];
-    this.departments$.next([...this.departments]);
-    return newDept;
+  // --- Student List CRUD ---
+  addStudentListRow(row: Omit<StudentListRow, 'slNo'>) {
+    const newRow: StudentListRow = { ...row, slNo: this.studentListRows.length + 1 };
+    this.studentListRows = [newRow, ...this.studentListRows];
+    this.studentListRows$.next([...this.studentListRows]);
   }
 
-  updateDepartment(id: string, updated: Partial<Department>) {
-    this.departments = this.departments.map(d => d.id === id ? { ...d, ...updated } : d);
-    this.departments$.next([...this.departments]);
+  updateStudentListRow(slNo: number, updated: Partial<StudentListRow>) {
+    this.studentListRows = this.studentListRows.map(s => s.slNo === slNo ? { ...s, ...updated } : s);
+    this.studentListRows$.next([...this.studentListRows]);
   }
 
-  deleteDepartment(id: string) {
-    this.departments = this.departments.filter(d => d.id !== id);
-    this.departments$.next([...this.departments]);
+  deleteStudentListRow(slNo: number) {
+    this.studentListRows = this.studentListRows.filter(s => s.slNo !== slNo);
+    this.studentListRows.forEach((s, idx) => s.slNo = idx + 1);
+    this.studentListRows$.next([...this.studentListRows]);
   }
 
-  // Branch Methods
-  addBranch(branch: Omit<Branch, 'id' | 'code'>): Branch {
-    const newBranch: Branch = {
-      ...branch,
-      id: String(Date.now()),
-      code: `BR-${branch.city.substring(0, 3).toUpperCase()}`
-    };
-    this.branches = [newBranch, ...this.branches];
-    this.branches$.next([...this.branches]);
-    return newBranch;
+  // --- Users CRUD ---
+  addUserRow(user: Omit<UserRow, 'slNo'>) {
+    const newUser: UserRow = { ...user, slNo: this.users.length + 1 };
+    this.users = [...this.users, newUser];
+    this.users$.next([...this.users]);
   }
 
-  updateBranch(id: string, updated: Partial<Branch>) {
-    this.branches = this.branches.map(b => b.id === id ? { ...b, ...updated } : b);
-    this.branches$.next([...this.branches]);
+  deleteUserRow(slNo: number) {
+    this.users = this.users.filter(u => u.slNo !== slNo);
+    this.users.forEach((u, idx) => u.slNo = idx + 1);
+    this.users$.next([...this.users]);
   }
 
-  deleteBranch(id: string) {
-    this.branches = this.branches.filter(b => b.id !== id);
-    this.branches$.next([...this.branches]);
+  // --- Follow-up Types CRUD ---
+  addFollowupTypeItem(name: string) {
+    const newItem: FollowupTypeItem = { slNo: this.followupTypeItems.length + 1, name };
+    this.followupTypeItems = [...this.followupTypeItems, newItem];
+    this.followupTypeItems$.next([...this.followupTypeItems]);
   }
 
-  // Account Methods
+  updateFollowupTypeItem(slNo: number, name: string) {
+    this.followupTypeItems = this.followupTypeItems.map(i => i.slNo === slNo ? { ...i, name } : i);
+    this.followupTypeItems$.next([...this.followupTypeItems]);
+  }
+
+  deleteFollowupTypeItem(slNo: number) {
+    this.followupTypeItems = this.followupTypeItems.filter(i => i.slNo !== slNo);
+    this.followupTypeItems.forEach((i, idx) => i.slNo = idx + 1);
+    this.followupTypeItems$.next([...this.followupTypeItems]);
+  }
+
+  // --- Enquiry Sources CRUD ---
+  addEnquirySourceItem(name: string) {
+    const newItem: EnquirySourceItem = { slNo: this.enquirySourceItems.length + 1, name };
+    this.enquirySourceItems = [...this.enquirySourceItems, newItem];
+    this.enquirySourceItems$.next([...this.enquirySourceItems]);
+  }
+
+  updateEnquirySourceItem(slNo: number, name: string) {
+    this.enquirySourceItems = this.enquirySourceItems.map(i => i.slNo === slNo ? { ...i, name } : i);
+    this.enquirySourceItems$.next([...this.enquirySourceItems]);
+  }
+
+  deleteEnquirySourceItem(slNo: number) {
+    this.enquirySourceItems = this.enquirySourceItems.filter(i => i.slNo !== slNo);
+    this.enquirySourceItems.forEach((i, idx) => i.slNo = idx + 1);
+    this.enquirySourceItems$.next([...this.enquirySourceItems]);
+  }
+
+  // --- Status Settings CRUD ---
+  addStatusSettingsItem(name: string) {
+    const newItem: StatusItem = { slNo: this.statusSettingsItems.length + 1, name };
+    this.statusSettingsItems = [...this.statusSettingsItems, newItem];
+    this.statusSettingsItems$.next([...this.statusSettingsItems]);
+  }
+
+  updateStatusSettingsItem(slNo: number, name: string) {
+    this.statusSettingsItems = this.statusSettingsItems.map(i => i.slNo === slNo ? { ...i, name } : i);
+    this.statusSettingsItems$.next([...this.statusSettingsItems]);
+  }
+
+  deleteStatusSettingsItem(slNo: number) {
+    this.statusSettingsItems = this.statusSettingsItems.filter(i => i.slNo !== slNo);
+    this.statusSettingsItems.forEach((i, idx) => i.slNo = idx + 1);
+    this.statusSettingsItems$.next([...this.statusSettingsItems]);
+  }
+
+  // --- Company Info Update ---
+  updateCompanyInfo(info: CompanyInfo) {
+    this.companyInfo = { ...info };
+    this.companyInfo$.next({ ...this.companyInfo });
+  }
+
+  // --- Accounts CRUD ---
   addAccount(acc: Omit<Account, 'id' | 'code'>): Account {
     const newAcc: Account = {
       ...acc,
@@ -441,7 +967,7 @@ export class MockDataService {
     this.accounts$.next([...this.accounts]);
   }
 
-  // Receipt Methods
+  // --- Receipt CRUD ---
   addReceipt(receipt: Omit<Receipt, 'id' | 'receiptNo'>): Receipt {
     const newReceipt: Receipt = {
       ...receipt,
@@ -450,15 +976,6 @@ export class MockDataService {
     };
     this.receipts = [newReceipt, ...this.receipts];
     this.receipts$.next([...this.receipts]);
-
-    // Update student paid amount
-    const student = this.students.find(s => s.code === receipt.studentId || s.name === receipt.studentName);
-    if (student) {
-      this.updateStudent(student.id, {
-        feesPaid: (student.feesPaid || 0) + Number(receipt.amount)
-      });
-    }
-
     return newReceipt;
   }
 
@@ -467,94 +984,20 @@ export class MockDataService {
     this.receipts$.next([...this.receipts]);
   }
 
-  // Payment Methods
-  addPayment(pmt: Omit<Payment, 'id' | 'voucherNo'>): Payment {
-    const newPayment: Payment = {
-      ...pmt,
-      id: String(Date.now()),
-      voucherNo: `VCH-2026-${100 + this.payments.length + 1}`
-    };
-    this.payments = [newPayment, ...this.payments];
-    this.payments$.next([...this.payments]);
-    return newPayment;
+  // --- FollowUp CRUD ---
+  addFollowUp(item: Omit<StudentFollowUp, 'id'>) {
+    const newItem: StudentFollowUp = { ...item, id: String(Date.now()) };
+    this.followUps = [newItem, ...this.followUps];
+    this.followUps$.next([...this.followUps]);
   }
 
-  deletePayment(id: string) {
-    this.payments = this.payments.filter(p => p.id !== id);
-    this.payments$.next([...this.payments]);
+  updateFollowUp(id: string, updated: Partial<StudentFollowUp>) {
+    this.followUps = this.followUps.map(f => f.id === id ? { ...f, ...updated } : f);
+    this.followUps$.next([...this.followUps]);
   }
 
-  // User Role Methods
-  addUserRole(role: Omit<UserRole, 'id'>): UserRole {
-    const newRole: UserRole = { ...role, id: String(Date.now()) };
-    this.userRoles = [newRole, ...this.userRoles];
-    this.userRoles$.next([...this.userRoles]);
-    return newRole;
-  }
-
-  updateUserRole(id: string, updated: Partial<UserRole>) {
-    this.userRoles = this.userRoles.map(r => r.id === id ? { ...r, ...updated } : r);
-    this.userRoles$.next([...this.userRoles]);
-  }
-
-  deleteUserRole(id: string) {
-    this.userRoles = this.userRoles.filter(r => r.id !== id);
-    this.userRoles$.next([...this.userRoles]);
-  }
-
-  // User Methods
-  addUser(user: Omit<SystemUser, 'id'>): SystemUser {
-    const newUser: SystemUser = { ...user, id: String(Date.now()) };
-    this.systemUsers = [newUser, ...this.systemUsers];
-    this.systemUsers$.next([...this.systemUsers]);
-    return newUser;
-  }
-
-  updateUser(id: string, updated: Partial<SystemUser>) {
-    this.systemUsers = this.systemUsers.map(u => u.id === id ? { ...u, ...updated } : u);
-    this.systemUsers$.next([...this.systemUsers]);
-  }
-
-  deleteUser(id: string) {
-    this.systemUsers = this.systemUsers.filter(u => u.id !== id);
-    this.systemUsers$.next([...this.systemUsers]);
-  }
-
-  // Settings Methods
-  addSetting(type: 'followup' | 'enquiry' | 'status', item: Omit<SettingItem, 'id' | 'code'>) {
-    const newItem: SettingItem = {
-      ...item,
-      id: String(Date.now()),
-      code: `${type.substring(0, 2).toUpperCase()}-${Date.now().toString().slice(-3)}`
-    };
-    if (type === 'followup') {
-      this.followupTypes = [newItem, ...this.followupTypes];
-      this.followupTypes$.next([...this.followupTypes]);
-    } else if (type === 'enquiry') {
-      this.enquirySources = [newItem, ...this.enquirySources];
-      this.enquirySources$.next([...this.enquirySources]);
-    } else {
-      this.statusItems = [newItem, ...this.statusItems];
-      this.statusItems$.next([...this.statusItems]);
-    }
-  }
-
-  deleteSetting(type: 'followup' | 'enquiry' | 'status', id: string) {
-    if (type === 'followup') {
-      this.followupTypes = this.followupTypes.filter(i => i.id !== id);
-      this.followupTypes$.next([...this.followupTypes]);
-    } else if (type === 'enquiry') {
-      this.enquirySources = this.enquirySources.filter(i => i.id !== id);
-      this.enquirySources$.next([...this.enquirySources]);
-    } else {
-      this.statusItems = this.statusItems.filter(i => i.id !== id);
-      this.statusItems$.next([...this.statusItems]);
-    }
-  }
-
-  // Company Info Update
-  updateCompanyInfo(info: CompanyInfo) {
-    this.companyInfo = { ...info };
-    this.companyInfo$.next({ ...this.companyInfo });
+  deleteFollowUp(id: string) {
+    this.followUps = this.followUps.filter(f => f.id !== id);
+    this.followUps$.next([...this.followUps]);
   }
 }

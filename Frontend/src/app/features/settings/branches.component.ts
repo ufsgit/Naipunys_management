@@ -2,17 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
-
-export interface BranchItem {
-  slNo: number;
-  name: string;
-}
-
-export interface DepartmentOption {
-  slNo: number;
-  selected: boolean;
-  name: string;
-}
+import { MockDataService, BranchItem, DepartmentOption } from '../../core/mock-data.service';
 
 @Component({
   selector: 'app-branches',
@@ -47,22 +37,20 @@ export interface DepartmentOption {
                 <button
                   type="button"
                   class="btn-action-edit"
-                  [ngClass]="getEditClass(i)"
                   (click)="openEditModal(b)"
                   title="Edit Branch"
                 >
-                  <app-icon name="edit" [size]="14"></app-icon>
+                  <app-icon name="edit" [size]="15"></app-icon>
                 </button>
               </td>
               <td style="text-align: center;">
                 <button
                   type="button"
                   class="btn-action-delete"
-                  [ngClass]="getDeleteClass(i)"
                   (click)="deleteBranch(b)"
                   title="Delete Branch"
                 >
-                  <app-icon name="trash-2" [size]="14"></app-icon>
+                  <app-icon name="trash-2" [size]="15"></app-icon>
                 </button>
               </td>
             </tr>
@@ -299,55 +287,30 @@ export interface DepartmentOption {
       color: #64748b;
     }
 
-    /* Action Buttons (Purple/Blue edit, White/Brown delete) */
+    /* Action Buttons */
     .btn-action-edit,
     .btn-action-delete {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      border: none;
+      background: transparent;
+      color: #64748b;
       cursor: pointer;
       transition: all 0.15s ease;
     }
 
-    .btn-purple {
-      background-color: #7c3aed;
-      border: none;
-      color: #ffffff;
-    }
-    .btn-purple:hover {
-      background-color: #6d28d9;
+    .btn-action-edit:hover {
+      color: #0b62b6;
+      background-color: #f0f7ff;
     }
 
-    .btn-blue {
-      background-color: #2563eb;
-      border: none;
-      color: #ffffff;
-    }
-    .btn-blue:hover {
-      background-color: #1d4ed8;
-    }
-
-    .btn-del-white {
-      background-color: #ffffff;
-      border: 1px solid #cbd5e1;
-      color: #64748b;
-    }
-    .btn-del-white:hover {
-      border-color: #ef4444;
-      color: #ef4444;
+    .btn-action-delete:hover {
+      color: #dc2626;
       background-color: #fef2f2;
-    }
-
-    .btn-del-brown {
-      background-color: #c2410c;
-      border: none;
-      color: #ffffff;
-    }
-    .btn-del-brown:hover {
-      background-color: #9a3412;
     }
 
     .empty-state {
@@ -592,24 +555,8 @@ export interface DepartmentOption {
   `]
 })
 export class BranchesComponent implements OnInit {
-  branches: BranchItem[] = [
-    { slNo: 1, name: 'Ernakulam' },
-    { slNo: 2, name: 'Kaloor' },
-    { slNo: 3, name: 'Angamaly' },
-    { slNo: 4, name: 'Thrikkakara' },
-    { slNo: 5, name: 'Pala' },
-    { slNo: 6, name: 'Naipunya Overseas' }
-  ];
-
-  departmentOptions: DepartmentOption[] = [
-    { slNo: 1, selected: false, name: 'Accounts' },
-    { slNo: 2, selected: false, name: 'Admission' },
-    { slNo: 3, selected: false, name: 'CLOSED' },
-    { slNo: 4, selected: false, name: 'Follow Up' },
-    { slNo: 5, selected: false, name: 'JOINED' },
-    { slNo: 6, selected: false, name: 'Marketing' },
-    { slNo: 7, selected: false, name: 'Visa' }
-  ];
+  branches: BranchItem[] = [];
+  departmentOptions: DepartmentOption[] = [];
 
   isModalOpen = false;
   isEditMode = false;
@@ -627,14 +574,11 @@ export class BranchesComponent implements OnInit {
     email: ''
   };
 
-  ngOnInit() {}
+  constructor(private mockDataService: MockDataService) {}
 
-  getEditClass(index: number): string {
-    return index % 2 === 1 ? 'btn-blue' : 'btn-purple';
-  }
-
-  getDeleteClass(index: number): string {
-    return index % 2 === 1 ? 'btn-del-brown' : 'btn-del-white';
+  ngOnInit() {
+    this.mockDataService.getBranchItems().subscribe(data => this.branches = data);
+    this.mockDataService.getBranchDeptOptions().subscribe(data => this.departmentOptions = data);
   }
 
   openCreateModal() {
@@ -680,13 +624,11 @@ export class BranchesComponent implements OnInit {
     if (!this.branchForm.name.trim()) return;
 
     if (this.isEditMode && this.editingIndex > -1) {
-      this.branches[this.editingIndex] = {
-        slNo: this.branches[this.editingIndex].slNo,
+      this.mockDataService.updateBranchItem(this.branches[this.editingIndex].slNo, {
         name: this.branchForm.name
-      };
+      });
     } else {
-      this.branches.push({
-        slNo: this.branches.length + 1,
+      this.mockDataService.addBranchItem({
         name: this.branchForm.name
       });
     }
@@ -696,8 +638,7 @@ export class BranchesComponent implements OnInit {
 
   deleteBranch(b: BranchItem) {
     if (confirm(`Are you sure you want to delete ${b.name}?`)) {
-      this.branches = this.branches.filter(item => item !== b);
-      this.branches.forEach((item, idx) => (item.slNo = idx + 1));
+      this.mockDataService.deleteBranchItem(b.slNo);
     }
   }
 }

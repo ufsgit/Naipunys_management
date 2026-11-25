@@ -2,20 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
-
-export interface CourseBranchFee {
-  slNo: number;
-  branch: string;
-  fees: string | number;
-}
-
-export interface CourseItem {
-  slNo: number;
-  name: string;
-  fees: number;
-  hasDelete: boolean;
-  hasEdit: boolean;
-}
+import { MockDataService, CourseItem, CourseBranchFee } from '../../core/mock-data.service';
 
 @Component({
   selector: 'app-course-setup',
@@ -523,16 +510,8 @@ export interface CourseItem {
   `]
 })
 export class CourseSetupComponent implements OnInit {
-  courses: CourseItem[] = [
-    { slNo: 1, name: 'A01 IELTS REGULAR', fees: 0, hasDelete: true, hasEdit: true },
-    { slNo: 2, name: 'A02 IELTS 2 MONTHS', fees: 0, hasDelete: true, hasEdit: true },
-    { slNo: 3, name: 'A03 IELTS CRASH', fees: 0, hasDelete: true, hasEdit: true },
-    { slNo: 4, name: 'A04 IELTS Extn (ONE MONTH)', fees: 0, hasDelete: true, hasEdit: true },
-    { slNo: 5, name: 'A05 IELTS Extn (2 WEEKS)', fees: 0, hasDelete: true, hasEdit: true },
-    { slNo: 6, name: 'A06 OET', fees: 0, hasDelete: true, hasEdit: true },
-    { slNo: 7, name: 'A07 COMMUNICATIVE ENGLISH 1 MONTH', fees: 0, hasDelete: true, hasEdit: true },
-    { slNo: 8, name: 'A08 OET (2 Weeks)', fees: 0, hasDelete: true, hasEdit: true }
-  ];
+  courses: CourseItem[] = [];
+  branchFees: CourseBranchFee[] = [];
 
   getEditClass(index: number): string {
     return index % 2 === 1 ? 'btn-blue' : 'btn-purple';
@@ -550,16 +529,12 @@ export class CourseSetupComponent implements OnInit {
     bookAmount: 0
   };
 
-  branchFees: CourseBranchFee[] = [
-    { slNo: 1, branch: 'Ernakulam', fees: '' },
-    { slNo: 2, branch: 'Kaloor', fees: '' },
-    { slNo: 3, branch: 'Angamaly', fees: '' },
-    { slNo: 4, branch: 'Thrikkakara', fees: '' },
-    { slNo: 5, branch: 'Pala', fees: '' },
-    { slNo: 6, branch: 'Naipunya Overseas', fees: '' }
-  ];
+  constructor(private mockDataService: MockDataService) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.mockDataService.getCourseItems().subscribe(data => this.courses = data);
+    this.mockDataService.getBranchFees().subscribe(data => this.branchFees = data);
+  }
 
   openCreateModal() {
     this.isEditMode = false;
@@ -586,25 +561,17 @@ export class CourseSetupComponent implements OnInit {
   }
 
   resetBranchFees() {
-    this.branchFees = [
-      { slNo: 1, branch: 'Ernakulam', fees: '' },
-      { slNo: 2, branch: 'Kaloor', fees: '' },
-      { slNo: 3, branch: 'Angamaly', fees: '' },
-      { slNo: 4, branch: 'Thrikkakara', fees: '' },
-      { slNo: 5, branch: 'Pala', fees: '' },
-      { slNo: 6, branch: 'Naipunya Overseas', fees: '' }
-    ];
+    this.mockDataService.getBranchFees().subscribe(data => this.branchFees = [...data]);
   }
 
   saveCourse() {
     if (!this.courseForm.name.trim()) return;
 
-    this.courses.push({
-      slNo: this.courses.length + 1,
+    this.mockDataService.addCourseItem({
       name: this.courseForm.name,
       fees: 0,
       hasDelete: true,
-      hasEdit: false
+      hasEdit: true
     });
 
     this.closeModal();
@@ -612,7 +579,7 @@ export class CourseSetupComponent implements OnInit {
 
   deleteCourse(c: CourseItem) {
     if (confirm(`Are you sure you want to delete ${c.name}?`)) {
-      this.courses = this.courses.filter(item => item !== c);
+      this.mockDataService.deleteCourseItem(c.slNo);
     }
   }
 }

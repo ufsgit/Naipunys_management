@@ -2,34 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
-
-export interface UserRow {
-  slNo: number;
-  userName: string;
-  userType: 'User' | 'Admin' | string;
-  branch: string;
-  phoneNo: string;
-  hasDelete: boolean;
-  hasEdit: boolean;
-}
-
-export interface DepartmentPermRow {
-  slNo: number;
-  branch: string;
-  department: string;
-  view: boolean;
-  viewAll: boolean;
-}
-
-export interface MenuPermRow {
-  slNo: number;
-  menu: string;
-  view: boolean;
-  edit: boolean;
-  delete: boolean;
-  hasEdit?: boolean;
-  hasDelete?: boolean;
-}
+import { MockDataService, UserRow, DepartmentPermRow, MenuPermRow } from '../../core/mock-data.service';
 
 @Component({
   selector: 'app-user-details',
@@ -899,23 +872,7 @@ export class UserDetailsComponent implements OnInit {
   searchUsername = '';
   selectedBranch = 'Select Branch';
 
-  users: UserRow[] = [
-    { slNo: 1, userName: 'AMALU', userType: 'User', branch: 'Thrikkakara', phoneNo: '', hasDelete: true, hasEdit: true },
-    { slNo: 2, userName: 'ANNIE', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
-    { slNo: 3, userName: 'Athul', userType: 'User', branch: 'Angamaly', phoneNo: '', hasDelete: true, hasEdit: true },
-    { slNo: 4, userName: 'Binijose', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
-    { slNo: 5, userName: 'DIRECTOR', userType: 'Admin', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
-    { slNo: 6, userName: 'DIVYA', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
-    { slNo: 7, userName: 'DRSAJITHA', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
-    { slNo: 8, userName: 'Febi2020', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
-    { slNo: 9, userName: 'Feby', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
-    { slNo: 10, userName: 'FEBY18', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
-    { slNo: 11, userName: 'Frjophy', userType: 'Admin', branch: 'Thrikkakara', phoneNo: '', hasDelete: true, hasEdit: true },
-    { slNo: 12, userName: 'Froly', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
-    { slNo: 13, userName: 'Froly2020', userType: 'User', branch: 'Ernakulam', phoneNo: '', hasDelete: true, hasEdit: true },
-    { slNo: 14, userName: 'Frsebanp', userType: 'Admin', branch: 'Angamaly', phoneNo: '', hasDelete: true, hasEdit: true },
-    { slNo: 15, userName: 'Frshijo', userType: 'Admin', branch: 'Kaloor', phoneNo: '', hasDelete: true, hasEdit: true }
-  ];
+  users: UserRow[] = [];
 
   getEditClass(index: number): string {
     return index % 2 === 1 ? 'btn-brown' : 'btn-purple';
@@ -943,123 +900,18 @@ export class UserDetailsComponent implements OnInit {
     email: ''
   };
 
-  departmentPerms: DepartmentPermRow[] = [
-    // Angamaly (1-7)
-    { slNo: 1, branch: 'Angamaly', department: 'Admission', view: false, viewAll: false },
-    { slNo: 2, branch: '', department: 'Accounts', view: false, viewAll: false },
-    { slNo: 3, branch: '', department: 'CLOSED', view: false, viewAll: false },
-    { slNo: 4, branch: '', department: 'Marketing', view: false, viewAll: false },
-    { slNo: 5, branch: '', department: 'Follow Up', view: false, viewAll: false },
-    { slNo: 6, branch: '', department: 'JOINED', view: false, viewAll: false },
-    { slNo: 7, branch: '', department: 'Visa', view: false, viewAll: false },
-    // Ernakulam (8-14)
-    { slNo: 8, branch: 'Ernakulam', department: 'Accounts', view: false, viewAll: false },
-    { slNo: 9, branch: '', department: 'Admission', view: false, viewAll: false },
-    { slNo: 10, branch: '', department: 'CLOSED', view: false, viewAll: false },
-    { slNo: 11, branch: '', department: 'Follow Up', view: false, viewAll: false },
-    { slNo: 12, branch: '', department: 'JOINED', view: false, viewAll: false },
-    { slNo: 13, branch: '', department: 'Marketing', view: false, viewAll: false },
-    { slNo: 14, branch: '', department: 'Visa', view: false, viewAll: false },
-    // Kaloor (15-21)
-    { slNo: 15, branch: 'Kaloor', department: 'CLOSED', view: false, viewAll: false },
-    { slNo: 16, branch: '', department: 'JOINED', view: false, viewAll: false },
-    { slNo: 17, branch: '', department: 'Admission', view: false, viewAll: false },
-    { slNo: 18, branch: '', department: 'Follow Up', view: false, viewAll: false },
-    { slNo: 19, branch: '', department: 'Accounts', view: false, viewAll: false },
-    { slNo: 20, branch: '', department: 'Visa', view: false, viewAll: false },
-    { slNo: 21, branch: '', department: 'Marketing', view: false, viewAll: false },
-    // Naipunya Overseas (22-28)
-    { slNo: 22, branch: 'Naipunya Overseas', department: 'Admission', view: false, viewAll: false },
-    { slNo: 23, branch: '', department: 'Accounts', view: false, viewAll: false },
-    { slNo: 24, branch: '', department: 'CLOSED', view: false, viewAll: false },
-    { slNo: 25, branch: '', department: 'Follow Up', view: false, viewAll: false },
-    { slNo: 26, branch: '', department: 'JOINED', view: false, viewAll: false },
-    { slNo: 27, branch: '', department: 'Visa', view: false, viewAll: false },
-    { slNo: 28, branch: '', department: 'Marketing', view: false, viewAll: false },
-    // Pala (29-33)
-    { slNo: 29, branch: 'Pala', department: 'Accounts', view: false, viewAll: false },
-    { slNo: 30, branch: '', department: 'Admission', view: false, viewAll: false },
-    { slNo: 31, branch: '', department: 'Follow Up', view: false, viewAll: false },
-    { slNo: 32, branch: '', department: 'Marketing', view: false, viewAll: false },
-    { slNo: 33, branch: '', department: 'Visa', view: false, viewAll: false },
-    // Thrikkakara (34-40)
-    { slNo: 34, branch: 'Thrikkakara', department: 'CLOSED', view: false, viewAll: false },
-    { slNo: 35, branch: '', department: 'Admission', view: false, viewAll: false },
-    { slNo: 36, branch: '', department: 'Accounts', view: false, viewAll: false },
-    { slNo: 37, branch: '', department: 'Follow Up', view: false, viewAll: false },
-    { slNo: 38, branch: '', department: 'JOINED', view: false, viewAll: false },
-    { slNo: 39, branch: '', department: 'Marketing', view: false, viewAll: false },
-    { slNo: 40, branch: '', department: 'Visa', view: false, viewAll: false }
-  ];
+  departmentPerms: DepartmentPermRow[] = [];
+  menuPerms: MenuPermRow[] = [];
 
-  menuPerms: MenuPermRow[] = [
-    { slNo: 1, menu: 'Create New', view: false, edit: false, delete: false, hasEdit: false, hasDelete: true },
-    { slNo: 2, menu: 'Tab-Qualification', view: false, edit: false, delete: false },
-    { slNo: 3, menu: 'Tab-Course', view: false, edit: false, delete: false },
-    { slNo: 4, menu: 'Tab-Application', view: false, edit: false, delete: false },
-    { slNo: 5, menu: 'Tab-Fund Details', view: false, edit: false, delete: false },
-    { slNo: 6, menu: 'Tab-Invoice Details', view: false, edit: false, delete: false },
-    { slNo: 7, menu: 'Tab-Checklist', view: false, edit: false, delete: false },
-    { slNo: 8, menu: 'Tab-Document', view: false, edit: false, delete: false },
-    { slNo: 9, menu: 'Student List', view: false, edit: false, delete: false },
-    { slNo: 10, menu: 'Task', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 11, menu: 'Report', view: false, edit: false, delete: false },
-    { slNo: 12, menu: 'User Activity Report', view: false, edit: false, delete: false },
-    { slNo: 13, menu: 'Work Report', view: false, edit: false, delete: false },
-    { slNo: 14, menu: 'FollowUp Summary', view: false, edit: false, delete: false },
-    { slNo: 15, menu: 'Enquiry Source Report', view: false, edit: false, delete: false },
-    { slNo: 16, menu: 'Task Report', view: false, edit: false, delete: false },
-    { slNo: 17, menu: 'Fee Payment Report', view: false, edit: false, delete: false },
-    { slNo: 18, menu: 'Application Status Report', view: false, edit: false, delete: false },
-    { slNo: 19, menu: 'Application Details Status Report', view: false, edit: false, delete: false },
-    { slNo: 20, menu: 'Student Report', view: false, edit: false, delete: false },
-    { slNo: 21, menu: 'Login Report', view: false, edit: false, delete: false },
-    { slNo: 22, menu: 'PCC Report', view: false, edit: false, delete: false },
-    { slNo: 23, menu: 'Medical Report', view: false, edit: false, delete: false },
-    { slNo: 24, menu: 'Checklist Report', view: false, edit: false, delete: false },
-    { slNo: 25, menu: 'Invoice Claim Report', view: false, edit: false, delete: false },
-    { slNo: 26, menu: 'Fees Pending Report', view: false, edit: false, delete: false },
-    { slNo: 27, menu: 'Ielts Students Report', view: false, edit: false, delete: false },
-    { slNo: 28, menu: 'Student Registration Report', view: false, edit: false, delete: false },
-    { slNo: 29, menu: 'Data', view: false, edit: false, delete: false },
-    { slNo: 30, menu: 'Import', view: false, edit: false, delete: false },
-    { slNo: 31, menu: 'Import Pool', view: false, edit: false, delete: false },
-    { slNo: 32, menu: 'FileTransfer', view: false, edit: false, delete: false },
-    { slNo: 33, menu: 'Settings', view: false, edit: false, delete: false },
-    { slNo: 34, menu: 'Course', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 35, menu: 'Overseas Course', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 36, menu: 'User Details', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 37, menu: 'Enquiry Source', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 38, menu: 'Status', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 39, menu: 'Stream', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 40, menu: 'FollowUp Type', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 41, menu: 'Country', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 42, menu: 'Level', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 43, menu: 'College', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 44, menu: 'Department', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 45, menu: 'Branch', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 46, menu: 'Checklist Item', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 47, menu: 'Document', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 48, menu: 'User Role', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 49, menu: 'Intake', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 50, menu: 'Place', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 51, menu: 'Company Info', view: false, edit: false, delete: false },
-    { slNo: 52, menu: 'Export', view: false, edit: false, delete: false },
-    { slNo: 53, menu: 'Register', view: false, edit: false, delete: false },
-    { slNo: 54, menu: 'Remove Registration', view: false, edit: false, delete: false },
-    { slNo: 55, menu: 'Course Discount', view: false, edit: false, delete: false },
-    { slNo: 56, menu: 'Generate Button', view: false, edit: false, delete: false },
-    { slNo: 57, menu: 'Receipt Delete', view: false, edit: false, delete: false },
-    { slNo: 58, menu: 'Account', view: false, edit: false, delete: false },
-    { slNo: 59, menu: 'Receipt', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 60, menu: 'Accounts', view: false, edit: false, delete: false },
-    { slNo: 61, menu: 'Payment', view: false, edit: false, delete: false, hasEdit: true, hasDelete: true },
-    { slNo: 62, menu: 'Branch Account Report', view: false, edit: false, delete: false },
-    { slNo: 63, menu: 'Search All', view: false, edit: false, delete: false }
-  ];
+  constructor(private mockDataService: MockDataService) {}
 
   ngOnInit() {
-    this.filteredUsers = [...this.users];
+    this.mockDataService.getUserRows().subscribe(data => {
+      this.users = data;
+      this.onSearch();
+    });
+    this.mockDataService.getDepartmentPerms().subscribe(data => this.departmentPerms = data);
+    this.mockDataService.getMenuPerms().subscribe(data => this.menuPerms = data);
   }
 
   onSearch() {
@@ -1134,8 +986,7 @@ export class UserDetailsComponent implements OnInit {
   saveUser() {
     if (!this.userForm.userName.trim()) return;
 
-    this.users.push({
-      slNo: this.users.length + 1,
+    this.mockDataService.addUserRow({
       userName: this.userForm.userName,
       userType: this.userForm.userType,
       branch: this.userForm.branch === 'Select Branch' ? 'Ernakulam' : this.userForm.branch,
@@ -1144,14 +995,12 @@ export class UserDetailsComponent implements OnInit {
       hasEdit: false
     });
 
-    this.filteredUsers = [...this.users];
     this.closeModal();
   }
 
   deleteUser(u: UserRow) {
     if (confirm(`Are you sure you want to delete ${u.userName}?`)) {
-      this.users = this.users.filter(item => item !== u);
-      this.filteredUsers = this.filteredUsers.filter(item => item !== u);
+      this.mockDataService.deleteUserRow(u.slNo);
     }
   }
 }

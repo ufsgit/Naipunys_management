@@ -32,10 +32,6 @@ export const routes: Routes = [
 
       // 2. Accounts
       {
-        path: 'accounts/create',
-        loadComponent: () => import('./features/accounts/accounts.component').then(m => m.AccountsComponent)
-      },
-      {
         path: 'accounts',
         loadComponent: () => import('./features/accounts/accounts.component').then(m => m.AccountsComponent)
       },
@@ -67,10 +63,6 @@ export const routes: Routes = [
       },
       {
         path: 'setup/users/list',
-        loadComponent: () => import('./features/settings/user-details.component').then(m => m.UserDetailsComponent)
-      },
-      {
-        path: 'settings/user-details',
         loadComponent: () => import('./features/settings/user-details.component').then(m => m.UserDetailsComponent)
       },
       {

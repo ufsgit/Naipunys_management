@@ -2,19 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
-
-export interface DepartmentItem {
-  slNo: number;
-  name: string;
-  followUp: string;
-  order: number;
-}
-
-export interface StatusOption {
-  slNo: number;
-  selected: boolean;
-  name: string;
-}
+import { MockDataService, DepartmentItem, StatusOption } from '../../core/mock-data.service';
 
 @Component({
   selector: 'app-departments',
@@ -53,22 +41,20 @@ export interface StatusOption {
                 <button
                   type="button"
                   class="btn-action-edit"
-                  [ngClass]="getEditClass(i)"
                   (click)="openEditModal(d)"
                   title="Edit Department"
                 >
-                  <app-icon name="edit" [size]="14"></app-icon>
+                  <app-icon name="edit" [size]="15"></app-icon>
                 </button>
               </td>
               <td style="text-align: center;">
                 <button
                   type="button"
                   class="btn-action-delete"
-                  [ngClass]="getDeleteClass(i)"
                   (click)="deleteDept(d)"
                   title="Delete Department"
                 >
-                  <app-icon name="trash-2" [size]="14"></app-icon>
+                  <app-icon name="trash-2" [size]="15"></app-icon>
                 </button>
               </td>
             </tr>
@@ -260,55 +246,30 @@ export interface StatusOption {
       color: #64748b;
     }
 
-    /* Action Buttons (Purple / Blue edit, White / Brown delete) */
+    /* Action Buttons */
     .btn-action-edit,
     .btn-action-delete {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      border: none;
+      background: transparent;
+      color: #64748b;
       cursor: pointer;
       transition: all 0.15s ease;
     }
 
-    .btn-purple {
-      background-color: #7c3aed;
-      border: none;
-      color: #ffffff;
-    }
-    .btn-purple:hover {
-      background-color: #6d28d9;
+    .btn-action-edit:hover {
+      color: #0b62b6;
+      background-color: #f0f7ff;
     }
 
-    .btn-blue {
-      background-color: #2563eb;
-      border: none;
-      color: #ffffff;
-    }
-    .btn-blue:hover {
-      background-color: #1d4ed8;
-    }
-
-    .btn-del-white {
-      background-color: #ffffff;
-      border: 1px solid #cbd5e1;
-      color: #64748b;
-    }
-    .btn-del-white:hover {
-      border-color: #ef4444;
-      color: #ef4444;
+    .btn-action-delete:hover {
+      color: #dc2626;
       background-color: #fef2f2;
-    }
-
-    .btn-del-brown {
-      background-color: #c2410c;
-      border: none;
-      color: #ffffff;
-    }
-    .btn-del-brown:hover {
-      background-color: #9a3412;
     }
 
     .empty-state {
@@ -541,23 +502,8 @@ export interface StatusOption {
   `]
 })
 export class DepartmentsComponent implements OnInit {
-  departments: DepartmentItem[] = [
-    { slNo: 1, name: 'Accounts', followUp: 'yes', order: 1 },
-    { slNo: 2, name: 'Admission', followUp: 'yes', order: 2 },
-    { slNo: 3, name: 'CLOSED', followUp: 'no', order: 6 },
-    { slNo: 4, name: 'Follow Up', followUp: 'yes', order: 3 },
-    { slNo: 5, name: 'JOINED', followUp: 'no', order: 7 },
-    { slNo: 6, name: 'Marketing', followUp: 'yes', order: 4 },
-    { slNo: 7, name: 'Visa', followUp: 'yes', order: 5 }
-  ];
-
-  statusOptions: StatusOption[] = [
-    { slNo: 1, selected: false, name: 'Interested' },
-    { slNo: 2, selected: false, name: 'Not Interested' },
-    { slNo: 3, selected: false, name: 'Payment Pending' },
-    { slNo: 4, selected: false, name: 'Payment Received' },
-    { slNo: 5, selected: false, name: 'Unknown' }
-  ];
+  departments: DepartmentItem[] = [];
+  statusOptions: StatusOption[] = [];
 
   isModalOpen = false;
   isEditMode = false;
@@ -569,14 +515,11 @@ export class DepartmentsComponent implements OnInit {
     order: 8
   };
 
-  ngOnInit() {}
+  constructor(private mockDataService: MockDataService) {}
 
-  getEditClass(index: number): string {
-    return index % 2 === 1 ? 'btn-blue' : 'btn-purple';
-  }
-
-  getDeleteClass(index: number): string {
-    return index % 2 === 1 ? 'btn-del-brown' : 'btn-del-white';
+  ngOnInit() {
+    this.mockDataService.getDepartmentItems().subscribe(data => this.departments = data);
+    this.mockDataService.getDeptStatusOptions().subscribe(data => this.statusOptions = data);
   }
 
   openCreateModal() {
@@ -610,15 +553,13 @@ export class DepartmentsComponent implements OnInit {
     if (!this.deptForm.name.trim()) return;
 
     if (this.isEditMode && this.editingIndex > -1) {
-      this.departments[this.editingIndex] = {
-        slNo: this.departments[this.editingIndex].slNo,
+      this.mockDataService.updateDepartmentItem(this.departments[this.editingIndex].slNo, {
         name: this.deptForm.name,
         followUp: this.deptForm.followUp,
         order: this.deptForm.order
-      };
+      });
     } else {
-      this.departments.push({
-        slNo: this.departments.length + 1,
+      this.mockDataService.addDepartmentItem({
         name: this.deptForm.name,
         followUp: this.deptForm.followUp,
         order: this.deptForm.order
@@ -630,9 +571,7 @@ export class DepartmentsComponent implements OnInit {
 
   deleteDept(d: DepartmentItem) {
     if (confirm(`Are you sure you want to delete ${d.name}?`)) {
-      this.departments = this.departments.filter(item => item !== d);
-      // Re-index
-      this.departments.forEach((item, idx) => (item.slNo = idx + 1));
+      this.mockDataService.deleteDepartmentItem(d.slNo);
     }
   }
 }

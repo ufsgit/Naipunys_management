@@ -2,11 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
-
-export interface StatusItem {
-  slNo: number;
-  name: string;
-}
+import { MockDataService, StatusItem } from '../../core/mock-data.service';
 
 @Component({
   selector: 'app-status-settings',
@@ -57,22 +53,20 @@ export interface StatusItem {
                 <button
                   type="button"
                   class="btn-action-edit"
-                  [ngClass]="getEditClass(i)"
                   (click)="openEdit(item, i)"
                   title="Edit Status"
                 >
-                  <app-icon name="edit" [size]="14"></app-icon>
+                  <app-icon name="edit" [size]="15"></app-icon>
                 </button>
               </td>
               <td style="text-align: center;">
                 <button
                   type="button"
                   class="btn-action-delete"
-                  [ngClass]="getDeleteClass(i)"
                   (click)="deleteItem(item)"
                   title="Delete Status"
                 >
-                  <app-icon name="trash-2" [size]="14"></app-icon>
+                  <app-icon name="trash-2" [size]="15"></app-icon>
                 </button>
               </td>
             </tr>
@@ -251,56 +245,30 @@ export interface StatusItem {
       color: #64748b;
     }
 
-    /* Action Buttons (Square with rounded corners matching Accounts/Receipts reference) */
+    /* Action Buttons */
     .btn-action-edit,
     .btn-action-delete {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       border: none;
+      background: transparent;
+      color: #64748b;
       cursor: pointer;
       transition: all 0.15s ease;
     }
 
-    .btn-purple {
-      background-color: #7c3aed;
-      border: none;
-      color: #ffffff;
-    }
-    .btn-purple:hover {
-      background-color: #6d28d9;
+    .btn-action-edit:hover {
+      color: #0b62b6;
+      background-color: #f0f7ff;
     }
 
-    .btn-blue {
-      background-color: #2563eb;
-      border: none;
-      color: #ffffff;
-    }
-    .btn-blue:hover {
-      background-color: #1d4ed8;
-    }
-
-    .btn-del-white {
-      background-color: #ffffff;
-      border: 1px solid #cbd5e1;
-      color: #64748b;
-    }
-    .btn-del-white:hover {
-      border-color: #ef4444;
-      color: #ef4444;
+    .btn-action-delete:hover {
+      color: #dc2626;
       background-color: #fef2f2;
-    }
-
-    .btn-del-brown {
-      background-color: #c2410c;
-      border: none;
-      color: #ffffff;
-    }
-    .btn-del-brown:hover {
-      background-color: #9a3412;
     }
 
     .empty-state {
@@ -311,26 +279,15 @@ export interface StatusItem {
   `]
 })
 export class StatusSettingsComponent implements OnInit {
-  items: StatusItem[] = [
-    { slNo: 1, name: 'Interested' },
-    { slNo: 2, name: 'Not Interested' },
-    { slNo: 3, name: 'Payment Pending' },
-    { slNo: 4, name: 'Payment Received' },
-    { slNo: 5, name: 'Unknown' }
-  ];
-
+  items: StatusItem[] = [];
   formName = '';
   isEditMode = false;
   editingItem: StatusItem | null = null;
 
-  ngOnInit() {}
+  constructor(private mockDataService: MockDataService) {}
 
-  getEditClass(index: number): string {
-    return index % 2 === 1 ? 'btn-blue' : 'btn-purple';
-  }
-
-  getDeleteClass(index: number): string {
-    return index % 2 === 1 ? 'btn-del-brown' : 'btn-del-white';
+  ngOnInit() {
+    this.mockDataService.getStatusSettingsItems().subscribe(data => this.items = data);
   }
 
   openEdit(item: StatusItem, index: number) {
@@ -343,12 +300,9 @@ export class StatusSettingsComponent implements OnInit {
     if (!this.formName.trim()) return;
 
     if (this.isEditMode && this.editingItem) {
-      this.editingItem.name = this.formName.trim();
+      this.mockDataService.updateStatusSettingsItem(this.editingItem.slNo, this.formName.trim());
     } else {
-      this.items.push({
-        slNo: this.items.length + 1,
-        name: this.formName.trim()
-      });
+      this.mockDataService.addStatusSettingsItem(this.formName.trim());
     }
 
     this.cancelForm();
@@ -362,8 +316,7 @@ export class StatusSettingsComponent implements OnInit {
 
   deleteItem(item: StatusItem) {
     if (confirm(`Are you sure you want to delete ${item.name}?`)) {
-      this.items = this.items.filter(i => i !== item);
-      this.items.forEach((it, idx) => it.slNo = idx + 1);
+      this.mockDataService.deleteStatusSettingsItem(item.slNo);
     }
   }
 }

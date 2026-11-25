@@ -2,20 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { MockDataService } from '../../core/mock-data.service';
-
-interface StudentListRow {
-  slNo: number;
-  name: string;
-  note: string;
-  mobile: string;
-  remark: string;
-  nextFollowUp: string;
-  department: string;
-  status: string;
-  to: string;
-  from: string;
-}
+import { MockDataService, StudentListRow } from '../../core/mock-data.service';
 
 @Component({
   selector: 'app-student-list',
@@ -87,16 +74,14 @@ interface StudentListRow {
 
             <button type="button" class="btn-search-blue" (click)="applyFilters()">SEARCH</button>
           </div>
-        </div>
 
-        <!-- Row 2: Advanced Search Button matching Image 7 -->
-        <div class="filter-row-adv">
+          <!-- Advanced Search placed at Right Top matching reference -->
           <button type="button" class="btn-advanced-blue" (click)="toggleAdvanced()">
             ADVANCED SEARCH
           </button>
         </div>
 
-        <!-- Row 3: Dropdown Selectors -->
+        <!-- Dropdown Selectors -->
         <div class="filter-row-3" *ngIf="showAdvanced">
           <div class="filter-col">
             <select class="input-select filter-select" [(ngModel)]="selectedBranch" (change)="applyFilters()">
@@ -352,6 +337,7 @@ interface StudentListRow {
       cursor: pointer;
       transition: background-color 0.15s;
       white-space: nowrap;
+      margin-left: auto;
     }
 
     .btn-advanced-blue:hover {
@@ -411,11 +397,11 @@ interface StudentListRow {
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
     }
 
-    /* Vertical & Horizontal Scroll Container - matching Image 7 */
+    /* Vertical & Horizontal Scroll Container - 8-9 rows visible initially, scroll down for remaining */
     .table-scroll-container {
       width: 100%;
-      min-height: 480px;
-      max-height: 560px;
+      height: 380px;
+      max-height: 380px;
       overflow-x: auto;
       overflow-y: auto;
       border: 1px solid #d1d5db;
@@ -614,195 +600,16 @@ export class StudentListComponent implements OnInit {
   selectedStatus = 'All Statuses';
   selectedStaff = 'All Staff';
 
-  allStudents: StudentListRow[] = [
-    {
-      slNo: 1,
-      name: 'JUSTIN K G',
-      note: 'IELTS 1 MONTH',
-      mobile: '9995914160',
-      remark: 'IELTS 1 MONTH',
-      nextFollowUp: '24-Nov-2026',
-      department: 'Admission',
-      status: 'Interested',
-      to: 'DIVYA',
-      from: 'DIVYA'
-    },
-    {
-      slNo: 2,
-      name: 'PRIYANKA CLEMENT',
-      note: 'NICE',
-      mobile: '8891460293',
-      remark: 'NICE',
-      nextFollowUp: '19-Nov-2026',
-      department: 'Admission',
-      status: 'Interested',
-      to: 'DIVYA',
-      from: 'DIVYA'
-    },
-    {
-      slNo: 3,
-      name: 'ROBBIN CHIRACKAL JOSEPH',
-      note: 'IELTS 1 MONTH',
-      mobile: '9895162325',
-      remark: 'IELTS 1 MONTH',
-      nextFollowUp: '19-Oct-2026',
-      department: 'Admission',
-      status: 'Interested',
-      to: 'DIVYA',
-      from: 'DIVYA'
-    },
-    {
-      slNo: 4,
-      name: 'ANJANA BINDHU',
-      note: 'UK VISITING VISA',
-      mobile: '9544669647',
-      remark: 'UK VISITING VISA',
-      nextFollowUp: '13-Oct-2026',
-      department: 'Admission',
-      status: 'Interested',
-      to: 'DIVYA',
-      from: 'DIVYA'
-    },
-    {
-      slNo: 5,
-      name: 'AWIN SANTHOSH',
-      note: 'NZ DEPENDENT VISA',
-      mobile: '9072933600',
-      remark: 'NZ DEPENDENT VISA',
-      nextFollowUp: '10-Oct-2026',
-      department: 'Admission',
-      status: 'Interested',
-      to: 'DIVYA',
-      from: 'DIVYA'
-    },
-    {
-      slNo: 6,
-      name: 'FR. BENNY VARGHESE THOPPIPARAMBIL',
-      note: 'IELTS 1 MONTH',
-      mobile: '7025714977',
-      remark: 'IELTS 1 MONTH',
-      nextFollowUp: '05-Oct-2026',
-      department: 'Admission',
-      status: 'Interested',
-      to: 'DIVYA',
-      from: 'DIVYA'
-    },
-    {
-      slNo: 7,
-      name: 'MIKAH SUBIN ARACKAL',
-      note: 'UK DEPENDENT VISA',
-      mobile: '8593956865',
-      remark: 'UK DEPENDENT VISA',
-      nextFollowUp: '14-Sep-2026',
-      department: 'Admission',
-      status: 'Interested',
-      to: 'DIVYA',
-      from: 'DIVYA'
-    },
-    {
-      slNo: 8,
-      name: 'MARIAN JOSEPH ARACKAL',
-      note: 'IELTS 1 MONTH',
-      mobile: '9447617828',
-      remark: 'IELTS 1 MONTH',
-      nextFollowUp: '07-Sep-2026',
-      department: 'Admission',
-      status: 'Interested',
-      to: 'DIVYA',
-      from: 'DIVYA'
-    },
-    {
-      slNo: 9,
-      name: 'EMMANUEL CHRISTIE BENHAR',
-      note: 'IELTS 3 MONTHS',
-      mobile: '9072070780',
-      remark: 'IELTS 3 MONTHS',
-      nextFollowUp: '31-Aug-2026',
-      department: 'Admission',
-      status: 'Interested',
-      to: 'DIVYA',
-      from: 'DIVYA'
-    },
-    {
-      slNo: 10,
-      name: 'LAKSHMI N BIJU',
-      note: 'IELTS 1 MONTH EXTN',
-      mobile: '8075863539',
-      remark: 'IELTS 1 MONTH EXTN',
-      nextFollowUp: '31-Aug-2026',
-      department: 'Admission',
-      status: 'Interested',
-      to: 'DIVYA',
-      from: 'DIVYA'
-    },
-    {
-      slNo: 11,
-      name: 'ALFIN SHINIL',
-      note: 'IELTS 2 MONTH',
-      mobile: '8330055882',
-      remark: 'IELTS 2 MONTH',
-      nextFollowUp: '31-Aug-2026',
-      department: 'Admission',
-      status: 'Interested',
-      to: 'DIVYA',
-      from: 'DIVYA'
-    },
-    {
-      slNo: 12,
-      name: 'MANUEL VATTISERRY VARGHESE',
-      note: 'GERMANY',
-      mobile: '6238209350',
-      remark: 'GERMANY',
-      nextFollowUp: '29-Aug-2026',
-      department: 'Admission',
-      status: 'Interested',
-      to: 'DIVYA',
-      from: 'DIVYA'
-    },
-    {
-      slNo: 13,
-      name: 'SHARON PUTHENPURAKKAL JOSEPH',
-      note: 'GERMANY',
-      mobile: '9037068928',
-      remark: 'GERMANY',
-      nextFollowUp: '17-Aug-2026',
-      department: 'Admission',
-      status: 'Interested',
-      to: 'DIVYA',
-      from: 'DIVYA'
-    },
-    {
-      slNo: 14,
-      name: 'Rahan Jude',
-      note: 'IELTS 1 MONTH',
-      mobile: '7994241436',
-      remark: 'IELTS 1 MONTH',
-      nextFollowUp: '17-Aug-2026',
-      department: 'Admission',
-      status: 'Interested',
-      to: 'DIVYA',
-      from: 'DIVYA'
-    },
-    {
-      slNo: 15,
-      name: 'AKHIL BABU',
-      note: 'GERMANY',
-      mobile: '7034653432',
-      remark: 'GERMANY',
-      nextFollowUp: '14-Aug-2026',
-      department: 'Admission',
-      status: 'Interested',
-      to: 'DIVYA',
-      from: 'DIVYA'
-    }
-  ];
-
+  allStudents: StudentListRow[] = [];
   filteredStudents: StudentListRow[] = [];
 
   constructor(private mockDataService: MockDataService) {}
 
   ngOnInit() {
-    this.filteredStudents = [...this.allStudents];
+    this.mockDataService.getStudentListRows().subscribe(data => {
+      this.allStudents = data;
+      this.applyFilters();
+    });
   }
 
   toggleAdvanced() {

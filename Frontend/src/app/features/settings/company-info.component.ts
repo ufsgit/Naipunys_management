@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
+import { MockDataService, CompanyInfo } from '../../core/mock-data.service';
 
 @Component({
   selector: 'app-company-info',
@@ -251,20 +252,27 @@ import { IconComponent } from '../../shared/components/icon.component';
   `]
 })
 export class CompanyInfoComponent implements OnInit {
-  company = {
-    companyName: 'Naipunya Academy of Languages & Skills',
-    phoneNo: '98470 22001',
-    email: 'info@naipunya.edu.in',
-    address: 'MG Road, Ravipuram, Ernakulam, Kochi, Kerala 682016',
-    landPhone: '0484 235 8890',
-    website: 'https://naipunya.edu.in'
+  company: CompanyInfo = {
+    companyName: '',
+    phoneNo: '',
+    email: '',
+    address: '',
+    landPhone: '',
+    website: ''
   };
 
   showSavedAlert = false;
 
-  ngOnInit() {}
+  constructor(private mockDataService: MockDataService) {}
+
+  ngOnInit() {
+    this.mockDataService.getCompanyInfo().subscribe(info => {
+      this.company = { ...info };
+    });
+  }
 
   saveCompany() {
+    this.mockDataService.updateCompanyInfo(this.company);
     this.showSavedAlert = true;
     setTimeout(() => {
       this.showSavedAlert = false;
@@ -272,13 +280,8 @@ export class CompanyInfoComponent implements OnInit {
   }
 
   resetForm() {
-    this.company = {
-      companyName: 'Naipunya Academy of Languages & Skills',
-      phoneNo: '98470 22001',
-      email: 'info@naipunya.edu.in',
-      address: 'MG Road, Ravipuram, Ernakulam, Kochi, Kerala 682016',
-      landPhone: '0484 235 8890',
-      website: 'https://naipunya.edu.in'
-    };
+    this.mockDataService.getCompanyInfo().subscribe(info => {
+      this.company = { ...info };
+    });
   }
 }
