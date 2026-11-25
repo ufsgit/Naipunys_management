@@ -234,6 +234,14 @@ export interface StatusItem {
   name: string;
 }
 
+export interface FeePendingItem {
+  studentName: string;
+  phoneNumber: string;
+  informationStatus: 'Running' | 'Stopped' | string;
+  balanceAmount: number;
+  branch: string;
+}
+
 export interface CompanyInfo {
   companyName: string;
   phoneNo: string;
@@ -513,9 +521,19 @@ export class MockDataService {
   // 6. Receipts
   private receipts: Receipt[] = [
     { id: '1', receiptNo: '1', voucherNo: '1', date: '19-Nov-2026', from: 'MEERA NAIR', studentId: 'STU-1001', studentName: 'MEERA NAIR', course: 'IELTS CRASH', branch: 'Ernakulam', amount: 5000, paymentMode: 'Bank Transfer', toAccount: 'HDFC Current Account', details: 'QR CODE BY BANK - IELTS COURSE FEE' },
-    { id: '2', receiptNo: '2', voucherNo: '2', date: '21-Nov-2026', from: 'ANANYA KRISHNAN', studentId: 'STU-1002', studentName: 'ANANYA KRISHNAN', course: 'OET', branch: 'Ernakulam', amount: 7500, paymentMode: 'UPI', toAccount: 'SBI Fee Collection', details: 'OET ADMISSION INSTALLMENT' }
+    { id: '2', receiptNo: '2', voucherNo: '2', date: '21-Nov-2026', from: 'ANANYA KRISHNAN', studentId: 'STU-1002', studentName: 'ANANYA KRISHNAN', course: 'OET', branch: 'Ernakulam', amount: 7500, paymentMode: 'UPI', toAccount: 'SBI Fee Collection', details: 'OET ADMISSION INSTALLMENT' },
+    { id: '3', receiptNo: '3', voucherNo: '3', date: '17-Nov-2026', from: 'PRIYANKA CLEMENT', studentId: 'STU-1003', studentName: 'PRIYANKA CLEMENT', course: 'IELTS ACADEMIC', branch: 'Ernakulam', amount: 5000, paymentMode: 'Cash', toAccount: 'CASH IN HAND', details: 'IELTS COURSE FEE' },
+    { id: '4', receiptNo: '4', voucherNo: '4', date: '15-Nov-2026', from: 'ARJUN MENON', studentId: 'STU-1004', studentName: 'ARJUN MENON', course: 'COMMUNICATIVE ENGLISH 1 MONTH', branch: 'Ernakulam', amount: 1500, paymentMode: 'UPI', toAccount: 'SBI Fee Collection', details: 'Book Amount' }
   ];
   private receipts$ = new BehaviorSubject<Receipt[]>(this.receipts);
+
+  // 6b. Fees Pending Entries
+  private feePendingEntries: FeePendingItem[] = [
+    { studentName: 'Meera Nair', phoneNumber: '97450 61294', informationStatus: 'Running', balanceAmount: 10500.0, branch: 'Kochi Main' },
+    { studentName: 'Arjun Raj', phoneNumber: '98462 33109', informationStatus: 'Running', balanceAmount: 16000.0, branch: 'Kochi Main' },
+    { studentName: 'Nithya Menon', phoneNumber: '94471 02938', informationStatus: 'Stopped', balanceAmount: 12000.0, branch: 'Kochi Main' }
+  ];
+  private feePendingEntries$ = new BehaviorSubject<FeePendingItem[]>(this.feePendingEntries);
 
   // 7. Payments
   private payments: Payment[] = [
@@ -730,6 +748,7 @@ export class MockDataService {
   getCompanyInfo(): Observable<CompanyInfo> { return this.companyInfo$.asObservable(); }
   getFollowUps(): Observable<StudentFollowUp[]> { return this.followUps$.asObservable(); }
   getReceipts(): Observable<Receipt[]> { return this.receipts$.asObservable(); }
+  getFeePendingEntries(): Observable<FeePendingItem[]> { return this.feePendingEntries$.asObservable(); }
   getPayments(): Observable<Payment[]> { return this.payments$.asObservable(); }
   getAccounts(): Observable<Account[]> { return this.accounts$.asObservable(); }
 

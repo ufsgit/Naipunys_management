@@ -318,36 +318,16 @@ export class FeePendingReportComponent implements OnInit {
   selectedStatus: string = 'Running';
   selectedBranch: string = 'Kochi Main';
 
-  entries: FeePendingEntry[] = [
-    {
-      studentName: 'Meera Nair',
-      phoneNumber: '97450 61294',
-      informationStatus: 'Running',
-      balanceAmount: 10500.0,
-      branch: 'Kochi Main'
-    },
-    {
-      studentName: 'Arjun Raj',
-      phoneNumber: '98462 33109',
-      informationStatus: 'Running',
-      balanceAmount: 16000.0,
-      branch: 'Kochi Main'
-    },
-    {
-      studentName: 'Nithya Menon',
-      phoneNumber: '94471 02938',
-      informationStatus: 'Stopped',
-      balanceAmount: 12000.0,
-      branch: 'Kochi Main'
-    }
-  ];
-
+  entries: FeePendingEntry[] = [];
   filteredEntries: FeePendingEntry[] = [];
 
   constructor(private mockDataService: MockDataService) {}
 
   ngOnInit() {
-    this.applyFilters();
+    this.mockDataService.getFeePendingEntries().subscribe(data => {
+      this.entries = data;
+      this.applyFilters();
+    });
   }
 
   onSearch() {

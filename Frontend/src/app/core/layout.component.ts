@@ -240,13 +240,8 @@ import { IconComponent } from '../shared/index';
           </nav>
         </div>
 
-        <!-- Right: User Avatar & Logout -->
+        <!-- Right: Logout -->
         <div class="topbar-right-zone">
-          <div class="director-user-info">
-            <app-icon name="user" [size]="15" customClass="user-icon"></app-icon>
-            <span class="director-title">DIRECTOR</span>
-          </div>
-
           <button type="button" class="logout-action-btn" (click)="onLogout()" title="Logout">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
@@ -693,21 +688,6 @@ import { IconComponent } from '../shared/index';
       display: flex;
       align-items: center;
       gap: 1.5rem;
-    }
-    .director-user-info {
-      display: flex;
-      align-items: center;
-      gap: 0.45rem;
-      color: #334155;
-    }
-    .user-icon {
-      color: #475569;
-    }
-    .director-title {
-      font-size: 0.8125rem;
-      font-weight: 600;
-      color: #1e293b;
-      letter-spacing: 0.03em;
     }
 
     .logout-action-btn {
