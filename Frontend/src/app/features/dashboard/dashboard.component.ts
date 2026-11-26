@@ -188,7 +188,6 @@ interface AccountChip {
               <app-icon name="filter" [size]="16" customClass="icon-purple"></app-icon>
               <div>
                 <h3 class="panel-title-text">Course Demand Pipeline</h3>
-                <span class="panel-subtitle-text">Student enrollment distribution</span>
               </div>
             </div>
             <span class="header-badge badge-purple-tint">{{ activeCoursesCount }} Courses</span>
@@ -246,7 +245,6 @@ interface AccountChip {
               <app-icon name="bar-chart" [size]="16" customClass="icon-blue"></app-icon>
               <div>
                 <h3 class="panel-title-text">Branch Enrollment</h3>
-                <span class="panel-subtitle-text">Active students across centers</span>
               </div>
             </div>
 
@@ -275,9 +273,27 @@ interface AccountChip {
               <line x1="35" y1="170" x2="520" y2="170" stroke="#e2e8f0" stroke-width="1.5" />
               <text x="22" y="174" class="axis-y">0</text>
 
-              <g *ngFor="let bar of branchChart; let i = index" [attr.transform]="'translate(' + (65 + i * 80) + ', 0)'" class="bar-group">
+              <g
+                *ngFor="let bar of branchChart; let i = index"
+                [attr.transform]="'translate(' + (65 + i * 80) + ', 0)'"
+                class="bar-group"
+                [class.is-hovered]="hoveredBranchIndex === i"
+                [class.is-dimmed]="hoveredBranchIndex !== null && hoveredBranchIndex !== i"
+                (mouseenter)="hoveredBranchIndex = i"
+                (mouseleave)="hoveredBranchIndex = null"
+              >
+                <title>{{ bar.label }}: {{ bar.count }} students</title>
                 <text x="14" [attr.y]="170 - bar.height - 6" text-anchor="middle" class="bar-top-val">{{ bar.count }}</text>
-                <rect x="0" [attr.y]="170 - bar.height" width="28" [attr.height]="bar.height" rx="4" [attr.fill]="bar.color" class="anim-bar-rise" />
+                <rect
+                  x="0"
+                  [attr.y]="170 - bar.height"
+                  width="28"
+                  [attr.height]="bar.height"
+                  rx="4"
+                  [attr.fill]="bar.color"
+                  class="anim-bar-rise"
+                  [style.animation-delay]="(i * 90) + 'ms'"
+                />
                 <text x="14" y="192" text-anchor="middle" class="axis-x font-bold">{{ bar.label }}</text>
               </g>
             </svg>
@@ -291,7 +307,6 @@ interface AccountChip {
               <app-icon name="pie-chart" [size]="16" customClass="icon-teal"></app-icon>
               <div>
                 <h3 class="panel-title-text">Fee Collection Split</h3>
-                <span class="panel-subtitle-text">Revenue & payment modes</span>
               </div>
             </div>
             <span class="header-badge badge-teal-tint">₹{{ feeCollected | number }} Total</span>
@@ -299,10 +314,10 @@ interface AccountChip {
 
           <div class="donut-wrapper">
             <div class="donut-box">
-              <svg viewBox="0 0 160 160" class="donut-svg">
+              <svg viewBox="0 0 160 160" class="donut-svg anim-donut-svg">
                 <circle cx="80" cy="80" r="54" fill="none" stroke="#f1f5f9" stroke-width="18" />
 
-                <g class="anim-donut-draw">
+                <g>
                   <circle
                     *ngFor="let s of feeSplit; let i = index"
                     cx="80" cy="80" r="54"
@@ -311,6 +326,7 @@ interface AccountChip {
                     [attr.stroke-width]="hoveredSplitIndex === i ? 23 : 18"
                     [attr.stroke-dasharray]="s.dashArray"
                     [attr.stroke-dashoffset]="s.dashOffset"
+                    [style.animationDelay]="(i * 0.45) + 's'"
                     transform="rotate(-90 80 80)"
                     class="donut-slice"
                     [class.is-hovered]="hoveredSplitIndex === i"
@@ -374,7 +390,7 @@ interface AccountChip {
               <app-icon name="clock" [size]="16" customClass="icon-amber"></app-icon>
               <div>
                 <h3 class="panel-title-text">Pending Follow ups</h3>
-                <span class="panel-subtitle-text">Scheduled student communications</span>
+                
               </div>
             </div>
 
@@ -426,7 +442,6 @@ interface AccountChip {
               <app-icon name="receipt" [size]="16" customClass="icon-teal"></app-icon>
               <div>
                 <h3 class="panel-title-text">Recent Fee Receipts</h3>
-                <span class="panel-subtitle-text">Latest financial inflows</span>
               </div>
             </div>
 
@@ -850,21 +865,41 @@ interface AccountChip {
       font-weight: 700;
       fill: #0f172a;
       font-family: inherit;
+      transition: transform 0.25s ease, fill 0.25s ease;
     }
     .bar-group {
       cursor: pointer;
-      transition: transform 0.2s ease;
+      transition: opacity 0.25s ease;
     }
-    .bar-group:hover rect {
-      filter: brightness(1.1);
+    .bar-group.is-dimmed {
+      opacity: 0.45;
+    }
+    .bar-group:hover .bar-top-val,
+    .bar-group.is-hovered .bar-top-val {
+      transform: translateY(-4px);
+      fill: #0284c7;
+    }
+    .bar-group:hover rect,
+    .bar-group.is-hovered rect {
+      transform: scaleY(1.06) scaleX(1.12);
+      filter: brightness(1.12) drop-shadow(0 4px 10px rgba(15, 23, 42, 0.2));
     }
     .anim-bar-rise {
+      transform-box: fill-box;
       transform-origin: bottom;
-      animation: barGrow 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+      animation: barGrow 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.25s ease;
     }
     @keyframes barGrow {
-      from { transform: scaleY(0); }
-      to { transform: scaleY(1); }
+      from {
+        opacity: 0;
+        transform: scaleY(0);
+      }
+      to {
+        opacity: 1;
+        transform: scaleY(1);
+      }
     }
 
     /* CONTENT 3: Fee Split Donut Layout */
@@ -878,27 +913,44 @@ interface AccountChip {
     }
     .donut-box {
       position: relative;
-      width: 135px;
-      height: 135px;
+      width: 196px;
+      height: 196px;
     }
     .donut-svg {
       width: 100%;
       height: 100%;
       overflow: visible;
     }
-    .anim-donut-draw {
-      transform-origin: 80px 80px;
-      animation: donutSpinIn 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    .anim-donut-svg {
+      transform-origin: center center;
+      animation: donutReveal 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-    @keyframes donutSpinIn {
+    @keyframes donutReveal {
       from {
         opacity: 0;
-        transform: rotate(-110deg) scale(0.75);
+        transform: scale(0.84) rotate(-25deg);
       }
       to {
         opacity: 1;
-        transform: rotate(0deg) scale(1);
+        transform: scale(1) rotate(0deg);
       }
+    }
+    .donut-slice {
+      transition: stroke-width 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease, filter 0.25s ease;
+      animation: sliceWave 3.2s ease-in-out infinite;
+      cursor: pointer;
+    }
+    @keyframes sliceWave {
+      0%, 100% { stroke-opacity: 0.86; }
+      50% { stroke-opacity: 1; }
+    }
+    .donut-slice.is-hovered {
+      stroke-opacity: 1;
+      filter: drop-shadow(0 4px 10px rgba(15, 23, 42, 0.18));
+    }
+    .donut-slice.is-dimmed {
+      opacity: 0.42;
+      animation: none;
     }
     .donut-center {
       position: absolute;
@@ -907,17 +959,29 @@ interface AccountChip {
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      pointer-events: none;
+      animation: donutCenterPop 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes donutCenterPop {
+      from {
+        opacity: 0;
+        transform: scale(0.85);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
     }
     .donut-amount {
-      font-size: 1.25rem;
+      font-size: 1.45rem;
       font-weight: 700;
       color: #0f172a;
       line-height: 1.1;
     }
     .donut-label {
-      font-size: 0.68rem;
+      font-size: 0.72rem;
       color: #64748b;
-      margin-top: 1px;
+      margin-top: 2px;
     }
 
     .donut-legend {
@@ -1002,6 +1066,8 @@ interface AccountChip {
     .acc-chip:hover {
       background: #eff6ff;
       border-color: #bfdbfe;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.08);
     }
     .acc-chip-name {
       font-size: 0.65rem;
@@ -1148,6 +1214,7 @@ export class DashboardComponent implements OnInit {
   feeSplitTotal = 0;
   feeSplit: FeeSplitItem[] = [];
   hoveredSplitIndex: number | null = null;
+  hoveredBranchIndex: number | null = null;
   feesTypeTotal = 0;
   bookAmountTotal = 0;
   accountChips: AccountChip[] = [];

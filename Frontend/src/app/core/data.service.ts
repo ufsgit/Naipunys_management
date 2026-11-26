@@ -333,12 +333,13 @@ export class DataService {
 
     const request$ = source.pipe(
       tap((res: any) => {
-        apply(res);
         this.loadedKeys.add(key);
+        apply(res);
         queueMicrotask(() => this.appRef.tick());
       }),
       catchError(err => {
         console.error(`[ApiService] ${key} failed:`, err?.message || err);
+        this.loadedKeys.add(key);
         return of(void 0);
       }),
       finalize(() => this.inFlight.delete(key)),
@@ -370,25 +371,27 @@ export class DataService {
     if (this.preload$) return this.preload$;
     this.loadingSubject.next(true);
 
-    this.preload$ = this.loadBranches().pipe(
-      switchMap(() => this.loadDepartments()),
-      switchMap(() => forkJoin([
-        this.loadStatus(),
-        this.loadCourses(),
-        this.loadStudentData(),
-        this.loadAccounts(),
-        this.loadReceipts(),
-        this.loadPayments(),
-        this.loadFeePending(),
-        this.loadFollowUps(),
-        this.loadUsers(),
-        this.loadRoles(),
-        this.loadFollowupTypes(),
-        this.loadEnquirySources(),
-        this.loadCompanyInfo(),
-        this.loadDepartmentPerms(),
-        this.loadMenuPerms()
-      ])),
+    // Start every data set together; each loader already waits for its own
+    // dependencies, and ensureLoaded() shares duplicate requests.
+    this.preload$ = forkJoin([
+      this.loadBranches(),
+      this.loadDepartments(),
+      this.loadStatus(),
+      this.loadCourses(),
+      this.loadStudentData(),
+      this.loadAccounts(),
+      this.loadReceipts(),
+      this.loadPayments(),
+      this.loadFeePending(),
+      this.loadFollowUps(),
+      this.loadUsers(),
+      this.loadRoles(),
+      this.loadFollowupTypes(),
+      this.loadEnquirySources(),
+      this.loadCompanyInfo(),
+      this.loadDepartmentPerms(),
+      this.loadMenuPerms()
+    ]).pipe(
       map(() => void 0),
       finalize(() => this.loadingSubject.next(false)),
       shareReplay(1)

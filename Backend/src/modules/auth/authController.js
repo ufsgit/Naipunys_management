@@ -7,7 +7,7 @@ const login = async (req, res, next) => {
     const result = await authService.login(username, password);
 
     if (!result.valid) {
-      return error(res, 'Invalid username or password', 401);
+      return error(res, 'Incorrect password or username', 401);
     }
 
     return success(res, result, 'Login successful');
