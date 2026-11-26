@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
+import { ConfirmDialogComponent } from '../../shared/components/modal.component';
+import { DataService, RoleRow } from '../../core/data.service';
 
 export interface UserRoleItem {
   slNo: number;
@@ -14,7 +16,7 @@ export interface UserRoleItem {
 @Component({
   selector: 'app-user-roles',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent],
+  imports: [CommonModule, FormsModule, IconComponent, ConfirmDialogComponent],
   template: `
     <div class="roles-page-container">
       <!-- Title -->
@@ -36,10 +38,7 @@ export interface UserRoleItem {
             <label class="field-label">Role Under</label>
             <select class="form-select role-under-select" [(ngModel)]="roleForm.roleUnder">
               <option value="Select">Select</option>
-              <option value="DIRECTOR">DIRECTOR</option>
-              <option value="HEAD OPERATION">HEAD OPERATION</option>
-              <option value="ACCOUNT OFFICER">ACCOUNT OFFICER</option>
-              <option value="ADMIN MANAGER">ADMIN MANAGER</option>
+              <option *ngFor="let opt of underOptions" [value]="opt">{{ opt }}</option>
             </select>
           </div>
 
@@ -95,6 +94,15 @@ export interface UserRoleItem {
           </tbody>
         </table>
       </div>
+
+      <app-confirm-dialog
+        [isOpen]="isDeleteModalOpen"
+        title="Delete User Role"
+        [message]="'Are you sure you want to delete role ' + (roleToDelete?.role || '') + '?'"
+        confirmText="Delete"
+        (confirmEvent)="confirmDelete()"
+        (cancelEvent)="isDeleteModalOpen = false; roleToDelete = null"
+      ></app-confirm-dialog>
     </div>
   `,
   styles: [`
@@ -326,17 +334,9 @@ export interface UserRoleItem {
   `]
 })
 export class UserRolesComponent implements OnInit {
-  roles: UserRoleItem[] = [
-    { slNo: 1, role: 'ACCOUNT OFFICER', under: 'DIRECTOR', hasDelete: true, hasEdit: true },
-    { slNo: 2, role: 'ADMIN MANAGER', under: 'HEAD OPERATION', hasDelete: true, hasEdit: true },
-    { slNo: 3, role: 'ADMINISTRATION', under: 'DIRECTOR', hasDelete: true, hasEdit: true },
-    { slNo: 4, role: 'ASST MANAGER OVERSEAS', under: 'HEAD OPERATION', hasDelete: true, hasEdit: true },
-    { slNo: 5, role: 'CHIEF MARKETING MANAGER', under: 'DIRECTOR', hasDelete: true, hasEdit: true },
-    { slNo: 6, role: 'DIRECTOR', under: 'DIRECTOR', hasDelete: true, hasEdit: true },
-    { slNo: 7, role: 'HEAD OPERATION', under: 'ACCOUNT OFFICER', hasDelete: true, hasEdit: true },
-    { slNo: 8, role: 'MANAGER OVERSEAS', under: 'HEAD OPERATION', hasDelete: true, hasEdit: true },
-    { slNo: 9, role: 'STAFF', under: 'ADMIN MANAGER', hasDelete: true, hasEdit: true }
-  ];
+  roles: UserRoleItem[] = [];
+
+  constructor(private mockDataService: DataService, private cdr: ChangeDetectorRef) {}
 
   getEditClass(index: number): string {
     return index % 2 === 1 ? 'btn-brown' : 'btn-purple';
@@ -347,18 +347,35 @@ export class UserRolesComponent implements OnInit {
     roleUnder: 'Select'
   };
 
-  ngOnInit() {}
+  get underOptions(): string[] {
+    const list = this.roles.map(r => r.role).filter(Boolean);
+    const unique = Array.from(new Set(list));
+    return unique.sort();
+  }
+
+  ngOnInit() {
+    this.mockDataService.getRoleRows().subscribe(roles => {
+      this.roles = roles;
+      this.cdr.markForCheck();
+    });
+  }
 
   saveRole() {
     if (!this.roleForm.roleName.trim()) return;
 
-    this.roles.push({
-      slNo: this.roles.length + 1,
-      role: this.roleForm.roleName.toUpperCase(),
-      under: this.roleForm.roleUnder === 'Select' ? 'DIRECTOR' : this.roleForm.roleUnder,
+    const data = {
+      role: this.roleForm.roleName.trim().toUpperCase(),
+      under: this.roleForm.roleUnder === 'Select' ? '' : this.roleForm.roleUnder,
       hasDelete: true,
-      hasEdit: false
-    });
+      hasEdit: true
+    };
+
+    if (this.editingRole) {
+      this.mockDataService.updateRoleRow(this.editingRole.slNo, data);
+      this.editingRole = null;
+    } else {
+      this.mockDataService.addRoleRow(data);
+    }
 
     this.cancelForm();
   }
@@ -368,18 +385,33 @@ export class UserRolesComponent implements OnInit {
       roleName: '',
       roleUnder: 'Select'
     };
+    this.editingRole = null;
   }
 
+  editingRole: UserRoleItem | null = null;
+
   openEditRole(r: UserRoleItem) {
+    this.editingRole = r;
     this.roleForm = {
       roleName: r.role,
-      roleUnder: r.under
+      roleUnder: r.under || 'Select'
     };
   }
 
+  isDeleteModalOpen = false;
+  roleToDelete: UserRoleItem | null = null;
+
   deleteRole(r: UserRoleItem) {
-    if (confirm(`Are you sure you want to delete role ${r.role}?`)) {
-      this.roles = this.roles.filter(item => item !== r);
+    this.roleToDelete = r;
+    this.isDeleteModalOpen = true;
+  }
+
+  confirmDelete() {
+    if (this.roleToDelete) {
+      this.mockDataService.deleteRoleRow(this.roleToDelete.slNo);
+      this.roles = this.roles.filter(item => item !== this.roleToDelete);
     }
+    this.isDeleteModalOpen = false;
+    this.roleToDelete = null;
   }
 }

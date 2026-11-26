@@ -1,13 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
-import { MockDataService, CourseItem, CourseBranchFee } from '../../core/mock-data.service';
+import { ConfirmDialogComponent } from '../../shared/components/modal.component';
+import { DataService, CourseItem } from '../../core/data.service';
 
 @Component({
   selector: 'app-course-setup',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent],
+  imports: [CommonModule, FormsModule, IconComponent, ConfirmDialogComponent],
   template: `
     <div class="course-page-container">
       <!-- Header -->
@@ -63,19 +64,17 @@ import { MockDataService, CourseItem, CourseBranchFee } from '../../core/mock-da
         </table>
       </div>
 
-      <!-- Create / Edit Course Modal matching Image 5 exactly -->
+      <!-- Create / Edit Course Modal -->
       <div class="modal-backdrop" *ngIf="isModalOpen" (click)="closeModal()">
         <div class="modal-dialog" (click)="$event.stopPropagation()">
-          <!-- Modal Blue Header -->
           <div class="modal-header">
-            <h3 class="modal-title">Course</h3>
+            <h3 class="modal-title">{{ isEditMode ? 'Edit Course' : 'New Course' }}</h3>
             <button type="button" class="modal-close-btn" (click)="closeModal()">✕</button>
           </div>
 
-          <!-- Modal Body Form -->
           <div class="modal-body">
             <div class="form-group">
-              <label class="form-label">Course</label>
+              <label class="form-label">Course Name</label>
               <input
                 type="text"
                 class="form-input"
@@ -85,51 +84,31 @@ import { MockDataService, CourseItem, CourseBranchFee } from '../../core/mock-da
             </div>
 
             <div class="form-group">
-              <label class="form-label">Book Amount</label>
+              <label class="form-label">Course Fee</label>
               <input
                 type="number"
                 class="form-input"
-                [(ngModel)]="courseForm.bookAmount"
+                [(ngModel)]="courseForm.fees"
+                placeholder="0"
               />
-            </div>
-
-            <!-- Branch Fees Table -->
-            <div class="fees-section">
-              <label class="form-label">Fees</label>
-              <div class="fees-table-card">
-                <table class="fees-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 70px;">Sl No</th>
-                      <th>Branch</th>
-                      <th style="width: 170px;">Fees</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let b of branchFees">
-                      <td class="text-secondary">{{ b.slNo }}</td>
-                      <td class="branch-name">{{ b.branch }}</td>
-                      <td>
-                        <input
-                          type="text"
-                          class="fee-input"
-                          [(ngModel)]="b.fees"
-                        />
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
             </div>
           </div>
 
-          <!-- Modal Footer Actions -->
           <div class="modal-footer">
             <button type="button" class="btn-modal-save" (click)="saveCourse()">SAVE</button>
             <button type="button" class="btn-modal-cancel" (click)="closeModal()">CANCEL</button>
           </div>
         </div>
       </div>
+
+      <app-confirm-dialog
+        [isOpen]="isDeleteModalOpen"
+        title="Delete Course"
+        [message]="'Are you sure you want to delete ' + (courseToDelete?.name || '') + '?'"
+        confirmText="Delete"
+        (confirmEvent)="confirmDelete()"
+        (cancelEvent)="isDeleteModalOpen = false; courseToDelete = null"
+      ></app-confirm-dialog>
     </div>
   `,
   styles: [`
@@ -174,7 +153,6 @@ import { MockDataService, CourseItem, CourseBranchFee } from '../../core/mock-da
       background-color: #15803d;
     }
 
-    /* Table Card */
     .table-card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
@@ -203,7 +181,6 @@ import { MockDataService, CourseItem, CourseBranchFee } from '../../core/mock-da
 
     .course-table tbody tr {
       border-bottom: 1px solid #f1f5f9;
-      transition: background-color 0.15s ease;
     }
 
     .course-table tbody tr:last-child {
@@ -232,7 +209,6 @@ import { MockDataService, CourseItem, CourseBranchFee } from '../../core/mock-da
       color: #64748b;
     }
 
-    /* Action Buttons (Square with rounded corners matching Accounts/Receipts reference) */
     .btn-action-edit,
     .btn-action-delete {
       width: 32px;
@@ -251,6 +227,7 @@ import { MockDataService, CourseItem, CourseBranchFee } from '../../core/mock-da
       border: none;
       color: #ffffff;
     }
+
     .btn-purple:hover {
       background-color: #6d28d9;
     }
@@ -260,6 +237,7 @@ import { MockDataService, CourseItem, CourseBranchFee } from '../../core/mock-da
       border: none;
       color: #ffffff;
     }
+
     .btn-blue:hover {
       background-color: #1d4ed8;
     }
@@ -269,6 +247,7 @@ import { MockDataService, CourseItem, CourseBranchFee } from '../../core/mock-da
       border: 1px solid #cbd5e1;
       color: #64748b;
     }
+
     .btn-del-white:hover {
       border-color: #ef4444;
       color: #ef4444;
@@ -280,6 +259,7 @@ import { MockDataService, CourseItem, CourseBranchFee } from '../../core/mock-da
       border: none;
       color: #ffffff;
     }
+
     .btn-del-brown:hover {
       background-color: #9a3412;
     }
@@ -290,7 +270,6 @@ import { MockDataService, CourseItem, CourseBranchFee } from '../../core/mock-da
       color: #94a3b8;
     }
 
-    /* Modal Backdrop & Dialog */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -377,7 +356,8 @@ import { MockDataService, CourseItem, CourseBranchFee } from '../../core/mock-da
       color: #334155;
     }
 
-    .form-input {
+    .form-input,
+    .form-select {
       width: 100%;
       height: 38px;
       padding: 0 0.85rem;
@@ -388,82 +368,13 @@ import { MockDataService, CourseItem, CourseBranchFee } from '../../core/mock-da
       border-radius: 6px;
       box-sizing: border-box;
       outline: none;
-      transition: border-color 0.15s ease;
     }
 
-    .form-input:focus {
+    .form-input:focus,
+    .form-select:focus {
       border-color: #3b82f6;
     }
 
-    .fees-section {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      margin-top: 0.25rem;
-    }
-
-    .fees-table-card {
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      overflow: hidden;
-    }
-
-    .fees-table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-    }
-
-    .fees-table thead tr {
-      background-color: #f8fafc;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    .fees-table th {
-      padding: 0.65rem 0.85rem;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #475569;
-    }
-
-    .fees-table tbody tr {
-      border-bottom: 1px solid #f1f5f9;
-    }
-
-    .fees-table tbody tr:last-child {
-      border-bottom: none;
-    }
-
-    .fees-table td {
-      padding: 0.55rem 0.85rem;
-      font-size: 0.825rem;
-      color: #334155;
-      vertical-align: middle;
-    }
-
-    .branch-name {
-      font-weight: 500;
-      color: #1e293b;
-    }
-
-    .fee-input {
-      width: 100%;
-      height: 32px;
-      padding: 0 0.6rem;
-      font-size: 0.825rem;
-      color: #1e293b;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 4px;
-      box-sizing: border-box;
-      outline: none;
-    }
-
-    .fee-input:focus {
-      border-color: #3b82f6;
-    }
-
-    /* Modal Footer */
     .modal-footer {
       padding: 1rem 1.6rem;
       display: flex;
@@ -511,7 +422,6 @@ import { MockDataService, CourseItem, CourseBranchFee } from '../../core/mock-da
 })
 export class CourseSetupComponent implements OnInit {
   courses: CourseItem[] = [];
-  branchFees: CourseBranchFee[] = [];
 
   getEditClass(index: number): string {
     return index % 2 === 1 ? 'btn-blue' : 'btn-purple';
@@ -523,36 +433,39 @@ export class CourseSetupComponent implements OnInit {
 
   isModalOpen = false;
   isEditMode = false;
+  editingCourseSlNo: number | null = null;
 
   courseForm = {
     name: '',
-    bookAmount: 0
+    fees: 0
   };
 
-  constructor(private mockDataService: MockDataService) {}
+  constructor(private mockDataService: DataService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
-    this.mockDataService.getCourseItems().subscribe(data => this.courses = data);
-    this.mockDataService.getBranchFees().subscribe(data => this.branchFees = data);
+    this.mockDataService.getCourseItems().subscribe(data => {
+      this.courses = data;
+      this.cdr.markForCheck();
+    });
   }
 
   openCreateModal() {
     this.isEditMode = false;
+    this.editingCourseSlNo = null;
     this.courseForm = {
       name: '',
-      bookAmount: 0
+      fees: 0
     };
-    this.resetBranchFees();
     this.isModalOpen = true;
   }
 
   openEditModal(c: CourseItem) {
     this.isEditMode = true;
+    this.editingCourseSlNo = c.slNo;
     this.courseForm = {
       name: c.name,
-      bookAmount: 0
+      fees: c.fees
     };
-    this.resetBranchFees();
     this.isModalOpen = true;
   }
 
@@ -560,26 +473,43 @@ export class CourseSetupComponent implements OnInit {
     this.isModalOpen = false;
   }
 
-  resetBranchFees() {
-    this.mockDataService.getBranchFees().subscribe(data => this.branchFees = [...data]);
-  }
-
   saveCourse() {
     if (!this.courseForm.name.trim()) return;
 
-    this.mockDataService.addCourseItem({
-      name: this.courseForm.name,
-      fees: 0,
-      hasDelete: true,
-      hasEdit: true
-    });
+    if (this.isEditMode && this.editingCourseSlNo !== null) {
+      this.mockDataService.updateCourseItem(this.editingCourseSlNo, {
+        name: this.courseForm.name,
+        fees: this.courseForm.fees,
+        status: 'Active'
+      });
+    } else {
+      this.mockDataService.addCourseItem({
+        name: this.courseForm.name,
+        department: '',
+        duration: '',
+        fees: this.courseForm.fees,
+        hasDelete: true,
+        hasEdit: true,
+        status: 'Active'
+      });
+    }
 
     this.closeModal();
   }
 
+  isDeleteModalOpen = false;
+  courseToDelete: CourseItem | null = null;
+
   deleteCourse(c: CourseItem) {
-    if (confirm(`Are you sure you want to delete ${c.name}?`)) {
-      this.mockDataService.deleteCourseItem(c.slNo);
+    this.courseToDelete = c;
+    this.isDeleteModalOpen = true;
+  }
+
+  confirmDelete() {
+    if (this.courseToDelete) {
+      this.mockDataService.deleteCourseItem(this.courseToDelete.slNo);
     }
+    this.isDeleteModalOpen = false;
+    this.courseToDelete = null;
   }
 }

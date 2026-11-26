@@ -2,6 +2,7 @@ import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, RouterOutlet } from '@angular/router';
 import { IconComponent } from '../shared/index';
+import { DataService } from './data.service';
 
 @Component({
   selector: 'app-layout',
@@ -726,7 +727,7 @@ import { IconComponent } from '../shared/index';
 export class LayoutComponent {
   activeDropdown: string | null = null;
 
-  constructor(public router: Router) {}
+  constructor(public router: Router, private data: DataService) {}
 
   isCreateNewActive(): boolean {
     return this.router.url.startsWith('/students/create');
@@ -770,6 +771,9 @@ export class LayoutComponent {
   }
 
   onLogout() {
-    alert('Logged out from Director session.');
+    localStorage.removeItem('naipunya_token');
+    localStorage.removeItem('naipunya_user');
+    this.data.reset();
+    this.router.navigate(['/login']);
   }
 }

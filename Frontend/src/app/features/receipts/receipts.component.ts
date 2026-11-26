@@ -1,13 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
-import { MockDataService, Receipt, Account, Branch } from '../../core/mock-data.service';
+import { ConfirmDialogComponent } from '../../shared/components/modal.component';
+import { DataService, Receipt, Account, Branch } from '../../core/data.service';
 
 @Component({
   selector: 'app-receipts',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent],
+  imports: [CommonModule, FormsModule, IconComponent, ConfirmDialogComponent],
   template: `
     <div class="receipt-page-container">
       <!-- Title -->
@@ -131,11 +132,10 @@ import { MockDataService, Receipt, Account, Branch } from '../../core/mock-data.
               <label class="form-label">Date</label>
               <div class="date-input-wrap modal-date-wrap">
                 <input
-                  type="text"
+                  type="date"
                   class="form-input"
                   [(ngModel)]="receiptForm.date"
                 />
-                <app-icon name="calendar" [size]="14" customClass="cal-icon"></app-icon>
               </div>
             </div>
 
@@ -180,6 +180,15 @@ import { MockDataService, Receipt, Account, Branch } from '../../core/mock-data.
           </div>
         </div>
       </div>
+
+      <app-confirm-dialog
+        [isOpen]="isDeleteModalOpen"
+        title="Delete Receipt"
+        [message]="'Are you sure you want to delete receipt #' + (receiptToDelete?.voucherNo || receiptToDelete?.receiptNo || '') + '?'"
+        confirmText="Delete"
+        (confirmEvent)="confirmDelete()"
+        (cancelEvent)="isDeleteModalOpen = false; receiptToDelete = null"
+      ></app-confirm-dialog>
     </div>
   `,
   styles: [`
@@ -640,8 +649,8 @@ export class ReceiptsComponent implements OnInit {
   branches: Branch[] = [];
   accounts: Account[] = [];
 
-  fromDate: string = '05-Feb-2026';
-  toDate: string = '23-Nov-2026';
+  fromDate: string = '';
+  toDate: string = '';
   selectedBranch: string = 'All';
 
   isModalOpen: boolean = false;
@@ -658,27 +667,30 @@ export class ReceiptsComponent implements OnInit {
   } = {
     id: '',
     from: '',
-    date: '24-Nov-2026',
+    date: '',
     amount: 0,
-    voucherNo: 3,
+    voucherNo: '',
     toAccount: '',
     details: ''
   };
 
-  constructor(private mockDataService: MockDataService) {}
+  constructor(private mockDataService: DataService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.mockDataService.getReceipts().subscribe(rcp => {
       this.allReceipts = rcp;
       this.receipts = [...rcp];
+      this.cdr.markForCheck();
     });
 
     this.mockDataService.getBranches().subscribe(b => {
       this.branches = b;
+      this.cdr.markForCheck();
     });
 
     this.mockDataService.getAccounts().subscribe(acc => {
       this.accounts = acc;
+      this.cdr.markForCheck();
     });
   }
 
@@ -700,14 +712,22 @@ export class ReceiptsComponent implements OnInit {
     });
   }
 
+  private toInputDate(value: string): string {
+    if (!value) return '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return '';
+    return d.toISOString().split('T')[0];
+  }
+
   openCreateModal() {
     this.isEditMode = false;
     this.receiptForm = {
       id: '',
       from: '',
-      date: '24-Nov-2026',
+      date: new Date().toISOString().split('T')[0],
       amount: 0,
-      voucherNo: this.receipts.length + 1,
+      voucherNo: '',
       toAccount: '',
       details: ''
     };
@@ -719,9 +739,9 @@ export class ReceiptsComponent implements OnInit {
     this.receiptForm = {
       id: r.id,
       from: r.from || r.studentName || '',
-      date: r.date,
+      date: this.toInputDate(r.date),
       amount: r.amount,
-      voucherNo: r.voucherNo || 1,
+      voucherNo: r.voucherNo || '',
       toAccount: r.toAccount || '',
       details: r.details || r.remark || ''
     };
@@ -736,35 +756,31 @@ export class ReceiptsComponent implements OnInit {
     if (!this.receiptForm.from.trim()) return;
 
     if (this.isEditMode) {
-      const idx = this.receipts.findIndex(r => r.id === this.receiptForm.id);
-      if (idx !== -1) {
-        this.receipts[idx] = {
-          ...this.receipts[idx],
-          from: this.receiptForm.from,
-          studentName: this.receiptForm.from,
-          date: this.receiptForm.date,
-          amount: Number(this.receiptForm.amount) || 0,
-          voucherNo: this.receiptForm.voucherNo,
-          toAccount: this.receiptForm.toAccount,
-          details: this.receiptForm.details
-        };
-      }
-    } else {
-      const newReceipt: Receipt = {
-        id: (this.receipts.length + 1).toString(),
-        receiptNo: (this.receipts.length + 1).toString(),
-        voucherNo: this.receiptForm.voucherNo,
-        date: this.receiptForm.date,
+      this.mockDataService.updateReceipt(this.receiptForm.id, {
         from: this.receiptForm.from,
-        studentId: 'STU-' + (1000 + this.receipts.length + 1),
         studentName: this.receiptForm.from,
-        course: 'General Course',
-        branch: 'Ernakulam',
+        date: this.receiptForm.date,
         amount: Number(this.receiptForm.amount) || 0,
-        paymentMode: 'Cash',
+        voucherNo: this.receiptForm.voucherNo,
         toAccount: this.receiptForm.toAccount,
         details: this.receiptForm.details
-      };
+      });
+    } else {
+      const newReceipt = this.mockDataService.addReceipt({
+        date: this.receiptForm.date,
+        from: this.receiptForm.from,
+        studentId: '',
+        studentName: this.receiptForm.from,
+        course: '',
+        branch: '',
+        amount: Number(this.receiptForm.amount) || 0,
+        voucherNo: this.receiptForm.voucherNo,
+        details: this.receiptForm.details,
+        toAccount: this.receiptForm.toAccount,
+        paymentMode: '',
+        referenceNo: '',
+        remark: ''
+      });
       this.receipts.push(newReceipt);
       this.allReceipts.push(newReceipt);
     }
@@ -772,10 +788,22 @@ export class ReceiptsComponent implements OnInit {
     this.closeModal();
   }
 
+  isDeleteModalOpen = false;
+  receiptToDelete: Receipt | null = null;
+
   deleteReceipt(r: Receipt) {
-    if (confirm(`Are you sure you want to delete receipt #${r.voucherNo || r.receiptNo}?`)) {
-      this.receipts = this.receipts.filter(item => item.id !== r.id);
-      this.allReceipts = this.allReceipts.filter(item => item.id !== r.id);
+    this.receiptToDelete = r;
+    this.isDeleteModalOpen = true;
+  }
+
+  confirmDelete() {
+    if (this.receiptToDelete) {
+      const id = this.receiptToDelete.id;
+      this.mockDataService.deleteReceipt(id);
+      this.receipts = this.receipts.filter(item => item.id !== id);
+      this.allReceipts = this.allReceipts.filter(item => item.id !== id);
     }
+    this.isDeleteModalOpen = false;
+    this.receiptToDelete = null;
   }
 }

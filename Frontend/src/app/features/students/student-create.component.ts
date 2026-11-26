@@ -3,7 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { MockDataService } from '../../core/mock-data.service';
+import { DataService, Branch, DepartmentItem, UserRow, EnquirySourceItem, StatusItem, FollowupTypeItem } from '../../core/data.service';
+import { NotificationService } from '../../core/notification.service';
 
 @Component({
   selector: 'app-student-create',
@@ -30,11 +31,7 @@ import { MockDataService } from '../../core/mock-data.service';
                 <label class="field-label required">Enquiry Source</label>
                 <div class="field-control">
                   <select class="input-select" [(ngModel)]="student.enquirySource">
-                    <option value="Advertisement">Advertisement</option>
-                    <option value="Walk-in">Walk-in</option>
-                    <option value="Referral">Referral</option>
-                    <option value="Social Media">Social Media</option>
-                    <option value="Website">Website</option>
+                    <option *ngFor="let s of enquirySources" [value]="s.name">{{ s.name }}</option>
                   </select>
                 </div>
               </div>
@@ -43,10 +40,7 @@ import { MockDataService } from '../../core/mock-data.service';
                 <label class="field-label required">Enquiry Type</label>
                 <div class="field-control">
                   <select class="input-select" [(ngModel)]="student.enquiryType">
-                    <option value="Select">Select</option>
-                    <option value="Course Enquiry">Course Enquiry</option>
-                    <option value="Visa Enquiry">Visa Enquiry</option>
-                    <option value="IELTS / OET">IELTS / OET</option>
+                    <option *ngFor="let t of enquiryTypes" [value]="t">{{ t }}</option>
                   </select>
                 </div>
               </div>
@@ -189,10 +183,7 @@ import { MockDataService } from '../../core/mock-data.service';
               <label class="field-label required">Branch</label>
               <div class="field-control">
                 <select class="input-select" [(ngModel)]="student.branch">
-                  <option value="Ernakulam">Ernakulam</option>
-                  <option value="Kottayam">Kottayam</option>
-                  <option value="Thrissur">Thrissur</option>
-                  <option value="Calicut">Calicut</option>
+                  <option *ngFor="let b of branches" [value]="b.name">{{ b.name }}</option>
                 </select>
               </div>
             </div>
@@ -201,10 +192,7 @@ import { MockDataService } from '../../core/mock-data.service';
               <label class="field-label required">Department</label>
               <div class="field-control">
                 <select class="input-select" [(ngModel)]="student.department">
-                  <option value="Follow Up">Follow Up</option>
-                  <option value="IELTS Academic">IELTS Academic</option>
-                  <option value="Study Abroad">Study Abroad</option>
-                  <option value="Spoken English">Spoken English</option>
+                  <option *ngFor="let d of departments" [value]="d.name">{{ d.name }}</option>
                 </select>
               </div>
             </div>
@@ -213,10 +201,7 @@ import { MockDataService } from '../../core/mock-data.service';
               <label class="field-label required">To</label>
               <div class="field-control">
                 <select class="input-select" [(ngModel)]="student.assignedTo">
-                  <option value="DIRECTOR">DIRECTOR</option>
-                  <option value="Manager">Manager</option>
-                  <option value="Senior Counselor">Senior Counselor</option>
-                  <option value="Front Office">Front Office</option>
+                  <option *ngFor="let u of staffOptions" [value]="u.userName">{{ u.userName }}</option>
                 </select>
               </div>
             </div>
@@ -226,11 +211,7 @@ import { MockDataService } from '../../core/mock-data.service';
               <label class="field-label required">Status</label>
               <div class="field-control">
                 <select class="input-select" [(ngModel)]="student.status">
-                  <option value="Interested">Interested</option>
-                  <option value="Running">Running</option>
-                  <option value="Followup Due">Followup Due</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Stopped">Stopped</option>
+                  <option *ngFor="let s of statuses" [value]="s.name">{{ s.name }}</option>
                 </select>
               </div>
             </div>
@@ -239,10 +220,7 @@ import { MockDataService } from '../../core/mock-data.service';
               <label class="field-label required">Followup Type</label>
               <div class="field-control">
                 <select class="input-select" [(ngModel)]="student.followupType">
-                  <option value="Walkin">Walkin</option>
-                  <option value="Phone Call">Phone Call</option>
-                  <option value="WhatsApp">WhatsApp</option>
-                  <option value="Email">Email</option>
+                  <option *ngFor="let t of followupTypes" [value]="t.name">{{ t.name }}</option>
                 </select>
               </div>
             </div>
@@ -524,9 +502,17 @@ import { MockDataService } from '../../core/mock-data.service';
 export class StudentCreateComponent implements OnInit {
   showSuccess = false;
 
+  branches: Branch[] = [];
+  departments: DepartmentItem[] = [];
+  staffOptions: UserRow[] = [];
+  enquirySources: EnquirySourceItem[] = [];
+  statuses: StatusItem[] = [];
+  followupTypes: FollowupTypeItem[] = [];
+  enquiryTypes: string[] = [];
+
   student = {
-    enquirySource: 'Advertisement',
-    enquiryType: 'Select',
+    enquirySource: '',
+    enquiryType: '',
     name: '',
     mobile: '',
     parentsMobile: '',
@@ -535,18 +521,19 @@ export class StudentCreateComponent implements OnInit {
     address: '',
     email: '',
     altEmail: '',
-    date: '23-Nov-2026',
+    date: '',
     whatsapp: '',
-    branch: 'Ernakulam',
-    department: 'Follow Up',
-    assignedTo: 'DIRECTOR',
-    status: 'Interested',
-    followupType: 'Walkin',
-    nextFollowupDate: '23-Nov-2026',
+    branch: '',
+    department: '',
+    assignedTo: '',
+    batch: '',
+    status: '',
+    followupType: '',
+    nextFollowupDate: '',
     remarks: ''
   };
 
-  constructor(private router: Router, private mockDataService: MockDataService) {}
+  constructor(private router: Router, private mockDataService: DataService, private notify: NotificationService) {}
 
   ngOnInit() {
     const today = new Date();
@@ -556,6 +543,23 @@ export class StudentCreateComponent implements OnInit {
     const formatted = `${yyyy}-${mm}-${dd}`;
     this.student.date = formatted;
     this.student.nextFollowupDate = formatted;
+
+    this.mockDataService.getBranches().subscribe(b => this.branches = b);
+    this.mockDataService.getDepartmentItems().subscribe(d => this.departments = d);
+    this.mockDataService.getUserRows().subscribe(u => this.staffOptions = u);
+    this.mockDataService.getEnquirySourceItems().subscribe(s => this.enquirySources = s);
+    this.mockDataService.getStatusSettingsItems().subscribe(s => this.statuses = s);
+    this.mockDataService.getFollowupTypeItems().subscribe(t => this.followupTypes = t);
+    this.mockDataService.getCourseItems().subscribe(c => {
+      const types = new Set<string>();
+      c.forEach(item => {
+        const name = item.name.toLowerCase();
+        if (name.includes('visa')) types.add('Visa Enquiry');
+        else types.add('Course Enquiry');
+      });
+      this.enquiryTypes = [...types];
+      if (!this.enquiryTypes.length) this.enquiryTypes = [];
+    });
   }
 
   resetForm() {
@@ -574,7 +578,7 @@ export class StudentCreateComponent implements OnInit {
 
   saveStudent(andSend = false) {
     if (!this.student.name) {
-      alert('Please enter student name');
+      this.notify.show('Please enter student name', 'Validation', 'warning');
       return;
     }
 
@@ -583,9 +587,9 @@ export class StudentCreateComponent implements OnInit {
       course: this.student.department,
       branch: this.student.branch,
       department: this.student.department,
-      batch: '2026-Batch A',
+      batch: this.student.batch || '',
       admissionDate: this.student.date,
-      feesTotal: 45000,
+      feesTotal: 0,
       feesPaid: 0,
       status: 'Active',
       phone: this.student.mobile,

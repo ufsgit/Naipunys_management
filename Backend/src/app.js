@@ -17,20 +17,21 @@ app.get('/health', (req, res) => {
 
 // API routes
 const base = '/api';
-app.use(`${base}/auth`, require('./routes/authRoutes'));
-app.use(`${base}/students`, require('./routes/studentRoutes'));
-app.use(`${base}/courses`, require('./routes/courseRoutes'));
-app.use(`${base}/branches`, require('./routes/branchRoutes'));
-app.use(`${base}/departments`, require('./routes/departmentRoutes'));
-app.use(`${base}/accounts`, require('./routes/accountRoutes'));
-app.use(`${base}/receipts`, require('./routes/receiptRoutes'));
-app.use(`${base}/payments`, require('./routes/paymentRoutes'));
-app.use(`${base}/users`, require('./routes/userRoutes'));
-app.use(`${base}/roles`, require('./routes/roleRoutes'));
-app.use(`${base}/follow-ups`, require('./routes/followUpRoutes'));
-app.use(`${base}/reports`, require('./routes/reportRoutes'));
-app.use(`${base}/company-info`, require('./routes/companyInfoRoutes'));
-app.use(`${base}/settings`, require('./routes/settingsRoutes'));
+app.use(`${base}/auth`, require('./modules/auth/authRoutes'));
+app.use(`${base}/students`, require('./modules/students/studentRoutes'));
+app.use(`${base}/courses`, require('./modules/courses/courseRoutes'));
+app.use(`${base}/branches`, require('./modules/branches/branchRoutes'));
+app.use(`${base}/departments`, require('./modules/departments/departmentRoutes'));
+app.use(`${base}/accounts`, require('./modules/accounts/accountRoutes'));
+app.use(`${base}/receipts`, require('./modules/receipts/receiptRoutes'));
+app.use(`${base}/payments`, require('./modules/payments/paymentRoutes'));
+app.use(`${base}/users`, require('./modules/users/userRoutes'));
+app.use(`${base}/roles`, require('./modules/roles/roleRoutes'));
+app.use(`${base}/follow-ups`, require('./modules/follow-ups/followUpRoutes'));
+app.use(`${base}/reports`, require('./modules/reports/reportRoutes'));
+app.use(`${base}/company-info`, require('./modules/company-info/companyInfoRoutes'));
+app.use(`${base}/settings`, require('./modules/settings/settingsRoutes'));
+app.use(`${base}/permissions`, require('./modules/permissions/permissionRoutes'));
 
 // 404 handler
 app.use((req, res) => {

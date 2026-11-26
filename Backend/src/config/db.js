@@ -42,7 +42,7 @@ pool.getConnection()
 
 /**
  * Execute a stored procedure and return its result rows.
- * @param {string} procedureName - e.g. 'sp_GetStudents'
+ * @param {string} procedureName - e.g. 'GetStudents'
  * @param {Array} params - parameters in order
  */
 async function callProcedure(procedureName, params = []) {

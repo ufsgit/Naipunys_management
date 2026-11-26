@@ -1,13 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
-import { MockDataService, UserRow, DepartmentPermRow, MenuPermRow } from '../../core/mock-data.service';
+import { ConfirmDialogComponent } from '../../shared/components/modal.component';
+import { DataService, UserRow, DepartmentPermRow, MenuPermRow, Branch, RoleRow } from '../../core/data.service';
 
 @Component({
   selector: 'app-user-details',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent],
+  imports: [CommonModule, FormsModule, IconComponent, ConfirmDialogComponent],
   template: `
     <div class="users-page-container">
       <!-- Title -->
@@ -29,12 +30,8 @@ import { MockDataService, UserRow, DepartmentPermRow, MenuPermRow } from '../../
           <div class="filter-field">
             <label class="filter-label">Branch</label>
             <select class="filter-select" [(ngModel)]="selectedBranch">
-              <option value="Select Branch">Select Branch</option>
-              <option value="Ernakulam">Ernakulam</option>
-              <option value="Thrikkakara">Thrikkakara</option>
-              <option value="Angamaly">Angamaly</option>
-              <option value="Kaloor">Kaloor</option>
-              <option value="Pala">Pala</option>
+              <option value="">All Branches</option>
+              <option *ngFor="let b of branches" [value]="b.name">{{ b.name }}</option>
             </select>
           </div>
 
@@ -145,25 +142,16 @@ import { MockDataService, UserRow, DepartmentPermRow, MenuPermRow } from '../../
               <div class="form-row">
                 <label class="form-label required">Branch <span class="req">*</span></label>
                 <select class="form-select" [(ngModel)]="userForm.branch">
-                  <option value="Select Branch">Select Branch</option>
-                  <option value="Ernakulam">Ernakulam</option>
-                  <option value="Kaloor">Kaloor</option>
-                  <option value="Angamaly">Angamaly</option>
-                  <option value="Thrikkakara">Thrikkakara</option>
-                  <option value="Pala">Pala</option>
-                  <option value="Naipunya Overseas">Naipunya Overseas</option>
+                  <option value="">Select Branch</option>
+                  <option *ngFor="let b of branches" [value]="b.name">{{ b.name }}</option>
                 </select>
               </div>
 
               <div class="form-row">
                 <label class="form-label required">Role <span class="req">*</span></label>
                 <select class="form-select" [(ngModel)]="userForm.role">
-                  <option value="Select Role">Select Role</option>
-                  <option value="ACCOUNT OFFICER">ACCOUNT OFFICER</option>
-                  <option value="ADMIN MANAGER">ADMIN MANAGER</option>
-                  <option value="ADMINISTRATION">ADMINISTRATION</option>
-                  <option value="DIRECTOR">DIRECTOR</option>
-                  <option value="STAFF">STAFF</option>
+                  <option value="">Select Role</option>
+                  <option *ngFor="let r of roles" [value]="r.role">{{ r.role }}</option>
                 </select>
               </div>
 
@@ -263,7 +251,7 @@ import { MockDataService, UserRow, DepartmentPermRow, MenuPermRow } from '../../
                   <table class="perm-table">
                     <thead>
                       <tr>
-                        <th style="width: 50px;">Sl No</th>
+                        <th style="width: 50px;">SI No</th>
                         <th style="width: 100px;">Branch</th>
                         <th>Department</th>
                         <th style="width: 50px; text-align: center;">View</th>
@@ -301,7 +289,7 @@ import { MockDataService, UserRow, DepartmentPermRow, MenuPermRow } from '../../
                   <table class="perm-table">
                     <thead>
                       <tr>
-                        <th style="width: 50px;">Sl No</th>
+                        <th style="width: 50px;">SI No</th>
                         <th>Menu</th>
                         <th style="width: 50px; text-align: center;">View</th>
                         <th style="width: 50px; text-align: center;">Edit</th>
@@ -336,6 +324,15 @@ import { MockDataService, UserRow, DepartmentPermRow, MenuPermRow } from '../../
           </div>
         </div>
       </div>
+
+      <app-confirm-dialog
+        [isOpen]="isDeleteModalOpen"
+        title="Delete User"
+        [message]="'Are you sure you want to delete ' + (userToDelete?.userName || '') + '?'"
+        confirmText="Delete"
+        (confirmEvent)="confirmDelete()"
+        (cancelEvent)="isDeleteModalOpen = false; userToDelete = null"
+      ></app-confirm-dialog>
     </div>
   `,
   styles: [`
@@ -778,20 +775,19 @@ import { MockDataService, UserRow, DepartmentPermRow, MenuPermRow } from '../../
     }
 
     .perm-table thead tr {
-      background-color: #f8fafc;
-      border-bottom: 1px solid #e2e8f0;
+      background-color: #0b63b8;
     }
 
     .perm-table th {
       position: sticky;
       top: 0;
-      background-color: #f8fafc;
+      background-color: #0b63b8;
       z-index: 2;
-      padding: 0.45rem 0.65rem;
-      font-size: 0.75rem;
+      padding: 0.5rem 0.65rem;
+      font-size: 0.775rem;
       font-weight: 600;
-      color: #475569;
-      border-bottom: 1px solid #e2e8f0;
+      color: #ffffff;
+      border: none;
     }
 
     .perm-table tbody tr {
@@ -870,9 +866,11 @@ import { MockDataService, UserRow, DepartmentPermRow, MenuPermRow } from '../../
 })
 export class UserDetailsComponent implements OnInit {
   searchUsername = '';
-  selectedBranch = 'Select Branch';
+  selectedBranch = '';
 
   users: UserRow[] = [];
+  branches: Branch[] = [];
+  roles: RoleRow[] = [];
 
   getEditClass(index: number): string {
     return index % 2 === 1 ? 'btn-brown' : 'btn-purple';
@@ -887,9 +885,9 @@ export class UserDetailsComponent implements OnInit {
     userName: '',
     password: '',
     userType: 'User',
-    status: 'Working',
-    branch: 'Select Branch',
-    role: 'Select Role',
+    status: '',
+    branch: '',
+    role: '',
     address: '',
     location: '',
     district: '',
@@ -903,21 +901,24 @@ export class UserDetailsComponent implements OnInit {
   departmentPerms: DepartmentPermRow[] = [];
   menuPerms: MenuPermRow[] = [];
 
-  constructor(private mockDataService: MockDataService) {}
+  constructor(private mockDataService: DataService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.mockDataService.getUserRows().subscribe(data => {
       this.users = data;
       this.onSearch();
+      this.cdr.markForCheck();
     });
-    this.mockDataService.getDepartmentPerms().subscribe(data => this.departmentPerms = data);
-    this.mockDataService.getMenuPerms().subscribe(data => this.menuPerms = data);
+    this.mockDataService.getDepartmentPerms().subscribe(data => { this.departmentPerms = data; this.cdr.markForCheck(); });
+    this.mockDataService.getMenuPerms().subscribe(data => { this.menuPerms = data; this.cdr.markForCheck(); });
+    this.mockDataService.getBranches().subscribe(b => { this.branches = b; this.cdr.markForCheck(); });
+    this.mockDataService.getRoleRows().subscribe(r => { this.roles = r; this.cdr.markForCheck(); });
   }
 
   onSearch() {
     this.filteredUsers = this.users.filter(u => {
       const matchName = !this.searchUsername.trim() || u.userName.toLowerCase().includes(this.searchUsername.toLowerCase());
-      const matchBranch = this.selectedBranch === 'Select Branch' || u.branch === this.selectedBranch;
+      const matchBranch = !this.selectedBranch || u.branch === this.selectedBranch;
       return matchName && matchBranch;
     });
   }
@@ -928,9 +929,9 @@ export class UserDetailsComponent implements OnInit {
       userName: '',
       password: '',
       userType: 'User',
-      status: 'Working',
-      branch: 'Select Branch',
-      role: 'Select Role',
+      status: '',
+      branch: '',
+      role: '',
       address: '',
       location: '',
       district: '',
@@ -940,6 +941,8 @@ export class UserDetailsComponent implements OnInit {
       phone: '',
       email: ''
     };
+    this.mockDataService.getDepartmentPerms().subscribe(data => { this.departmentPerms = data; this.cdr.markForCheck(); });
+    this.mockDataService.getMenuPerms().subscribe(data => { this.menuPerms = data; this.cdr.markForCheck(); });
     this.isModalOpen = true;
   }
 
@@ -949,9 +952,9 @@ export class UserDetailsComponent implements OnInit {
       userName: u.userName,
       password: '••••••••',
       userType: u.userType,
-      status: 'Working',
+      status: '',
       branch: u.branch,
-      role: 'Select Role',
+      role: '',
       address: '',
       location: '',
       district: '',
@@ -961,6 +964,8 @@ export class UserDetailsComponent implements OnInit {
       phone: u.phoneNo,
       email: ''
     };
+    this.mockDataService.getDepartmentPerms().subscribe(data => { this.departmentPerms = data; this.cdr.markForCheck(); });
+    this.mockDataService.getMenuPerms().subscribe(data => { this.menuPerms = data; this.cdr.markForCheck(); });
     this.isModalOpen = true;
   }
 
@@ -988,8 +993,11 @@ export class UserDetailsComponent implements OnInit {
 
     this.mockDataService.addUserRow({
       userName: this.userForm.userName,
+      password: this.userForm.password,
+      email: this.userForm.email,
+      role: this.userForm.role,
       userType: this.userForm.userType,
-      branch: this.userForm.branch === 'Select Branch' ? 'Ernakulam' : this.userForm.branch,
+      branch: this.userForm.branch,
       phoneNo: this.userForm.phone,
       hasDelete: true,
       hasEdit: false
@@ -998,9 +1006,19 @@ export class UserDetailsComponent implements OnInit {
     this.closeModal();
   }
 
+  isDeleteModalOpen = false;
+  userToDelete: UserRow | null = null;
+
   deleteUser(u: UserRow) {
-    if (confirm(`Are you sure you want to delete ${u.userName}?`)) {
-      this.mockDataService.deleteUserRow(u.slNo);
+    this.userToDelete = u;
+    this.isDeleteModalOpen = true;
+  }
+
+  confirmDelete() {
+    if (this.userToDelete) {
+      this.mockDataService.deleteUserRow(this.userToDelete.slNo);
     }
+    this.isDeleteModalOpen = false;
+    this.userToDelete = null;
   }
 }

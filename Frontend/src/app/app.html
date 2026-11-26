@@ -1,1 +1,32 @@
 <router-outlet></router-outlet>
+
+<div class="app-loading" *ngIf="loading()">
+  <div class="app-loading-card">
+    <div class="app-spinner"></div>
+    <span>Loading data…</span>
+  </div>
+</div>
+
+<app-modal
+  [isOpen]="!!notify.alert()"
+  [title]="notify.alert()?.title || 'Notice'"
+  size="sm"
+  [customFooter]="true"
+  (closeEvent)="notify.close()"
+>
+  <div modal-body>
+    <p style="margin: 0; color: var(--text-secondary); line-height: 1.5;">
+      {{ notify.alert()?.message }}
+    </p>
+  </div>
+  <div modal-footer>
+    <button
+      type="button"
+      class="btn"
+      [ngClass]="notify.alert()?.type === 'danger' ? 'btn-danger' : 'btn-primary'"
+      (click)="notify.close()"
+    >
+      OK
+    </button>
+  </div>
+</app-modal>

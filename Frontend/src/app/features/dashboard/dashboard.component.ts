@@ -1,9 +1,9 @@
 import { IconComponent } from '../../shared/index';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { MockDataService, StudentListRow, Receipt, CourseItem, BranchItem, Account } from '../../core/mock-data.service';
+import { DataService, StudentListRow, Receipt, CourseItem, BranchItem, Account } from '../../core/data.service';
 
 interface FollowUpRow {
   initials: string;
@@ -20,6 +20,21 @@ interface FeeReceiptRow {
   type: string;
   amount: number;
   date: string;
+}
+
+interface FeeSplitItem {
+  name: string;
+  amount: number;
+  pct: number;
+  color: string;
+  dashArray: string;
+  dashOffset: number;
+}
+
+interface AccountChip {
+  name: string;
+  balance: number;
+  title: string;
 }
 
 @Component({
@@ -180,81 +195,45 @@ interface FeeReceiptRow {
           </div>
 
           <div class="funnel-container">
-            <!-- SVG Layered Funnel Graphic matching Video -->
+            <!-- SVG Layered Funnel Graphic -->
             <div class="funnel-svg-box">
               <svg viewBox="0 0 140 180" class="funnel-svg">
-                <!-- Layer 1: IELTS Regular (7 students • 47%) -->
-                <polygon
-                  points="10,0 130,0 120,32 20,32"
-                  class="funnel-piece fp-blue"
-                />
-                <!-- Layer 2: German Language (3 students • 20%) -->
-                <polygon
-                  points="21,36 119,36 111,68 29,68"
-                  class="funnel-piece fp-teal"
-                />
-                <!-- Layer 3: UK / NZ Visa (3 students • 20%) -->
-                <polygon
-                  points="30,72 110,72 103,104 37,104"
-                  class="funnel-piece fp-green"
-                />
-                <!-- Layer 4: IELTS Crash (2 students • 13%) -->
-                <polygon
-                  points="38,108 102,108 95,140 45,140"
-                  class="funnel-piece fp-orange"
-                />
-                <!-- Layer 5: Other Courses / Inactive -->
-                <polygon
-                  points="46,144 94,144 88,176 52,176"
-                  class="funnel-piece fp-pink"
-                />
+                <g *ngFor="let c of courseDemand; let i = index">
+                  <polygon
+                    [attr.points]="getFunnelPoints(i)"
+                    [attr.fill]="c.color"
+                    class="funnel-piece"
+                    [class.is-hovered]="hoveredCourseIndex === i"
+                    [class.is-dimmed]="hoveredCourseIndex !== null && hoveredCourseIndex !== i"
+                    [style.animation-delay]="(i * 90) + 'ms'"
+                    (mouseenter)="hoveredCourseIndex = i"
+                    (mouseleave)="hoveredCourseIndex = null"
+                  >
+                    <title>{{ c.name }}: {{ c.count }} ({{ c.pct }}%)</title>
+                  </polygon>
+                </g>
               </svg>
             </div>
 
             <!-- Funnel Metric Breakdown on Right -->
             <div class="funnel-breakdown">
-              <div class="funnel-item">
+              <div
+                class="funnel-item"
+                *ngFor="let c of courseDemand; let i = index"
+                [class.is-hovered]="hoveredCourseIndex === i"
+                (mouseenter)="hoveredCourseIndex = i"
+                (mouseleave)="hoveredCourseIndex = null"
+              >
                 <div class="f-item-info">
-                  <span class="f-dot dot-blue"></span>
+                  <span class="f-dot" [style.background-color]="c.color"></span>
                   <div>
-                    <span class="f-count">7</span>
-                    <span class="f-name">IELTS 1 Month / Regular</span>
+                    <span class="f-count">{{ c.count }}</span>
+                    <span class="f-name">{{ c.name }}</span>
                   </div>
                 </div>
-                <span class="f-pct badge-blue-tint">47%</span>
-              </div>
-
-              <div class="funnel-item">
-                <div class="f-item-info">
-                  <span class="f-dot dot-teal"></span>
-                  <div>
-                    <span class="f-count">3</span>
-                    <span class="f-name">German Language & Visa</span>
-                  </div>
-                </div>
-                <span class="f-pct badge-teal-tint">20%</span>
-              </div>
-
-              <div class="funnel-item">
-                <div class="f-item-info">
-                  <span class="f-dot dot-green"></span>
-                  <div>
-                    <span class="f-count">3</span>
-                    <span class="f-name">UK / NZ Dependent Visa</span>
-                  </div>
-                </div>
-                <span class="f-pct badge-green-tint">20%</span>
-              </div>
-
-              <div class="funnel-item">
-                <div class="f-item-info">
-                  <span class="f-dot dot-orange"></span>
-                  <div>
-                    <span class="f-count">2</span>
-                    <span class="f-name">IELTS 2 Months / Crash</span>
-                  </div>
-                </div>
-                <span class="f-pct badge-orange-tint">13%</span>
+                <span class="f-pct" [ngClass]="'badge-' + (i % 5) + '-tint'">
+                  {{ c.pct }}%
+                </span>
               </div>
             </div>
           </div>
@@ -296,46 +275,10 @@ interface FeeReceiptRow {
               <line x1="35" y1="170" x2="520" y2="170" stroke="#e2e8f0" stroke-width="1.5" />
               <text x="22" y="174" class="axis-y">0</text>
 
-              <!-- Ernakulam (7 students • Highest bar) -->
-              <g transform="translate(65, 0)" class="bar-group">
-                <text x="14" y="62" text-anchor="middle" class="bar-top-val">7</text>
-                <rect x="0" y="68" width="28" height="102" rx="4" fill="#0284c7" class="anim-bar-rise" />
-                <text x="14" y="192" text-anchor="middle" class="axis-x font-bold">Ernakulam</text>
-              </g>
-
-              <!-- Kaloor (3 students) -->
-              <g transform="translate(145, 0)" class="bar-group">
-                <text x="14" y="120" text-anchor="middle" class="bar-top-val">3</text>
-                <rect x="0" y="126" width="28" height="44" rx="4" fill="#6366f1" class="anim-bar-rise" />
-                <text x="14" y="192" text-anchor="middle" class="axis-x font-bold">Kaloor</text>
-              </g>
-
-              <!-- Angamaly (2 students) -->
-              <g transform="translate(225, 0)" class="bar-group">
-                <text x="14" y="135" text-anchor="middle" class="bar-top-val">2</text>
-                <rect x="0" y="141" width="28" height="29" rx="4" fill="#10b981" class="anim-bar-rise" />
-                <text x="14" y="192" text-anchor="middle" class="axis-x font-bold">Angamaly</text>
-              </g>
-
-              <!-- Thrikkakara (2 students) -->
-              <g transform="translate(305, 0)" class="bar-group">
-                <text x="14" y="135" text-anchor="middle" class="bar-top-val">2</text>
-                <rect x="0" y="141" width="28" height="29" rx="4" fill="#f59e0b" class="anim-bar-rise" />
-                <text x="14" y="192" text-anchor="middle" class="axis-x font-bold">Thrikkakara</text>
-              </g>
-
-              <!-- Pala (1 student) -->
-              <g transform="translate(385, 0)" class="bar-group">
-                <text x="14" y="150" text-anchor="middle" class="bar-top-val">1</text>
-                <rect x="0" y="156" width="28" height="14" rx="4" fill="#ec4899" class="anim-bar-rise" />
-                <text x="14" y="192" text-anchor="middle" class="axis-x font-bold">Pala</text>
-              </g>
-
-              <!-- Overseas (0 students) -->
-              <g transform="translate(465, 0)" class="bar-group">
-                <text x="14" y="164" text-anchor="middle" class="bar-top-val">0</text>
-                <rect x="0" y="168" width="28" height="2" rx="1" fill="#cbd5e1" />
-                <text x="14" y="192" text-anchor="middle" class="axis-x">Overseas</text>
+              <g *ngFor="let bar of branchChart; let i = index" [attr.transform]="'translate(' + (65 + i * 80) + ', 0)'" class="bar-group">
+                <text x="14" [attr.y]="170 - bar.height - 6" text-anchor="middle" class="bar-top-val">{{ bar.count }}</text>
+                <rect x="0" [attr.y]="170 - bar.height" width="28" [attr.height]="bar.height" rx="4" [attr.fill]="bar.color" class="anim-bar-rise" />
+                <text x="14" y="192" text-anchor="middle" class="axis-x font-bold">{{ bar.label }}</text>
               </g>
             </svg>
           </div>
@@ -355,105 +298,67 @@ interface FeeReceiptRow {
           </div>
 
           <div class="donut-wrapper">
-            <!-- Donut SVG with Total in Center matching Video -->
             <div class="donut-box">
               <svg viewBox="0 0 160 160" class="donut-svg">
-                <!-- Track background -->
                 <circle cx="80" cy="80" r="54" fill="none" stroke="#f1f5f9" stroke-width="18" />
 
-                <!-- UPI (₹9,000 • 47%) -> Circ = 340 -> 47% = 160 -->
-                <circle
-                  cx="80" cy="80" r="54"
-                  fill="none"
-                  stroke="#10b981"
-                  stroke-width="18"
-                  stroke-dasharray="160 340"
-                  stroke-dashoffset="0"
-                  transform="rotate(-90 80 80)"
-                  class="anim-donut-draw"
-                />
-
-                <!-- Bank Transfer (₹5,000 • 26.5%) -> 26.5% = 90 -->
-                <circle
-                  cx="80" cy="80" r="54"
-                  fill="none"
-                  stroke="#0284c7"
-                  stroke-width="18"
-                  stroke-dasharray="90 340"
-                  stroke-dashoffset="-160"
-                  transform="rotate(-90 80 80)"
-                  class="anim-donut-draw"
-                />
-
-                <!-- Cash in Hand (₹5,000 • 26.5%) -> 26.5% = 90 -->
-                <circle
-                  cx="80" cy="80" r="54"
-                  fill="none"
-                  stroke="#f59e0b"
-                  stroke-width="18"
-                  stroke-dasharray="90 340"
-                  stroke-dashoffset="-250"
-                  transform="rotate(-90 80 80)"
-                  class="anim-donut-draw"
-                />
+                <g class="anim-donut-draw">
+                  <circle
+                    *ngFor="let s of feeSplit; let i = index"
+                    cx="80" cy="80" r="54"
+                    fill="none"
+                    [attr.stroke]="s.color"
+                    [attr.stroke-width]="hoveredSplitIndex === i ? 23 : 18"
+                    [attr.stroke-dasharray]="s.dashArray"
+                    [attr.stroke-dashoffset]="s.dashOffset"
+                    transform="rotate(-90 80 80)"
+                    class="donut-slice"
+                    [class.is-hovered]="hoveredSplitIndex === i"
+                    [class.is-dimmed]="hoveredSplitIndex !== null && hoveredSplitIndex !== i"
+                    (mouseenter)="hoveredSplitIndex = i"
+                    (mouseleave)="hoveredSplitIndex = null"
+                  >
+                    <title>{{ s.name }}: ₹{{ s.amount }} ({{ s.pct }}%)</title>
+                  </circle>
+                </g>
               </svg>
 
-              <!-- Center Total Number matching Video -->
               <div class="donut-center">
-                <span class="donut-amount">₹19K</span>
+                <span class="donut-amount">₹{{ feeSplitTotal | number }}</span>
                 <span class="donut-label">Total Revenue</span>
               </div>
             </div>
 
-            <!-- Legend with Exact Amounts & Pct below Donut -->
             <div class="donut-legend">
-              <div class="d-leg-row">
+              <div
+                class="d-leg-row"
+                *ngFor="let s of feeSplit; let i = index"
+                [class.is-hovered]="hoveredSplitIndex === i"
+                (mouseenter)="hoveredSplitIndex = i"
+                (mouseleave)="hoveredSplitIndex = null"
+              >
                 <div class="d-leg-item">
-                  <span class="d-dot dot-green"></span>
-                  <span class="d-name">UPI / Online</span>
+                  <span class="d-dot" [style.background]="s.color"></span>
+                  <span class="d-name">{{ s.name }}</span>
                 </div>
                 <div class="d-leg-val">
-                  <strong>₹9,000</strong>
-                  <span class="d-pct">(47%)</span>
+                  <strong>₹{{ s.amount | number }}</strong>
+                  <span class="d-pct">({{ s.pct }}%)</span>
                 </div>
               </div>
-
-              <div class="d-leg-row">
-                <div class="d-leg-item">
-                  <span class="d-dot dot-blue"></span>
-                  <span class="d-name">Bank Transfer</span>
-                </div>
-                <div class="d-leg-val">
-                  <strong>₹5,000</strong>
-                  <span class="d-pct">(26%)</span>
-                </div>
-              </div>
-
-              <div class="d-leg-row">
-                <div class="d-leg-item">
-                  <span class="d-dot dot-orange"></span>
-                  <span class="d-name">Cash in Hand</span>
-                </div>
-                <div class="d-leg-val">
-                  <strong>₹5,000</strong>
-                  <span class="d-pct">(26%)</span>
-                </div>
+              <div class="d-leg-row" *ngIf="feeSplit.length === 0">
+                <span class="d-name">No fee receipts</span>
               </div>
             </div>
 
-            <!-- Account Balances Micro-chips -->
-            <div class="account-row-chips">
-              <div class="acc-chip" title="Cash Petty Balance">
-                <span class="acc-chip-name">Cash</span>
-                <strong class="acc-chip-val">₹25K</strong>
+            <div class="account-row-chips fee-type-chips">
+              <div class="acc-chip" title="Total Fees Collected">
+                <span class="acc-chip-name">Fees</span>
+                <strong class="acc-chip-val">₹{{ feesTypeTotal | number }}</strong>
               </div>
-              <div class="acc-chip" title="HDFC Main Operating A/C">
-                <span class="acc-chip-name">HDFC</span>
-                <strong class="acc-chip-val">₹180K</strong>
-              </div>
-              <div class="acc-chip" title="SBI Fee Collection">
-                <span class="acc-chip-name">SBI</span>
-                <strong class="acc-chip-val">₹250K</strong>
+              <div class="acc-chip" title="Total Book Amount Collected">
+                <span class="acc-chip-name">Book Amount</span>
+                <strong class="acc-chip-val">₹{{ bookAmountTotal | number }}</strong>
               </div>
             </div>
           </div>
@@ -803,6 +708,11 @@ interface FeeReceiptRow {
     .badge-blue-tint { background: #eff6ff; color: #0284c7; }
     .badge-green-tint { background: #f0fdf4; color: #16a34a; }
     .badge-orange-tint { background: #fffbeb; color: #d97706; }
+    .badge-0-tint { background: #eff6ff; color: #0284c7; }
+    .badge-1-tint { background: #f0fdfa; color: #0d9488; }
+    .badge-2-tint { background: #f0fdf4; color: #16a34a; }
+    .badge-3-tint { background: #fffbeb; color: #d97706; }
+    .badge-4-tint { background: #faf5ff; color: #7c3aed; }
 
     /* CONTENT 1: Funnel Pipeline Layout */
     .funnel-container {
@@ -818,25 +728,39 @@ interface FeeReceiptRow {
     .funnel-svg {
       width: 100%;
       height: 180px;
+      overflow: visible;
     }
     .funnel-piece {
-      transition: all 0.2s ease;
+      transform-box: fill-box;
+      transform-origin: center;
+      opacity: 0;
+      animation: funnelLayerIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.25s ease, opacity 0.25s ease;
       cursor: pointer;
     }
-    .funnel-piece:hover {
-      opacity: 0.85;
-      filter: drop-shadow(0 2px 5px rgba(0,0,0,0.2));
+    .funnel-piece:hover,
+    .funnel-piece.is-hovered {
+      transform: scale(1.07);
+      filter: brightness(1.1) drop-shadow(0 4px 10px rgba(15, 23, 42, 0.22));
     }
-    .fp-blue { fill: #0284c7; }
-    .fp-teal { fill: #0d9488; }
-    .fp-green { fill: #16a34a; }
-    .fp-orange { fill: #f59e0b; }
-    .fp-pink { fill: #ec4899; }
+    .funnel-piece.is-dimmed {
+      opacity: 0.45 !important;
+    }
+    @keyframes funnelLayerIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px) scaleX(0.82);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scaleX(1);
+      }
+    }
 
     .funnel-breakdown {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0.55rem;
       flex: 1;
     }
     .funnel-item {
@@ -844,6 +768,15 @@ interface FeeReceiptRow {
       align-items: center;
       justify-content: space-between;
       gap: 0.5rem;
+      padding: 0.25rem 0.4rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+    .funnel-item:hover,
+    .funnel-item.is-hovered {
+      background-color: #f8fafc;
+      transform: translateX(4px);
     }
     .f-item-info {
       display: flex;
@@ -856,11 +789,13 @@ interface FeeReceiptRow {
       border-radius: 50%;
       flex-shrink: 0;
     }
-    .dot-blue { background-color: #0284c7; }
     .dot-teal { background-color: #0d9488; }
-    .dot-green { background-color: #16a34a; }
-    .dot-orange { background-color: #f59e0b; }
     .dot-pink { background-color: #ec4899; }
+    .dot-0 { background-color: #0284c7; }
+    .dot-1 { background-color: #0d9488; }
+    .dot-2 { background-color: #16a34a; }
+    .dot-3 { background-color: #f59e0b; }
+    .dot-4 { background-color: #ec4899; }
 
     .f-count {
       font-size: 0.9rem;
@@ -949,12 +884,21 @@ interface FeeReceiptRow {
     .donut-svg {
       width: 100%;
       height: 100%;
+      overflow: visible;
     }
     .anim-donut-draw {
-      animation: donutAnim 1.2s ease-out forwards;
+      transform-origin: 80px 80px;
+      animation: donutSpinIn 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-    @keyframes donutAnim {
-      from { stroke-dashoffset: 340; }
+    @keyframes donutSpinIn {
+      from {
+        opacity: 0;
+        transform: rotate(-110deg) scale(0.75);
+      }
+      to {
+        opacity: 1;
+        transform: rotate(0deg) scale(1);
+      }
     }
     .donut-center {
       position: absolute;
@@ -988,6 +932,25 @@ interface FeeReceiptRow {
       justify-content: space-between;
       font-size: 0.78rem;
       color: #475569;
+      padding: 0.2rem 0.4rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+    .d-leg-row:hover,
+    .d-leg-row.is-hovered {
+      background-color: #f8fafc;
+      transform: translateX(4px);
+    }
+    .donut-slice {
+      cursor: pointer;
+      transition: stroke-width 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease, filter 0.25s ease;
+    }
+    .donut-slice.is-hovered {
+      filter: brightness(1.08) drop-shadow(0 3px 8px rgba(15, 23, 42, 0.22));
+    }
+    .donut-slice.is-dimmed {
+      opacity: 0.4;
     }
     .d-leg-item {
       display: flex;
@@ -1022,6 +985,9 @@ interface FeeReceiptRow {
       width: 100%;
       padding-top: 0.5rem;
       border-top: 1px dashed #e2e8f0;
+    }
+    .account-row-chips.fee-type-chips {
+      grid-template-columns: repeat(2, 1fr);
     }
     .acc-chip {
       background: #f8fafc;
@@ -1168,21 +1134,36 @@ export class DashboardComponent implements OnInit {
   // Master lists
   allStudents: StudentListRow[] = [];
   allReceipts: Receipt[] = [];
+  allFeePending: any[] = [];
   branchesList: BranchItem[] = [];
   accountsList: Account[] = [];
+  coursesList: CourseItem[] = [];
 
   // Metrics
-  totalStudents = 15;
-  activeCoursesCount = 8;
-  followUpsDueCount = 8;
-  feeCollected = 19000;
-  feePending = 38500;
+  totalStudents = 0;
+  activeCoursesCount = 0;
+  followUpsDueCount = 0;
+  feeCollected = 0;
+  feePending = 0;
+  feeSplitTotal = 0;
+  feeSplit: FeeSplitItem[] = [];
+  hoveredSplitIndex: number | null = null;
+  feesTypeTotal = 0;
+  bookAmountTotal = 0;
+  accountChips: AccountChip[] = [];
+  branchChart: { label: string; count: number; color: string; height: number }[] = [];
+  courseDemand: { name: string; count: number; color: string; pct: number }[] = [];
+  hoveredCourseIndex: number | null = null;
+  totalFunnelCount = 1;
+
+  private readonly DONUT_CIRCUMFERENCE = 2 * Math.PI * 54;
+  private readonly FEE_SPLIT_COLORS = ['#10b981', '#0284c7', '#f59e0b', '#8b5cf6', '#ec4899', '#0891b2'];
 
   // Tables
   pendingFollowUps: FollowUpRow[] = [];
   recentReceipts: FeeReceiptRow[] = [];
 
-  constructor(private mockDataService: MockDataService) {}
+  constructor(private mockDataService: DataService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     const today = new Date();
@@ -1192,33 +1173,44 @@ export class DashboardComponent implements OnInit {
     // 1. Branches list
     this.mockDataService.getBranchItems().subscribe(branches => {
       this.branchesList = branches;
+      this.applyBranchFilter();
+      this.cdr.markForCheck();
     });
 
     // 2. Active Courses count
     this.mockDataService.getCourseItems().subscribe(courses => {
+      this.coursesList = courses;
       this.activeCoursesCount = courses.length;
+      this.buildCourseDemand();
+      this.cdr.markForCheck();
     });
 
     // 3. Accounts list
     this.mockDataService.getAccounts().subscribe(accounts => {
       this.accountsList = accounts;
+      this.applyBranchFilter();
+      this.cdr.markForCheck();
     });
 
     // 4. Students
     this.mockDataService.getStudentListRows().subscribe(rows => {
       this.allStudents = rows;
       this.applyBranchFilter();
+      this.cdr.markForCheck();
     });
 
     // 5. Receipts
     this.mockDataService.getReceipts().subscribe(receipts => {
       this.allReceipts = receipts;
       this.applyBranchFilter();
+      this.cdr.markForCheck();
     });
 
     // 6. Fee Pending from Fee Pending Report
     this.mockDataService.getFeePendingEntries().subscribe(entries => {
-      this.feePending = entries.reduce((sum, e) => sum + (e.balanceAmount || 0), 0);
+      this.allFeePending = entries;
+      this.applyBranchFilter();
+      this.cdr.markForCheck();
     });
   }
 
@@ -1231,10 +1223,24 @@ export class DashboardComponent implements OnInit {
 
     const filteredStudents = isAll
       ? this.allStudents
-      : this.allStudents.filter(s => (s.branch || 'Ernakulam') === this.selectedBranch);
+      : this.allStudents.filter(s => (s.branch || '') === this.selectedBranch);
 
     this.totalStudents = filteredStudents.length;
     this.followUpsDueCount = filteredStudents.filter(s => !!s.nextFollowUp).length;
+
+    const chartColors = ['#0284c7', '#6366f1', '#10b981', '#f59e0b', '#ec4899', '#0891b2', '#7c3aed', '#db2777'];
+    const maxCount = Math.max(1, ...this.branchesList.map(b => filteredStudents.filter(s => s.branch === b.name).length));
+    this.branchChart = this.branchesList.slice(0, 8).map((b, i) => {
+      const count = filteredStudents.filter(s => s.branch === b.name).length;
+      return {
+        label: b.name,
+        count,
+        color: chartColors[i % chartColors.length],
+        height: Math.max(2, (count / maxCount) * 102)
+      };
+    });
+
+    this.buildCourseDemand();
 
     const avatarPalettes = [
       { bg: '#eff6ff', color: '#0284c7' },
@@ -1261,15 +1267,113 @@ export class DashboardComponent implements OnInit {
 
     const filteredReceipts = isAll
       ? this.allReceipts
-      : this.allReceipts.filter(r => (r.branch || 'Ernakulam') === this.selectedBranch);
+      : this.allReceipts.filter(r => (r.branch || '') === this.selectedBranch);
+
+    const filteredPending = isAll
+      ? this.allFeePending
+      : this.allFeePending.filter(e => (e.branch || '') === this.selectedBranch);
 
     this.feeCollected = filteredReceipts.reduce((sum, r) => sum + (r.amount || 0), 0);
+    this.feePending = filteredPending.reduce((sum, e) => sum + (e.balanceAmount || 0), 0);
+    this.buildFeeSplit(filteredReceipts);
+    this.buildAccountChips(isAll ? this.accountsList : this.accountsList.filter(a => (a.branch || '') === this.selectedBranch));
 
     this.recentReceipts = filteredReceipts.slice(0, 4).map(r => ({
-      student: r.studentName,
-      type: r.details || r.course,
+      student: r.studentName || r.from || '',
+      type: r.details || r.course || r.toAccount || '',
       amount: r.amount,
       date: r.date
     }));
+  }
+
+  private paymentCategory(mode: string): string {
+    const value = (mode || '').trim().toLowerCase();
+    if (!value) return 'CASH';
+    if (value.includes('upi') || value.includes('online')) return 'UPI';
+    if (value.includes('bank') || value.includes('neft') || value.includes('rtgs') || value.includes('imps')) return 'BANK';
+    if (value.includes('cash')) return 'CASH';
+    return mode.trim().toUpperCase();
+  }
+
+  private buildFeeSplit(receipts: Receipt[]): void {
+    const modeOrder = ['CASH', 'BANK', 'UPI'];
+    const totals = new Map<string, number>();
+    modeOrder.forEach(m => totals.set(m, 0));
+
+    let feesSum = 0;
+    let bookSum = 0;
+
+    receipts.forEach(r => {
+      const amt = Number(r.amount) || 0;
+      const accountOrMode = r.toAccount || r.paymentMode || '';
+      const cat = this.paymentCategory(accountOrMode);
+      const bucket = modeOrder.includes(cat) ? cat : 'CASH';
+      totals.set(bucket, (totals.get(bucket) || 0) + amt);
+
+      const feeType = (r.paymentMode || '').trim().toLowerCase();
+      if (feeType.includes('book')) {
+        bookSum += amt;
+      } else {
+        feesSum += amt;
+      }
+    });
+
+    this.feesTypeTotal = feesSum;
+    this.bookAmountTotal = bookSum;
+
+    const entries = Array.from(totals.entries())
+      .filter(([, amount]) => amount > 0);
+
+    this.feeSplitTotal = entries.reduce((sum, [, amount]) => sum + amount, 0);
+    let used = 0;
+
+    this.feeSplit = entries.map(([name, amount], i) => {
+      const length = (amount / this.feeSplitTotal) * this.DONUT_CIRCUMFERENCE;
+      const item: FeeSplitItem = {
+        name,
+        amount,
+        pct: Math.round((amount / this.feeSplitTotal) * 100),
+        color: this.FEE_SPLIT_COLORS[i % this.FEE_SPLIT_COLORS.length],
+        dashArray: `${length} ${this.DONUT_CIRCUMFERENCE}`,
+        dashOffset: -used
+      };
+      used += length;
+      return item;
+    });
+  }
+
+  private buildAccountChips(accounts: Account[]): void {
+    this.accountChips = accounts.map(a => ({
+      name: a.name || a.code || 'Account',
+      balance: Number(a.currentBalance) || 0,
+      title: a.name || a.code || 'Account'
+    }));
+  }
+
+  private buildCourseDemand() {
+    const funnelColors = ['#0284c7', '#0d9488', '#16a34a', '#f59e0b', '#ec4899', '#0891b2', '#7c3aed'];
+    const total = Math.max(1, this.allStudents.length);
+    this.courseDemand = this.coursesList.map((c, i) => {
+      const count = this.allStudents.filter(s => s.note === c.name).length;
+      return {
+        name: c.name,
+        count,
+        color: funnelColors[i % funnelColors.length],
+        pct: total ? Math.round((count / total) * 100) : 0
+      };
+    });
+    this.totalFunnelCount = total;
+  }
+
+  getFunnelPoints(i: number): string {
+    const n = Math.max(1, this.courseDemand.length);
+    const totalHeight = 176;
+    const gap = 4;
+    const layerH = Math.max(14, (totalHeight - gap * (n - 1)) / n);
+    const y1 = i * (layerH + gap);
+    const y2 = y1 + layerH;
+    const topInset = 8 + (i / n) * 42;
+    const bottomInset = 8 + ((i + 1) / n) * 42;
+    return `${topInset},${y1} ${140 - topInset},${y1} ${140 - bottomInset},${y2} ${bottomInset},${y2}`;
   }
 }

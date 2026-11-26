@@ -2,7 +2,7 @@ import { IconComponent, ModalComponent, ConfirmDialogComponent, PageHeaderCompon
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MockDataService, StudentFollowUp, Student, SettingItem } from '../../core/mock-data.service';
+import { DataService, StudentFollowUp, Student, SettingItem, StatusItem } from '../../core/data.service';
 
 @Component({
   selector: 'app-student-followup',
@@ -38,9 +38,7 @@ import { MockDataService, StudentFollowUp, Student, SettingItem } from '../../co
       <div filters class="filter-group">
         <select class="form-select" [(ngModel)]="selectedStatus" (ngModelChange)="applyFilters()">
           <option value="">All Statuses</option>
-          <option value="Open">Open</option>
-          <option value="Converted">Converted</option>
-          <option value="Closed">Closed</option>
+          <option *ngFor="let s of statuses" [value]="s.name">{{ s.name }}</option>
         </select>
 
         <select class="form-select" [(ngModel)]="selectedType" (ngModelChange)="applyFilters()">
@@ -205,6 +203,7 @@ export class StudentFollowupComponent implements OnInit {
   students: Student[] = [];
   followupTypes: SettingItem[] = [];
   enquirySources: SettingItem[] = [];
+  statuses: StatusItem[] = [];
 
   searchTerm = '';
   selectedStatus = '';
@@ -225,14 +224,14 @@ export class StudentFollowupComponent implements OnInit {
     phone: '',
     course: '',
     date: new Date().toISOString().slice(0, 10),
-    type: 'Phone Call',
-    enquirySource: 'Direct Walk-in',
+    type: '',
+    enquirySource: '',
     remark: '',
     nextFollowUpDate: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
-    status: 'Open' as 'Open' | 'Converted' | 'Closed'
+    status: ''
   };
 
-  constructor(private mockDataService: MockDataService) {}
+  constructor(private mockDataService: DataService) {}
 
   ngOnInit() {
     this.mockDataService.getFollowUps().subscribe(items => {
@@ -242,6 +241,7 @@ export class StudentFollowupComponent implements OnInit {
     this.mockDataService.getStudents().subscribe(s => this.students = s);
     this.mockDataService.getFollowupTypes().subscribe(t => this.followupTypes = t);
     this.mockDataService.getEnquirySources().subscribe(e => this.enquirySources = e);
+    this.mockDataService.getStatusSettingsItems().subscribe(s => this.statuses = s);
   }
 
   onStudentSelect(studentName: string) {
@@ -288,11 +288,11 @@ export class StudentFollowupComponent implements OnInit {
       phone: '',
       course: '',
       date: new Date().toISOString().slice(0, 10),
-      type: this.followupTypes[0]?.name || 'Phone Call',
-      enquirySource: this.enquirySources[0]?.name || 'Direct Walk-in',
+      type: this.followupTypes[0]?.name || '',
+      enquirySource: this.enquirySources[0]?.name || '',
       remark: '',
       nextFollowUpDate: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
-      status: 'Open'
+      status: ''
     };
     this.isModalOpen = true;
   }

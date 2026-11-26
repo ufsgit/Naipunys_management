@@ -1,13 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
-import { MockDataService, FollowupTypeItem } from '../../core/mock-data.service';
+import { ConfirmDialogComponent } from '../../shared/components/modal.component';
+import { DataService, FollowupTypeItem } from '../../core/data.service';
 
 @Component({
   selector: 'app-followup-types',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent],
+  imports: [CommonModule, FormsModule, IconComponent, ConfirmDialogComponent],
   template: `
     <div class="settings-page-container">
       <!-- Title -->
@@ -70,12 +71,26 @@ import { MockDataService, FollowupTypeItem } from '../../core/mock-data.service'
                 </button>
               </td>
             </tr>
-            <tr *ngIf="items.length === 0">
+            <tr *ngIf="isLoading">
+              <td colspan="4" class="text-center loading-state">
+                <span class="loading-spinner"></span> Loading follow-up types...
+              </td>
+            </tr>
+            <tr *ngIf="!isLoading && items.length === 0">
               <td colspan="4" class="empty-state">No follow-up types configured.</td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <app-confirm-dialog
+        [isOpen]="isDeleteModalOpen"
+        title="Delete FollowUp Type"
+        [message]="'Are you sure you want to delete ' + (itemToDelete?.name || '') + '?'"
+        confirmText="Delete"
+        (confirmEvent)="confirmDelete()"
+        (cancelEvent)="isDeleteModalOpen = false; itemToDelete = null"
+      ></app-confirm-dialog>
     </div>
   `,
   styles: [`
@@ -276,6 +291,29 @@ import { MockDataService, FollowupTypeItem } from '../../core/mock-data.service'
       padding: 2.5rem;
       color: #94a3b8;
     }
+
+    .loading-state {
+      text-align: center;
+      padding: 3rem;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+
+    .loading-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #e2e8f0;
+      border-top: 2px solid #2563eb;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   `]
 })
 export class FollowupTypesComponent implements OnInit {
@@ -283,11 +321,24 @@ export class FollowupTypesComponent implements OnInit {
   formName = '';
   isEditMode = false;
   editingItem: FollowupTypeItem | null = null;
+  isLoading = true;
 
-  constructor(private mockDataService: MockDataService) {}
+  constructor(private mockDataService: DataService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
-    this.mockDataService.getFollowupTypeItems().subscribe(data => this.items = data);
+    this.isLoading = true;
+    this.mockDataService.getFollowupTypeItems().subscribe({
+      next: data => {
+        this.items = data;
+        this.isLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: err => {
+        console.error('[FollowupTypes] load failed:', err);
+        this.isLoading = false;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   openEdit(item: FollowupTypeItem, index: number) {
@@ -314,9 +365,20 @@ export class FollowupTypesComponent implements OnInit {
     this.editingItem = null;
   }
 
+  isDeleteModalOpen = false;
+  itemToDelete: FollowupTypeItem | null = null;
+
   deleteItem(item: FollowupTypeItem) {
-    if (confirm(`Are you sure you want to delete ${item.name}?`)) {
-      this.mockDataService.deleteFollowupTypeItem(item.slNo);
+    this.itemToDelete = item;
+    this.isDeleteModalOpen = true;
+  }
+
+  confirmDelete() {
+    if (this.itemToDelete) {
+      this.mockDataService.deleteFollowupTypeItem(this.itemToDelete.slNo);
     }
+    this.isDeleteModalOpen = false;
+    this.itemToDelete = null;
   }
 }
+

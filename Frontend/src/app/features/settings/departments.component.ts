@@ -2,12 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
-import { MockDataService, DepartmentItem, StatusOption } from '../../core/mock-data.service';
+import { ConfirmDialogComponent } from '../../shared/components/modal.component';
+import { DataService, DepartmentItem, StatusOption } from '../../core/data.service';
 
 @Component({
   selector: 'app-departments',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent],
+  imports: [CommonModule, FormsModule, IconComponent, ConfirmDialogComponent],
   template: `
     <div class="dept-page-container">
       <!-- Header -->
@@ -145,6 +146,15 @@ import { MockDataService, DepartmentItem, StatusOption } from '../../core/mock-d
           </div>
         </div>
       </div>
+
+      <app-confirm-dialog
+        [isOpen]="isDeleteModalOpen"
+        title="Delete Department"
+        [message]="'Are you sure you want to delete ' + (deptToDelete?.name || '') + '?'"
+        confirmText="Delete"
+        (confirmEvent)="confirmDelete()"
+        (cancelEvent)="isDeleteModalOpen = false; deptToDelete = null"
+      ></app-confirm-dialog>
     </div>
   `,
   styles: [`
@@ -515,7 +525,7 @@ export class DepartmentsComponent implements OnInit {
     order: 8
   };
 
-  constructor(private mockDataService: MockDataService) {}
+  constructor(private mockDataService: DataService) {}
 
   ngOnInit() {
     this.mockDataService.getDepartmentItems().subscribe(data => this.departments = data);
@@ -569,9 +579,19 @@ export class DepartmentsComponent implements OnInit {
     this.closeModal();
   }
 
+  isDeleteModalOpen = false;
+  deptToDelete: DepartmentItem | null = null;
+
   deleteDept(d: DepartmentItem) {
-    if (confirm(`Are you sure you want to delete ${d.name}?`)) {
-      this.mockDataService.deleteDepartmentItem(d.slNo);
+    this.deptToDelete = d;
+    this.isDeleteModalOpen = true;
+  }
+
+  confirmDelete() {
+    if (this.deptToDelete) {
+      this.mockDataService.deleteDepartmentItem(this.deptToDelete.slNo);
     }
+    this.isDeleteModalOpen = false;
+    this.deptToDelete = null;
   }
 }

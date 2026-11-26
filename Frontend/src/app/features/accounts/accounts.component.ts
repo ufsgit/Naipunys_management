@@ -2,12 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
-import { MockDataService, Account, BranchAccountConfig } from '../../core/mock-data.service';
+import { ConfirmDialogComponent } from '../../shared/components/modal.component';
+import { DataService, Account, BranchAccountConfig } from '../../core/data.service';
 
 @Component({
   selector: 'app-accounts',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent],
+  imports: [CommonModule, FormsModule, IconComponent, ConfirmDialogComponent],
   template: `
     <div class="accounts-page-container">
       <!-- Top Title & Create Action Header -->
@@ -159,6 +160,15 @@ import { MockDataService, Account, BranchAccountConfig } from '../../core/mock-d
           </div>
         </div>
       </div>
+
+      <app-confirm-dialog
+        [isOpen]="isDeleteModalOpen"
+        title="Delete Account"
+        [message]="'Are you sure you want to delete ' + (accountToDelete?.name || '') + '?'"
+        confirmText="Delete"
+        (confirmEvent)="confirmDelete()"
+        (cancelEvent)="isDeleteModalOpen = false; accountToDelete = null"
+      ></app-confirm-dialog>
     </div>
   `,
   styles: [`
@@ -586,20 +596,18 @@ export class AccountsComponent implements OnInit {
     description: ''
   };
 
-  branchRows: BranchAccountConfig[] = [
-    { branch: 'Ernakulam', selected: false, opening: 0, type: 'Select' },
-    { branch: 'Kaloor', selected: false, opening: 0, type: 'Select' },
-    { branch: 'Angamaly', selected: false, opening: 0, type: 'Select' },
-    { branch: 'Thrikkakara', selected: false, opening: 0, type: 'Select' },
-    { branch: 'Pala', selected: false, opening: 0, type: 'Select' },
-    { branch: 'Naipunya Overseas', selected: false, opening: 0, type: 'Select' }
-  ];
+  branchRows: BranchAccountConfig[] = [];
+  private branchNames: string[] = [];
 
-  constructor(private mockDataService: MockDataService) {}
+  constructor(private mockDataService: DataService) {}
 
   ngOnInit() {
     this.mockDataService.getAccounts().subscribe(acc => {
       this.accounts = acc;
+    });
+    this.mockDataService.getBranches().subscribe(branches => {
+      this.branchNames = branches.map(b => b.name);
+      this.branchRows = this.branchNames.map(name => ({ branch: name, selected: false, opening: 0, type: '' }));
     });
   }
 
@@ -642,14 +650,7 @@ export class AccountsComponent implements OnInit {
   }
 
   resetBranchRows() {
-    this.branchRows = [
-      { branch: 'Ernakulam', selected: false, opening: 0, type: 'Select' },
-      { branch: 'Kaloor', selected: false, opening: 0, type: 'Select' },
-      { branch: 'Angamaly', selected: false, opening: 0, type: 'Select' },
-      { branch: 'Thrikkakara', selected: false, opening: 0, type: 'Select' },
-      { branch: 'Pala', selected: false, opening: 0, type: 'Select' },
-      { branch: 'Naipunya Overseas', selected: false, opening: 0, type: 'Select' }
-    ];
+    this.branchRows = this.branchNames.map(name => ({ branch: name, selected: false, opening: 0, type: '' }));
   }
 
   saveAccount() {
@@ -665,29 +666,42 @@ export class AccountsComponent implements OnInit {
           description: this.currentAccount.description,
           branchConfigs: [...this.branchRows]
         };
+        this.mockDataService.updateAccount(this.currentAccount.id, {
+          name: this.currentAccount.name,
+          type: this.accounts[idx].type || ''
+        });
       }
     } else {
-      const newAcc: Account = {
-        id: (this.accounts.length + 1).toString(),
+      const newAcc = this.mockDataService.addAccount({
         name: this.currentAccount.name,
         details: this.currentAccount.details,
         description: this.currentAccount.description,
         type: 'Bank',
-        branch: 'Ernakulam',
         openingBalance: 0,
         currentBalance: 0,
         status: 'Active',
         branchConfigs: [...this.branchRows]
-      };
+      });
       this.accounts.push(newAcc);
     }
 
     this.closeModal();
   }
 
+  isDeleteModalOpen = false;
+  accountToDelete: Account | null = null;
+
   deleteAccount(acc: Account) {
-    if (confirm(`Are you sure you want to delete ${acc.name}?`)) {
-      this.accounts = this.accounts.filter(a => a.id !== acc.id);
+    this.accountToDelete = acc;
+    this.isDeleteModalOpen = true;
+  }
+
+  confirmDelete() {
+    if (this.accountToDelete) {
+      this.mockDataService.deleteAccount(this.accountToDelete.id);
+      this.accounts = this.accounts.filter(a => a.id !== this.accountToDelete!.id);
     }
+    this.isDeleteModalOpen = false;
+    this.accountToDelete = null;
   }
 }

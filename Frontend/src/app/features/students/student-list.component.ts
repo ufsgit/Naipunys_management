@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { MockDataService, StudentListRow } from '../../core/mock-data.service';
+import { DataService, StudentListRow, Branch, DepartmentItem, UserRow, StatusItem, CourseItem } from '../../core/data.service';
 
 @Component({
   selector: 'app-student-list',
@@ -38,9 +38,7 @@ import { MockDataService, StudentListRow } from '../../core/mock-data.service';
             <span class="filter-label">Enquiry Type</span>
             <select class="input-select enquiry-select" [(ngModel)]="enquiryType">
               <option value="All">All</option>
-              <option value="Course Enquiry">Course Enquiry</option>
-              <option value="Visa Enquiry">Visa Enquiry</option>
-              <option value="IELTS / OET">IELTS / OET</option>
+              <option *ngFor="let t of enquiryTypes" [value]="t">{{ t }}</option>
             </select>
           </div>
 
@@ -85,37 +83,29 @@ import { MockDataService, StudentListRow } from '../../core/mock-data.service';
         <div class="filter-row-3" *ngIf="showAdvanced">
           <div class="filter-col">
             <select class="input-select filter-select" [(ngModel)]="selectedBranch" (change)="applyFilters()">
-              <option value="All Branches">All Branches</option>
-              <option value="Ernakulam">Ernakulam</option>
-              <option value="Kottayam">Kottayam</option>
-              <option value="Thrissur">Thrissur</option>
-              <option value="Calicut">Calicut</option>
+              <option value="">All Branches</option>
+              <option *ngFor="let b of branches" [value]="b.name">{{ b.name }}</option>
             </select>
           </div>
 
           <div class="filter-col">
             <select class="input-select filter-select" [(ngModel)]="selectedDept" (change)="applyFilters()">
-              <option value="All Departments">All Departments</option>
-              <option value="Admission">Admission</option>
-              <option value="Follow Up">Follow Up</option>
-              <option value="IELTS Academic">IELTS Academic</option>
+              <option value="">All Departments</option>
+              <option *ngFor="let d of departments" [value]="d.name">{{ d.name }}</option>
             </select>
           </div>
 
           <div class="filter-col">
             <select class="input-select filter-select" [(ngModel)]="selectedStatus" (change)="applyFilters()">
-              <option value="All Statuses">All Statuses</option>
-              <option value="Interested">Interested</option>
-              <option value="Running">Running</option>
-              <option value="Completed">Completed</option>
+              <option value="">All Statuses</option>
+              <option *ngFor="let s of statuses" [value]="s.name">{{ s.name }}</option>
             </select>
           </div>
 
           <div class="filter-col">
             <select class="input-select filter-select" [(ngModel)]="selectedStaff" (change)="applyFilters()">
-              <option value="All Staff">All Staff</option>
-              <option value="DIVYA">DIVYA</option>
-              <option value="DIRECTOR">DIRECTOR</option>
+              <option value="">All Staff</option>
+              <option *ngFor="let u of staffOptions" [value]="u.userName">{{ u.userName }}</option>
             </select>
           </div>
         </div>
@@ -536,6 +526,29 @@ import { MockDataService, StudentListRow } from '../../core/mock-data.service';
       font-style: italic;
     }
 
+    .loading-state {
+      padding: 3rem !important;
+      color: #64748b;
+      font-style: italic;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+
+    .loading-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #e2e8f0;
+      border-top: 2px solid #2563eb;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
     /* Pager footer */
     .pagination-footer {
       display: flex;
@@ -591,24 +604,51 @@ export class StudentListComponent implements OnInit {
   searchQuery = '';
   enquiryType = 'All';
   dateFilterEnabled = true;
-  fromDate = '25-Nov-2026';
-  toDate = '25-Nov-2026';
+  fromDate = '';
+  toDate = '';
 
   showAdvanced = false;
-  selectedBranch = 'All Branches';
-  selectedDept = 'All Departments';
-  selectedStatus = 'All Statuses';
-  selectedStaff = 'All Staff';
+  selectedBranch = '';
+  selectedDept = '';
+  selectedStatus = '';
+  selectedStaff = '';
+
+  branches: Branch[] = [];
+  departments: DepartmentItem[] = [];
+  staffOptions: UserRow[] = [];
+  statuses: StatusItem[] = [];
+  enquiryTypes: string[] = [];
 
   allStudents: StudentListRow[] = [];
   filteredStudents: StudentListRow[] = [];
 
-  constructor(private mockDataService: MockDataService) {}
+  constructor(private mockDataService: DataService) {}
 
   ngOnInit() {
-    this.mockDataService.getStudentListRows().subscribe(data => {
-      this.allStudents = data;
-      this.applyFilters();
+    this.mockDataService.fetchStudents().subscribe({
+      next: data => {
+        this.allStudents = data || [];
+        this.applyFilters();
+      },
+      error: err => {
+        console.error('[StudentList] load failed:', err);
+        this.allStudents = [];
+        this.applyFilters();
+      }
+    });
+    this.mockDataService.getBranches().subscribe(b => this.branches = b);
+    this.mockDataService.getDepartmentItems().subscribe(d => this.departments = d);
+    this.mockDataService.getUserRows().subscribe(u => this.staffOptions = u);
+    this.mockDataService.getStatusSettingsItems().subscribe(s => this.statuses = s);
+    this.mockDataService.getCourseItems().subscribe(c => {
+      const types = new Set<string>();
+      c.forEach(item => {
+        const name = item.name.toLowerCase();
+        if (name.includes('visa')) types.add('Visa Enquiry');
+        else types.add('Course Enquiry');
+      });
+      this.enquiryTypes = [...types];
+      if (!this.enquiryTypes.length) this.enquiryTypes = [];
     });
   }
 
@@ -618,16 +658,18 @@ export class StudentListComponent implements OnInit {
 
   applyFilters() {
     const q = this.searchQuery.toLowerCase().trim();
-    if (!q) {
-      this.filteredStudents = [...this.allStudents];
-      return;
-    }
 
     this.filteredStudents = this.allStudents.filter(s => {
-      if (this.searchField === 'Name') return s.name.toLowerCase().includes(q);
-      if (this.searchField === 'Mobile') return s.mobile.includes(q);
-      if (this.searchField === 'Note') return s.note.toLowerCase().includes(q);
-      return s.name.toLowerCase().includes(q) || s.mobile.includes(q);
+      if (q) {
+        if (this.searchField === 'Name' && !s.name.toLowerCase().includes(q)) return false;
+        if (this.searchField === 'Mobile' && !s.mobile.includes(q)) return false;
+        if (this.searchField === 'Note' && !s.note.toLowerCase().includes(q)) return false;
+      }
+      if (this.selectedBranch && s.branch !== this.selectedBranch) return false;
+      if (this.selectedDept && s.department !== this.selectedDept) return false;
+      if (this.selectedStatus && s.status !== this.selectedStatus) return false;
+      if (this.selectedStaff && s.to !== this.selectedStaff) return false;
+      return true;
     });
   }
 

@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { IconComponent } from '../../shared/components/icon.component';
-import { MockDataService, Branch } from '../../core/mock-data.service';
+import { DataService, Branch } from '../../core/data.service';
 
 export interface FeeReceiptEntry {
   slNo: number;
@@ -333,72 +333,38 @@ export interface FeeReceiptEntry {
   `]
 })
 export class FeeReceiptReportComponent implements OnInit {
-  fromDate: string = '05-Feb-2026';
-  toDate: string = '23-Nov-2026';
+  fromDate: string = '';
+  toDate: string = '';
   selectedBranch: string = 'All';
 
   branches: Branch[] = [];
 
-  entries: FeeReceiptEntry[] = [
-    {
-      slNo: 1,
-      date: '01-Apr-2026',
-      name: 'JOHN M P',
-      phone: '9847638323',
-      email: 'john.mp@mail.in',
-      course: 'T20 Training',
-      voucherNumber: 1,
-      amount: 18000,
-      description: 'CASH IN HAND',
-      branch: 'Ernakulam'
-    },
-    {
-      slNo: 2,
-      date: '03-Apr-2026',
-      name: 'ANEETA GEORGE',
-      phone: '9946260617',
-      email: 'aneeta.g@mail.in',
-      course: 'G01 IELTS CRASH',
-      voucherNumber: 1,
-      amount: 8000,
-      description: 'QR CODE BY BANK',
-      branch: 'Ernakulam'
-    },
-    {
-      slNo: 3,
-      date: '03-Apr-2026',
-      name: 'CLINTIN JOSE CLEETUS',
-      phone: '9446207873',
-      email: 'clintin.jose@mail.in',
-      course: 'K02 French A1 Online Class',
-      voucherNumber: 1,
-      amount: 15000,
-      description: 'BANK TRANSFER',
-      branch: 'Kaloor'
-    },
-    {
-      slNo: 4,
-      date: '04-Apr-2026',
-      name: 'AKHIL JOSE',
-      phone: '7411919807',
-      email: 'akhil.jose@mail.in',
-      course: 'A16 IELTS 2 MONTHS',
-      voucherNumber: 1,
-      amount: 7000,
-      description: 'BANK FEES OF BOOK',
-      branch: 'Ernakulam'
-    }
-  ];
+  entries: FeeReceiptEntry[] = [];
 
   filteredEntries: FeeReceiptEntry[] = [];
 
-  constructor(private mockDataService: MockDataService) {}
+  constructor(private mockDataService: DataService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.mockDataService.getBranches().subscribe(b => {
       this.branches = b;
+      this.cdr.markForCheck();
     });
-    this.filteredEntries = [...this.entries];
+    this.loadEntries();
+  }
+
+  private loadEntries() {
+    this.mockDataService.getFeeReceiptEntries(this.fromDate, this.toDate).subscribe(entries => {
+      this.entries = entries;
+      this.applyBranchFilter();
+      this.cdr.markForCheck();
+    });
+  }
+
+  private applyBranchFilter() {
+    this.filteredEntries = this.entries.filter(e =>
+      this.selectedBranch === 'All' || e.branch === this.selectedBranch
+    );
   }
 
   get totalAmount(): number {
@@ -406,12 +372,8 @@ export class FeeReceiptReportComponent implements OnInit {
   }
 
   onSearch() {
-    this.filteredEntries = this.entries.filter(e => {
-      if (this.selectedBranch !== 'All' && e.branch !== this.selectedBranch) {
-        return false;
-      }
-      return true;
-    });
+    this.loadEntries();
+    this.applyBranchFilter();
   }
 
   exportToCsv() {

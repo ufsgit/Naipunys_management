@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
-import { MockDataService, CompanyInfo } from '../../core/mock-data.service';
+import { DataService, CompanyInfo } from '../../core/data.service';
 
 @Component({
   selector: 'app-company-info',
@@ -263,7 +263,7 @@ export class CompanyInfoComponent implements OnInit {
 
   showSavedAlert = false;
 
-  constructor(private mockDataService: MockDataService) {}
+  constructor(private mockDataService: DataService) {}
 
   ngOnInit() {
     this.mockDataService.getCompanyInfo().subscribe(info => {

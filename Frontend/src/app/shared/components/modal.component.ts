@@ -7,7 +7,7 @@ import { IconComponent } from './icon.component';
   standalone: true,
   imports: [CommonModule, IconComponent],
   template: `
-    <div class="modal-overlay" *ngIf="isOpen" (click)="onBackdropClick($event)">
+    <div class="modal-overlay" style="z-index: 1200;" *ngIf="isOpen" (click)="onBackdropClick($event)">
       <div class="modal-dialog" [ngClass]="sizeClass" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h3 class="modal-title">{{ title }}</h3>
@@ -66,8 +66,8 @@ export class ModalComponent {
   standalone: true,
   imports: [CommonModule, IconComponent],
   template: `
-    <div class="modal-overlay" *ngIf="isOpen">
-      <div class="modal-dialog modal-sm">
+    <div class="modal-overlay" style="z-index: 1100;" *ngIf="isOpen" (click)="cancel()">
+      <div class="modal-dialog modal-sm" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h3 class="modal-title">{{ title }}</h3>
           <button type="button" class="modal-close" (click)="cancel()">

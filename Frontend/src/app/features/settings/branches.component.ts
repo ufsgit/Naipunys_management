@@ -2,12 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
-import { MockDataService, BranchItem, DepartmentOption } from '../../core/mock-data.service';
+import { ConfirmDialogComponent } from '../../shared/components/modal.component';
+import { DataService, BranchItem, DepartmentOption } from '../../core/data.service';
 
 @Component({
   selector: 'app-branches',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent],
+  imports: [CommonModule, FormsModule, IconComponent, ConfirmDialogComponent],
   template: `
     <div class="branch-page-container">
       <!-- Header -->
@@ -186,6 +187,15 @@ import { MockDataService, BranchItem, DepartmentOption } from '../../core/mock-d
           </div>
         </div>
       </div>
+
+      <app-confirm-dialog
+        [isOpen]="isDeleteModalOpen"
+        title="Delete Branch"
+        [message]="'Are you sure you want to delete ' + (branchToDelete?.name || '') + '?'"
+        confirmText="Delete"
+        (confirmEvent)="confirmDelete()"
+        (cancelEvent)="isDeleteModalOpen = false; branchToDelete = null"
+      ></app-confirm-dialog>
     </div>
   `,
   styles: [`
@@ -574,7 +584,7 @@ export class BranchesComponent implements OnInit {
     email: ''
   };
 
-  constructor(private mockDataService: MockDataService) {}
+  constructor(private mockDataService: DataService) {}
 
   ngOnInit() {
     this.mockDataService.getBranchItems().subscribe(data => this.branches = data);
@@ -604,14 +614,14 @@ export class BranchesComponent implements OnInit {
     this.editingIndex = this.branches.indexOf(b);
     this.branchForm = {
       name: b.name,
-      address: 'Near Metro Station',
+      address: '',
       location: b.name,
-      district: 'Ernakulam',
-      state: 'Kerala',
-      country: 'India',
-      pincode: '682016',
-      phone: '0484 235 8890',
-      email: `${b.name.toLowerCase().replace(/[^a-z]/g, '')}@naipunya.edu.in`
+      district: '',
+      state: '',
+      country: '',
+      pincode: '',
+      phone: '',
+      email: ''
     };
     this.isModalOpen = true;
   }
@@ -636,9 +646,19 @@ export class BranchesComponent implements OnInit {
     this.closeModal();
   }
 
+  isDeleteModalOpen = false;
+  branchToDelete: BranchItem | null = null;
+
   deleteBranch(b: BranchItem) {
-    if (confirm(`Are you sure you want to delete ${b.name}?`)) {
-      this.mockDataService.deleteBranchItem(b.slNo);
+    this.branchToDelete = b;
+    this.isDeleteModalOpen = true;
+  }
+
+  confirmDelete() {
+    if (this.branchToDelete) {
+      this.mockDataService.deleteBranchItem(this.branchToDelete.slNo);
     }
+    this.isDeleteModalOpen = false;
+    this.branchToDelete = null;
   }
 }

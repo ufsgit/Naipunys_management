@@ -1,13 +1,15 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { MockDataService } from '../../core/mock-data.service';
+import { ConfirmDialogComponent, ModalComponent } from '../../shared/components/modal.component';
+import { DataService, CourseItem, EnquirySourceItem, StatusItem, FollowupTypeItem, Account } from '../../core/data.service';
+import { NotificationService } from '../../core/notification.service';
 
 @Component({
   selector: 'app-student-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, ConfirmDialogComponent, ModalComponent],
   template: `
     <div class="student-detail-page">
       <!-- Top Sub-Navigation Tabs & Student Name Header (Only for Student Profile: Details & Course) -->
@@ -60,9 +62,7 @@ import { MockDataService } from '../../core/mock-data.service';
                   <label class="field-label required">Enquiry Source</label>
                   <div class="field-control">
                     <select class="input-select" [(ngModel)]="details.enquirySource">
-                      <option value="Walkin">Walkin</option>
-                      <option value="Advertisement">Advertisement</option>
-                      <option value="Referral">Referral</option>
+                      <option *ngFor="let s of enquirySources" [value]="s.name">{{ s.name }}</option>
                     </select>
                   </div>
                 </div>
@@ -71,9 +71,7 @@ import { MockDataService } from '../../core/mock-data.service';
                   <label class="field-label required">Enquiry Type</label>
                   <div class="field-control">
                     <select class="input-select" [(ngModel)]="details.enquiryType">
-                      <option value="COURSE">COURSE</option>
-                      <option value="VISA">VISA</option>
-                      <option value="IELTS">IELTS</option>
+                      <option *ngFor="let t of enquiryTypes" [value]="t">{{ t }}</option>
                     </select>
                   </div>
                 </div>
@@ -179,10 +177,7 @@ import { MockDataService } from '../../core/mock-data.service';
                 <label class="field-label">Course</label>
                 <div class="field-control">
                   <select class="input-select" [(ngModel)]="courseData.course">
-                    <option value="E01 IELTS CRASH">E01 IELTS CRASH</option>
-                    <option value="E19 NICE">E19 NICE</option>
-                    <option value="IELTS ACADEMIC">IELTS ACADEMIC</option>
-                    <option value="IELTS 1 MONTH">IELTS 1 MONTH</option>
+                    <option *ngFor="let c of courses" [value]="c.name">{{ c.name }}</option>
                   </select>
                 </div>
               </div>
@@ -269,9 +264,8 @@ import { MockDataService } from '../../core/mock-data.service';
                 <label class="field-label">Status</label>
                 <div class="field-control">
                   <select class="input-select" [(ngModel)]="courseData.status">
-                    <option value="Select">Select</option>
-                    <option value="Enrolled">Enrolled</option>
-                    <option value="Pending">Pending</option>
+                    <option value="">Select</option>
+                    <option *ngFor="let s of statuses" [value]="s.name">{{ s.name }}</option>
                   </select>
                 </div>
               </div>
@@ -364,9 +358,17 @@ import { MockDataService } from '../../core/mock-data.service';
               <div class="fee-col">
                 <span class="mini-label">Type</span>
                 <select class="input-select" [(ngModel)]="newReceipt.type">
-                  <option value="Select">Select</option>
+                  <option value="">Select</option>
                   <option value="Fees">Fees</option>
                   <option value="Book Amount">Book Amount</option>
+                </select>
+              </div>
+
+              <div class="fee-col">
+                <span class="mini-label">Account</span>
+                <select class="input-select" [(ngModel)]="newReceipt.account">
+                  <option value="">Select</option>
+                  <option *ngFor="let acc of accounts" [value]="acc.name">{{ acc.name }}</option>
                 </select>
               </div>
 
@@ -388,6 +390,7 @@ import { MockDataService } from '../../core/mock-data.service';
                     <th>Receipt Date</th>
                     <th>Fee Amount</th>
                     <th>Fees</th>
+                    <th>Account</th>
                     <th>Description</th>
                     <th style="text-align: right; width: 100px;"></th>
                   </tr>
@@ -397,6 +400,7 @@ import { MockDataService } from '../../core/mock-data.service';
                     <td>{{ r.date }}</td>
                     <td>{{ r.amount }}</td>
                     <td>{{ r.type }}</td>
+                    <td>{{ r.account }}</td>
                     <td>{{ r.description }}</td>
                     <td style="text-align: right; white-space: nowrap;">
                       <button type="button" class="icon-link-btn" (click)="editReceipt(idx)" title="Edit">
@@ -460,10 +464,7 @@ import { MockDataService } from '../../core/mock-data.service';
                 <label class="field-label required">Status</label>
                 <div class="field-control">
                   <select class="input-select" [(ngModel)]="followupData.status">
-                    <option value="Interested">Interested</option>
-                    <option value="Running">Running</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Stopped">Stopped</option>
+                    <option *ngFor="let s of statuses" [value]="s.name">{{ s.name }}</option>
                   </select>
                 </div>
               </div>
@@ -472,9 +473,7 @@ import { MockDataService } from '../../core/mock-data.service';
                 <label class="field-label required">To staff</label>
                 <div class="field-control">
                   <select class="input-select" [(ngModel)]="followupData.toStaff">
-                    <option value="ANANDHU">ANANDHU</option>
-                    <option value="DIVYA">DIVYA</option>
-                    <option value="DIRECTOR">DIRECTOR</option>
+                    <option *ngFor="let staff of staffOptions" [value]="staff">{{ staff }}</option>
                   </select>
                 </div>
               </div>
@@ -541,6 +540,34 @@ import { MockDataService } from '../../core/mock-data.service';
           </div>
         </div>
       </div>
+
+      <app-confirm-dialog
+        [isOpen]="isDeleteModalOpen"
+        title="Delete Student"
+        [message]="'Are you sure you want to delete ' + studentName + '?'"
+        confirmText="Delete"
+        (confirmEvent)="confirmDelete()"
+        (cancelEvent)="isDeleteModalOpen = false"
+      ></app-confirm-dialog>
+
+      <app-modal
+        [isOpen]="isEditReceiptModalOpen"
+        title="Edit Fee Amount"
+        size="sm"
+        confirmText="Save"
+        (confirmEvent)="saveEditReceipt()"
+        (closeEvent)="isEditReceiptModalOpen = false"
+      >
+        <div modal-body>
+          <label class="form-label" style="display: block; margin-bottom: 0.4rem;">Fee Amount</label>
+          <input
+            type="number"
+            class="form-input"
+            [(ngModel)]="editingReceiptAmount"
+            style="width: 100%;"
+          />
+        </div>
+      </app-modal>
     </div>
   `,
   styles: [`
@@ -1228,40 +1255,40 @@ import { MockDataService } from '../../core/mock-data.service';
 })
 export class StudentDetailComponent implements OnInit {
   activeTab: 'details' | 'course' | 'followup' = 'details';
-  studentName = 'PRIYANKA CLEMENT';
+  studentName = '';
 
-  // Tab 1: Student Details Model
+  // Tab 1: Student Details Model (filled from backend)
   details = {
-    enquirySource: 'Walkin',
-    enquiryType: 'COURSE',
-    name: 'PRIYANKA CLEMENT',
-    mobile: '8891460293',
-    parentsMobile: '8891460293',
-    note: 'NICE',
+    enquirySource: '',
+    enquiryType: '',
+    name: '',
+    mobile: '',
+    parentsMobile: '',
+    note: '',
     facebook: '',
     address: '',
     email: '',
     altEmail: '',
-    date: '2026-11-19',
+    date: '',
     whatsapp: ''
   };
 
-  // Tab 2: Course Model matching Image 1
+  // Tab 2: Course Model (filled from backend)
   courseData = {
-    course: 'E01 IELTS CRASH',
-    batch: 'Select',
-    bookAmount: 600,
-    bookAmountChecked: true,
-    totalFees: 9100,
+    course: '',
+    batch: '',
+    bookAmount: 0,
+    bookAmountChecked: false,
+    totalFees: 0,
     examDateBooked: false,
     feesPayment: false,
     speakingDate: false,
     passportNumber: '',
-    courseType: 'Select',
-    fees: 8500,
+    courseType: '',
+    fees: 0,
     discount: 0,
-    status: 'Select',
-    studentIdNumber: '0',
+    status: '',
+    studentIdNumber: '',
     scoreL: 0,
     scoreR: 0,
     scoreW: 0,
@@ -1271,32 +1298,15 @@ export class StudentDetailComponent implements OnInit {
 
   // Fee Receipts in Tab 2 matching Image 1
   newReceipt = {
-    date: '2026-11-24',
+    date: '',
     amount: 0,
-    type: 'Select',
+    type: '',
+    account: '',
     description: ''
   };
 
-  receiptsList = [
-    {
-      date: '24-Nov-2026',
-      amount: 2000,
-      type: 'Fees',
-      description: 'BY CASH'
-    },
-    {
-      date: '24-Nov-2026',
-      amount: 600,
-      type: 'Fees',
-      description: 'QR CODE BY BANK'
-    },
-    {
-      date: '24-Nov-2026',
-      amount: 2400,
-      type: 'Fees',
-      description: 'QR CODE BY BANK'
-    }
-  ];
+  accounts: Account[] = [];
+  receiptsList: { id?: string; date: string; amount: number; type: string; account?: string; description: string }[] = [];
 
   // Dynamic fee calculation getters matching Image 1
   get totalReceiptsAmount(): number {
@@ -1317,19 +1327,81 @@ export class StudentDetailComponent implements OnInit {
 
   // Tab 3: Follow-up Model
   followupData = {
-    status: 'Interested',
-    toStaff: 'ANANDHU',
+    status: '',
+    toStaff: '',
     comments: '',
-    nextDate: '2026-11-28'
+    nextDate: ''
   };
 
-  constructor(private route: ActivatedRoute, private router: Router, private mockDataService: MockDataService) {}
+  constructor(private route: ActivatedRoute, private router: Router, private mockDataService: DataService, private notify: NotificationService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
+    this.mockDataService.getUserRows().subscribe(users => {
+      this.staffOptions = users.map(u => u.userName);
+    });
+    this.mockDataService.getCourseItems().subscribe(c => {
+      this.courses = c;
+      const types = new Set<string>();
+      c.forEach(item => {
+        const name = item.name.toLowerCase();
+        if (name.includes('visa')) types.add('VISA');
+        else types.add('COURSE');
+      });
+      this.enquiryTypes = [...types];
+      if (!this.enquiryTypes.length) this.enquiryTypes = [];
+    });
+    this.mockDataService.getEnquirySourceItems().subscribe(s => this.enquirySources = s);
+    this.mockDataService.getStatusSettingsItems().subscribe(s => this.statuses = s);
+    this.mockDataService.getFollowupTypeItems().subscribe(t => this.followupTypes = t);
+    this.mockDataService.getAccounts().subscribe(a => { this.accounts = a; this.cdr.markForCheck(); });
     this.route.params.subscribe(params => {
       if (params['name']) {
         this.studentName = decodeURIComponent(params['name']);
         this.details.name = this.studentName;
+        this.mockDataService.getStudentByName(this.studentName).subscribe(student => {
+          if (!student) return;
+          this.studentId = Number(student.id) || null;
+          this.studentBranch = student.branch || '';
+          this.studentDepartment = student.department || '';
+          this.details.name = student.name;
+          this.details.mobile = student.phone;
+          this.details.email = student.email;
+          this.details.date = student.admissionDate;
+          this.courseData.course = student.course;
+          this.courseData.batch = student.batch;
+          this.courseData.totalFees = student.feesTotal;
+          this.courseData.fees = student.feesTotal;
+          this.courseData.status = student.status;
+          this.courseData.studentIdNumber = student.code;
+          this.mockDataService.getReceipts().subscribe(receipts => {
+            this.receiptsList = receipts
+              .filter(r =>
+                (this.studentId && Number(r.studentId) === this.studentId) ||
+                String(r.studentName || r.from || '').toLowerCase() === student.name.toLowerCase()
+              )
+              .map(r => ({
+                id: r.id,
+                date: r.date,
+                amount: r.amount,
+                type: r.paymentMode || 'Fees',
+                account: r.toAccount || '',
+                description: r.details || ''
+              }));
+            this.cdr.markForCheck();
+          });
+          this.mockDataService.getFollowUps().subscribe(items => {
+            this.historyList = items
+              .filter(f => String(f.studentName || '').toLowerCase() === student.name.toLowerCase())
+              .map(f => ({
+                nextFollowup: f.nextFollowUpDate || '',
+                department: '',
+                status: f.status || '',
+                to: f.type || '',
+                from: '',
+                isOverdue: false
+              }));
+          });
+        });
       }
     });
 
@@ -1352,26 +1424,83 @@ export class StudentDetailComponent implements OnInit {
 
   addReceiptRow() {
     if (this.newReceipt.amount > 0) {
-      this.receiptsList.push({
-        date: this.newReceipt.date || '24-Nov-2026',
-        amount: Number(this.newReceipt.amount),
-        type: this.newReceipt.type === 'Select' ? 'Fees' : this.newReceipt.type,
-        description: this.newReceipt.description || 'BY CASH'
+      const receiptDate = this.newReceipt.date || new Date().toISOString().split('T')[0];
+      const amount = Number(this.newReceipt.amount);
+      const feeType = this.newReceipt.type && this.newReceipt.type !== 'Select' ? this.newReceipt.type : 'Fees';
+      const accountName = this.newReceipt.account && this.newReceipt.account !== 'Select' ? this.newReceipt.account : '';
+      const description = this.newReceipt.description || '';
+
+      this.receiptsList = [
+        ...this.receiptsList,
+        {
+          date: receiptDate,
+          amount,
+          type: feeType,
+          account: accountName,
+          description
+        }
+      ];
+
+      this.mockDataService.addReceipt({
+        date: receiptDate,
+        from: this.details.name || this.studentName,
+        studentId: this.studentId ? String(this.studentId) : '',
+        studentName: this.details.name || this.studentName,
+        course: this.courseData.course || '',
+        branch: this.studentBranch,
+        amount,
+        voucherNo: '',
+        details: description,
+        toAccount: accountName,
+        paymentMode: feeType,
+        referenceNo: '',
+        remark: description
       });
+
       this.newReceipt.amount = 0;
+      this.newReceipt.type = '';
+      this.newReceipt.account = '';
       this.newReceipt.description = '';
+      this.cdr.markForCheck();
     }
   }
 
+  isEditReceiptModalOpen = false;
+  editingReceiptIndex: number | null = null;
+  editingReceiptAmount = 0;
+
   editReceipt(idx: number) {
-    const r = this.receiptsList[idx];
-    const newAmt = prompt('Edit Fee Amount for receipt:', r.amount.toString());
-    if (newAmt !== null && !isNaN(Number(newAmt))) {
-      r.amount = Number(newAmt);
+    this.editingReceiptIndex = idx;
+    this.editingReceiptAmount = this.receiptsList[idx]?.amount || 0;
+    this.isEditReceiptModalOpen = true;
+  }
+
+  saveEditReceipt() {
+    if (this.editingReceiptIndex !== null && !isNaN(Number(this.editingReceiptAmount))) {
+      const item: any = this.receiptsList[this.editingReceiptIndex];
+      const amount = Number(this.editingReceiptAmount);
+      item.amount = amount;
+      if (item.id && !isNaN(Number(item.id))) {
+        this.mockDataService.updateReceipt(item.id, {
+          from: this.details.name || this.studentName,
+          studentName: this.details.name || this.studentName,
+          course: this.courseData.course || '',
+          branch: this.studentBranch,
+          date: item.date,
+          amount,
+          details: item.description || ''
+        });
+      }
     }
+    this.isEditReceiptModalOpen = false;
+    this.editingReceiptIndex = null;
   }
 
   deleteReceipt(idx: number) {
+    const item: any = this.receiptsList[idx];
+    if (item?.id && !isNaN(Number(item.id))) {
+      this.mockDataService.deleteReceipt(item.id);
+    }
     this.receiptsList.splice(idx, 1);
   }
 
@@ -1379,38 +1508,61 @@ export class StudentDetailComponent implements OnInit {
     window.print();
   }
 
+  studentId: number | null = null;
+  studentBranch = '';
+  studentDepartment = '';
+
   onSave() {
-    alert(`Saved changes for ${this.studentName}`);
+    if (!this.studentId) return;
+    const totalFees = Number(this.courseData.totalFees) || Number(this.courseData.fees) || 0;
+    this.mockDataService.updateStudentDetail(this.studentId, {
+      name: this.details.name || this.studentName,
+      phone: this.details.mobile || '',
+      email: this.details.email || '',
+      course: this.courseData.course || '',
+      branch: this.studentBranch,
+      department: this.studentDepartment,
+      feesTotal: totalFees,
+      feesPaid: this.totalReceiptsAmount,
+      status: this.courseData.status || 'Active'
+    }).subscribe({
+      next: () => this.notify.show(`Saved changes for ${this.details.name || this.studentName}`, 'Success', 'primary'),
+      error: e => {
+        console.error('[StudentDetail] save failed:', e);
+        this.notify.show('Failed to save student details.', 'Error', 'danger');
+      }
+    });
   }
 
   onSaveAndSend() {
-    alert(`Saved and sent confirmation for ${this.studentName}`);
+    this.onSave();
   }
 
   onNew() {
     this.router.navigate(['/students/create']);
   }
 
+  isDeleteModalOpen = false;
+
   onDelete() {
-    if (confirm(`Are you sure you want to delete ${this.studentName}?`)) {
-      this.router.navigate(['/students/list']);
-    }
+    this.isDeleteModalOpen = true;
+  }
+
+  confirmDelete() {
+    this.isDeleteModalOpen = false;
+    this.router.navigate(['/students/list']);
   }
 
   // Follow-up History Modal State & Data matching reference image
   showHistoryModal = false;
 
-  historyList = [
-    { nextFollowup: '24-Nov-2026', department: 'Admission', status: 'Interested', to: 'DIVYA', from: 'DIVYA', isOverdue: false },
-    { nextFollowup: '19-Nov-2026', department: 'Admission', status: 'Interested', to: 'DIVYA', from: 'DIVYA', isOverdue: true },
-    { nextFollowup: '19-Oct-2026', department: 'Admission', status: 'Interested', to: 'DIVYA', from: 'DIVYA', isOverdue: true },
-    { nextFollowup: '13-Oct-2026', department: 'Admission', status: 'Interested', to: 'DIVYA', from: 'DIVYA', isOverdue: true },
-    { nextFollowup: '10-Oct-2026', department: 'Admission', status: 'Interested', to: 'DIVYA', from: 'DIVYA', isOverdue: true },
-    { nextFollowup: '05-Oct-2026', department: 'Admission', status: 'Interested', to: 'DIVYA', from: 'DIVYA', isOverdue: true },
-    { nextFollowup: '14-Sep-2026', department: 'Admission', status: 'Interested', to: 'DIVYA', from: 'DIVYA', isOverdue: true },
-    { nextFollowup: '07-Sep-2026', department: 'Admission', status: 'Interested', to: 'DIVYA', from: 'DIVYA', isOverdue: true },
-    { nextFollowup: '31-Aug-2026', department: 'Admission', status: 'Interested', to: 'DIVYA', from: 'DIVYA', isOverdue: true }
-  ];
+  historyList: { nextFollowup: string; department: string; status: string; to: string; from: string; isOverdue: boolean }[] = [];
+  staffOptions: string[] = [];
+  courses: CourseItem[] = [];
+  enquirySources: EnquirySourceItem[] = [];
+  statuses: StatusItem[] = [];
+  followupTypes: FollowupTypeItem[] = [];
+  enquiryTypes: string[] = [];
 
   viewHistory() {
     this.showHistoryModal = true;

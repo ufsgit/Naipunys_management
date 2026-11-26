@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { IconComponent } from '../../shared/components/icon.component';
-import { MockDataService } from '../../core/mock-data.service';
+import { DataService } from '../../core/data.service';
 
 export interface FeePendingEntry {
   studentName: string;
@@ -41,9 +41,8 @@ export interface FeePendingEntry {
           <div class="filter-field">
             <label class="filter-label">Status</label>
             <select class="filter-select" [(ngModel)]="selectedStatus">
-              <option value="All">All</option>
-              <option value="Running">Running</option>
-              <option value="Stopped">Stopped</option>
+              <option value="">All</option>
+              <option *ngFor="let s of statuses" [value]="s.name">{{ s.name }}</option>
             </select>
           </div>
 
@@ -51,10 +50,8 @@ export interface FeePendingEntry {
           <div class="filter-field">
             <label class="filter-label">Branch</label>
             <select class="filter-select" [(ngModel)]="selectedBranch">
-              <option value="All">All</option>
-              <option value="Kochi Main">Kochi Main</option>
-              <option value="Ernakulam">Ernakulam</option>
-              <option value="Kaloor">Kaloor</option>
+              <option value="">All</option>
+              <option *ngFor="let b of branches" [value]="b.name">{{ b.name }}</option>
             </select>
           </div>
 
@@ -313,21 +310,27 @@ export interface FeePendingEntry {
   `]
 })
 export class FeePendingReportComponent implements OnInit {
-  fromDate: string = '01-Oct-2026';
-  toDate: string = '23-Nov-2026';
-  selectedStatus: string = 'Running';
-  selectedBranch: string = 'Kochi Main';
+  fromDate: string = '';
+  toDate: string = '';
+  selectedStatus: string = '';
+  selectedBranch: string = '';
+
+  branches: { name: string }[] = [];
+  statuses: { name: string }[] = [];
 
   entries: FeePendingEntry[] = [];
   filteredEntries: FeePendingEntry[] = [];
 
-  constructor(private mockDataService: MockDataService) {}
+  constructor(private mockDataService: DataService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.mockDataService.getFeePendingEntries().subscribe(data => {
       this.entries = data;
       this.applyFilters();
+      this.cdr.markForCheck();
     });
+    this.mockDataService.getBranches().subscribe(b => { this.branches = b; this.cdr.markForCheck(); });
+    this.mockDataService.getStatusSettingsItems().subscribe(s => { this.statuses = s; this.cdr.markForCheck(); });
   }
 
   onSearch() {
@@ -336,8 +339,8 @@ export class FeePendingReportComponent implements OnInit {
 
   applyFilters() {
     this.filteredEntries = this.entries.filter(e => {
-      const matchStatus = this.selectedStatus === 'All' || e.informationStatus === this.selectedStatus;
-      const matchBranch = this.selectedBranch === 'All' || e.branch === this.selectedBranch;
+      const matchStatus = !this.selectedStatus || e.informationStatus === this.selectedStatus;
+      const matchBranch = !this.selectedBranch || e.branch === this.selectedBranch;
       return matchStatus && matchBranch;
     });
   }
