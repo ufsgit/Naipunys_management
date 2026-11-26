@@ -314,10 +314,27 @@ interface AccountChip {
 
           <div class="donut-wrapper">
             <div class="donut-box">
-              <svg viewBox="0 0 160 160" class="donut-svg anim-donut-svg">
-                <circle cx="80" cy="80" r="54" fill="none" stroke="#f1f5f9" stroke-width="18" />
+              <svg viewBox="0 0 160 160" class="donut-svg">
+                <defs>
+                  <mask id="donutDrawMask">
+                    <circle
+                      cx="80" cy="80" r="54"
+                      fill="none"
+                      stroke="#ffffff"
+                      stroke-width="32"
+                      stroke-dasharray="339.3"
+                      stroke-dashoffset="339.3"
+                      transform="rotate(-90 80 80)"
+                      class="donut-mask-circle"
+                    />
+                  </mask>
+                </defs>
 
-                <g>
+                <!-- Base Track -->
+                <circle cx="80" cy="80" r="54" fill="none" stroke="#f1f5f9" stroke-width="18" class="donut-track" />
+
+                <!-- Progressive Clockwise Draw of Colored Slices -->
+                <g mask="url(#donutDrawMask)">
                   <circle
                     *ngFor="let s of feeSplit; let i = index"
                     cx="80" cy="80" r="54"
@@ -326,7 +343,6 @@ interface AccountChip {
                     [attr.stroke-width]="hoveredSplitIndex === i ? 23 : 18"
                     [attr.stroke-dasharray]="s.dashArray"
                     [attr.stroke-dashoffset]="s.dashOffset"
-                    [style.animationDelay]="(i * 0.45) + 's'"
                     transform="rotate(-90 80 80)"
                     class="donut-slice"
                     [class.is-hovered]="hoveredSplitIndex === i"
@@ -340,7 +356,7 @@ interface AccountChip {
               </svg>
 
               <div class="donut-center">
-                <span class="donut-amount">₹{{ feeSplitTotal | number }}</span>
+                <span class="donut-amount">₹{{ displayedRevenue | number }}</span>
                 <span class="donut-label">Total Revenue</span>
               </div>
             </div>
@@ -921,28 +937,29 @@ interface AccountChip {
       height: 100%;
       overflow: visible;
     }
-    .anim-donut-svg {
-      transform-origin: center center;
-      animation: donutReveal 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    .donut-track {
+      animation: trackFade 0.6s ease-out forwards;
     }
-    @keyframes donutReveal {
-      from {
-        opacity: 0;
-        transform: scale(0.84) rotate(-25deg);
+    @keyframes trackFade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .donut-mask-circle {
+      stroke-dasharray: 339.3;
+      stroke-dashoffset: 339.3;
+      animation: donutDrawAnim 1.35s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
+    }
+    @keyframes donutDrawAnim {
+      0% {
+        stroke-dashoffset: 339.3;
       }
-      to {
-        opacity: 1;
-        transform: scale(1) rotate(0deg);
+      100% {
+        stroke-dashoffset: 0;
       }
     }
     .donut-slice {
       transition: stroke-width 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease, filter 0.25s ease;
-      animation: sliceWave 3.2s ease-in-out infinite;
       cursor: pointer;
-    }
-    @keyframes sliceWave {
-      0%, 100% { stroke-opacity: 0.86; }
-      50% { stroke-opacity: 1; }
     }
     .donut-slice.is-hovered {
       stroke-opacity: 1;
@@ -950,7 +967,6 @@ interface AccountChip {
     }
     .donut-slice.is-dimmed {
       opacity: 0.42;
-      animation: none;
     }
     .donut-center {
       position: absolute;
@@ -960,14 +976,18 @@ interface AccountChip {
       align-items: center;
       justify-content: center;
       pointer-events: none;
-      animation: donutCenterPop 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: donutCenterPop 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
     }
     @keyframes donutCenterPop {
-      from {
+      0% {
         opacity: 0;
-        transform: scale(0.85);
+        transform: scale(0.8);
       }
-      to {
+      70% {
+        opacity: 1;
+        transform: scale(1.04);
+      }
+      100% {
         opacity: 1;
         transform: scale(1);
       }
@@ -1212,6 +1232,7 @@ export class DashboardComponent implements OnInit {
   feeCollected = 0;
   feePending = 0;
   feeSplitTotal = 0;
+  displayedRevenue = 0;
   feeSplit: FeeSplitItem[] = [];
   hoveredSplitIndex: number | null = null;
   hoveredBranchIndex: number | null = null;
@@ -1392,6 +1413,7 @@ export class DashboardComponent implements OnInit {
       .filter(([, amount]) => amount > 0);
 
     this.feeSplitTotal = entries.reduce((sum, [, amount]) => sum + amount, 0);
+    this.animateRevenue(this.feeSplitTotal);
     let used = 0;
 
     this.feeSplit = entries.map(([name, amount], i) => {
@@ -1407,6 +1429,31 @@ export class DashboardComponent implements OnInit {
       used += length;
       return item;
     });
+  }
+
+  private animateRevenue(target: number): void {
+    if (target <= 0) {
+      this.displayedRevenue = 0;
+      return;
+    }
+    const start = 0;
+    const duration = 1200;
+    const startTime = performance.now();
+
+    const step = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      this.displayedRevenue = Math.round(start + (target - start) * ease);
+      this.cdr.markForCheck();
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        this.displayedRevenue = target;
+        this.cdr.markForCheck();
+      }
+    };
+    requestAnimationFrame(step);
   }
 
   private buildAccountChips(accounts: Account[]): void {
