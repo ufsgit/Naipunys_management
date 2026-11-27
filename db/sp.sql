@@ -325,28 +325,41 @@ DELIMITER ;
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `GetStudentById`(IN p_id INT)
 BEGIN
-    SELECT s.*, c.name AS course_name, b.name AS branch_name, d.name AS department_name
-    FROM students s
-    LEFT JOIN courses c ON s.course_id = c.id
-    LEFT JOIN branches b ON s.branch_id = b.id
-    LEFT JOIN departments d ON s.department_id = d.id
-    WHERE s.id = p_id;
-END$$
+        SELECT s.*, 
+               c.name AS course_name, 
+               b.name AS branch_name, 
+               d.name AS department_name,
+               (SELECT f.next_followup_date FROM follow_ups f WHERE f.student_id = s.id ORDER BY f.id DESC LIMIT 1) AS next_followup_date,
+               (SELECT f.remarks FROM follow_ups f WHERE f.student_id = s.id ORDER BY f.id DESC LIMIT 1) AS latest_followup_remark,
+               (SELECT f.status FROM follow_ups f WHERE f.student_id = s.id ORDER BY f.id DESC LIMIT 1) AS latest_followup_status
+        FROM students s
+        LEFT JOIN courses c ON s.course_id = c.id
+        LEFT JOIN branches b ON s.branch_id = b.id
+        LEFT JOIN departments d ON s.department_id = d.id
+        WHERE s.id = p_id;
+    END$$
 DELIMITER ;
 
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `GetStudents`(IN p_branch_id INT, IN p_status VARCHAR(30), IN p_limit INT, IN p_offset INT)
 BEGIN
-    SELECT s.*, c.name AS course_name, b.name AS branch_name, d.name AS department_name
-    FROM students s
-    LEFT JOIN courses c ON s.course_id = c.id
-    LEFT JOIN branches b ON s.branch_id = b.id
-    LEFT JOIN departments d ON s.department_id = d.id
-    WHERE (p_branch_id IS NULL OR s.branch_id = p_branch_id)
-      AND (p_status IS NULL OR s.status = p_status)
-    ORDER BY s.created_at DESC
-    LIMIT p_limit OFFSET p_offset;
-END$$
+        SELECT s.*, 
+               c.name AS course_name, 
+               b.name AS branch_name, 
+               d.name AS department_name,
+               (SELECT f.next_followup_date FROM follow_ups f WHERE f.student_id = s.id ORDER BY f.id DESC LIMIT 1) AS next_followup_date,
+               (SELECT f.remarks FROM follow_ups f WHERE f.student_id = s.id ORDER BY f.id DESC LIMIT 1) AS latest_followup_remark,
+               (SELECT f.status FROM follow_ups f WHERE f.student_id = s.id ORDER BY f.id DESC LIMIT 1) AS latest_followup_status,
+               (SELECT u.username FROM follow_ups f LEFT JOIN users u ON f.assigned_to_id = u.id WHERE f.student_id = s.id ORDER BY f.id DESC LIMIT 1) AS assigned_to_name
+        FROM students s
+        LEFT JOIN courses c ON s.course_id = c.id
+        LEFT JOIN branches b ON s.branch_id = b.id
+        LEFT JOIN departments d ON s.department_id = d.id
+        WHERE (p_branch_id IS NULL OR s.branch_id = p_branch_id)
+          AND (p_status IS NULL OR s.status = p_status)
+        ORDER BY s.created_at DESC
+        LIMIT p_limit OFFSET p_offset;
+    END$$
 DELIMITER ;
 
 DELIMITER $$
