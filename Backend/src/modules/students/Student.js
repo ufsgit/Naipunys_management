@@ -1,11 +1,60 @@
 const { pool, callProcedure } = require('../../config/db');
 
 module.exports = {
-  getAll: (branchId, status, limit, offset) =>
-    callProcedure('GetStudents', [branchId, status, limit, offset]),
+  getAll: async (branchId, status, limit = 100, offset = 0) => {
+    try {
+      const query = `
+        SELECT s.*, 
+               c.name AS course_name, 
+               b.name AS branch_name, 
+               d.name AS department_name,
+               (SELECT f.next_followup_date FROM follow_ups f WHERE f.student_id = s.id ORDER BY f.id DESC LIMIT 1) AS next_followup_date,
+               (SELECT f.remarks FROM follow_ups f WHERE f.student_id = s.id ORDER BY f.id DESC LIMIT 1) AS latest_followup_remark,
+               (SELECT f.status FROM follow_ups f WHERE f.student_id = s.id ORDER BY f.id DESC LIMIT 1) AS latest_followup_status,
+               (SELECT u.username FROM follow_ups f LEFT JOIN users u ON f.assigned_to_id = u.id WHERE f.student_id = s.id ORDER BY f.id DESC LIMIT 1) AS assigned_to_name
+        FROM students s
+        LEFT JOIN courses c ON s.course_id = c.id
+        LEFT JOIN branches b ON s.branch_id = b.id
+        LEFT JOIN departments d ON s.department_id = d.id
+        WHERE (? IS NULL OR s.branch_id = ?)
+          AND (? IS NULL OR s.status = ?)
+        ORDER BY s.created_at DESC
+        LIMIT ? OFFSET ?
+      `;
+      const [rows] = await pool.query(query, [
+        branchId || null, branchId || null,
+        status || null, status || null,
+        Number(limit) || 100, Number(offset) || 0
+      ]);
+      return rows;
+    } catch (e) {
+      return callProcedure('GetStudents', [branchId, status, limit, offset]);
+    }
+  },
 
-  getById: (id) =>
-    callProcedure('GetStudentById', [id]),
+  getById: async (id) => {
+    try {
+      const query = `
+        SELECT s.*, 
+               c.name AS course_name, 
+               b.name AS branch_name, 
+               d.name AS department_name,
+               (SELECT f.next_followup_date FROM follow_ups f WHERE f.student_id = s.id ORDER BY f.id DESC LIMIT 1) AS next_followup_date,
+               (SELECT f.remarks FROM follow_ups f WHERE f.student_id = s.id ORDER BY f.id DESC LIMIT 1) AS latest_followup_remark,
+               (SELECT f.status FROM follow_ups f WHERE f.student_id = s.id ORDER BY f.id DESC LIMIT 1) AS latest_followup_status,
+               (SELECT u.username FROM follow_ups f LEFT JOIN users u ON f.assigned_to_id = u.id WHERE f.student_id = s.id ORDER BY f.id DESC LIMIT 1) AS assigned_to_name
+        FROM students s
+        LEFT JOIN courses c ON s.course_id = c.id
+        LEFT JOIN branches b ON s.branch_id = b.id
+        LEFT JOIN departments d ON s.department_id = d.id
+        WHERE s.id = ?
+      `;
+      const [rows] = await pool.query(query, [id]);
+      return rows;
+    } catch (e) {
+      return callProcedure('GetStudentById', [id]);
+    }
+  },
 
   create: (data) =>
     callProcedure('CreateStudent', [

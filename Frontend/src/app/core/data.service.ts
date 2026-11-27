@@ -50,6 +50,8 @@ export interface StudentFollowUp {
   remark: string;
   nextFollowUpDate: string;
   status: string;
+  to?: string;
+  from?: string;
 }
 
 export interface Course {
@@ -479,21 +481,44 @@ export class DataService {
     }, force)));
   }
 
+  private getCurrentUsername(): string {
+    try {
+      const raw = localStorage.getItem('naipunya_user');
+      return raw ? JSON.parse(raw).username || 'admin' : 'admin';
+    } catch {
+      return 'admin';
+    }
+  }
+
   private mapStudentListRows(rows: any[]): StudentListRow[] {
-    return rows.map((s, i) => ({
-      slNo: Number(s.id) || i + 1,
-      name: s.name || '',
-      note: s.course_name || '',
-      mobile: s.phone || '',
-      remark: s.course_name || '',
-      nextFollowUp: this.fmtDate(s.admission_date),
-      department: s.department_name || '',
-      status: s.status || '',
-      to: '',
-      from: '',
-      branch: s.branch_name || '',
-      enquiryType: s.enquiry_type || ''
-    }));
+    const currentFollowups = this.followUps$.value || [];
+    return rows.map((s, i) => {
+      const nextDate = s.next_followup_date || '';
+
+      const studentFollowUps = currentFollowups.filter(
+        f => (s.id && Number(f.studentId) === Number(s.id)) ||
+             (f.studentName && f.studentName.toLowerCase() === (s.name || '').toLowerCase())
+      );
+      const latestF = studentFollowUps.length > 0 ? studentFollowUps[0] : null;
+
+      const toStaff = s.assigned_to_name || latestF?.to || latestF?.type || s.to_staff || 'admin';
+      const fromStaff = latestF?.from || s.created_by_name || s.from_staff || (s.enquiry_source ? s.enquiry_source : 'admin');
+
+      return {
+        slNo: Number(s.id) || i + 1,
+        name: s.name || '',
+        note: s.course_name || '',
+        mobile: s.phone || '',
+        remark: s.course_name || '',
+        nextFollowUp: nextDate ? this.fmtDate(nextDate) : (latestF?.nextFollowUpDate ? this.fmtDate(latestF.nextFollowUpDate) : ''),
+        department: s.department_name || '',
+        status: s.status || '',
+        to: toStaff,
+        from: fromStaff,
+        branch: s.branch_name || '',
+        enquiryType: s.enquiry_type || ''
+      };
+    });
   }
 
   private mapStudentRows(rows: any[]): Student[] {
@@ -604,14 +629,16 @@ export class DataService {
         id: String(f.id || i + 1),
         studentId: String(f.student_id || ''),
         studentName: f.student_name || '',
-        phone: '',
+        phone: f.student_phone || '',
         course: '',
         date: f.followup_date || '',
         type: f.followup_type_name || '',
         enquirySource: '',
         remark: f.remarks || '',
         nextFollowUpDate: f.next_followup_date || '',
-        status: f.status || 'Open'
+        status: f.status || 'Open',
+        to: f.assigned_to_name || f.assigned_to_fullname || f.followup_type_name || 'admin',
+        from: 'admin'
       })));
     }, force);
   }
@@ -811,7 +838,32 @@ export class DataService {
       fees_total: student.fees_total || student.feesTotal || 0,
       fees_paid: student.fees_paid || student.feesPaid || 0,
       status: student.status || 'Active'
-    }).subscribe({ next: () => this.refreshStudents(), error: err => console.error('[ApiService] create student failed:', err) });
+    }).subscribe({
+      next: (res: any) => {
+        const createdStudent: any = this.unwrap(res);
+        const newStudentId = Array.isArray(createdStudent) ? createdStudent[0]?.id : createdStudent?.id;
+        if (student.nextFollowupDate && newStudentId) {
+          this.api.createFollowUp({
+            student_id: newStudentId,
+            assigned_to_id: null,
+            followup_type_id: null,
+            followup_date: student.admission_date || student.admissionDate || new Date().toISOString().slice(0, 10),
+            remarks: student.followupRemarks || student.remarks || '',
+            next_followup_date: student.nextFollowupDate,
+            status: student.followupStatus || 'Open'
+          }).subscribe({
+            next: () => {
+              this.refreshFollowUps();
+              this.refreshStudents();
+            },
+            error: () => this.refreshStudents()
+          });
+        } else {
+          this.refreshStudents();
+        }
+      },
+      error: err => console.error('[ApiService] create student failed:', err)
+    });
   }
 
   setBranch(branch: string): void { this.currentBranchSubject.next(branch); }
@@ -1375,11 +1427,84 @@ export class DataService {
   }
 
   addFollowUp(item: Omit<StudentFollowUp, 'id'>) {
-    this.api.createFollowUp({
-      student_id: Number(item.studentId) || null, assigned_to_id: null, followup_type_id: null,
-      followup_date: item.date || null, remarks: item.remark || '',
-      next_followup_date: item.nextFollowUpDate || null, status: item.status || 'Open'
-    }).subscribe({ next: () => this.refreshFollowUps(), error: e => console.error(e) });
+    let sId = Number(item.studentId) || null;
+    if (!sId && item.studentName) {
+      const matched = (this.students$.value || []).find(
+        st => String(st.name || '').toLowerCase() === String(item.studentName || '').toLowerCase()
+      );
+      if (matched && matched.id) sId = Number(matched.id);
+    }
+
+    const currentUsername = this.getCurrentUsername();
+    const toStaff = item.to || item.type || 'admin';
+    const fromStaff = item.from || currentUsername;
+
+    let assignedUserId: number | null = null;
+    const matchedUser = (this.users$.value || []).find(
+      u => String(u.userName || '').toLowerCase() === String(toStaff).toLowerCase()
+    );
+    if (matchedUser) assignedUserId = Number(matchedUser.slNo);
+
+    const payload = {
+      student_id: sId,
+      assigned_to_id: assignedUserId,
+      followup_type_id: null,
+      followup_date: item.date || new Date().toISOString().slice(0, 10),
+      remarks: item.remark || '',
+      next_followup_date: item.nextFollowUpDate || null,
+      status: item.status || 'Open'
+    };
+
+    // Optimistically update followUps$
+    const localId = String(Date.now());
+    const optimisticItem: StudentFollowUp = {
+      id: localId,
+      studentId: String(sId || ''),
+      studentName: item.studentName || '',
+      phone: item.phone || '',
+      course: item.course || '',
+      date: item.date || new Date().toISOString().slice(0, 10),
+      type: toStaff,
+      enquirySource: item.enquirySource || '',
+      remark: item.remark || '',
+      nextFollowUpDate: item.nextFollowUpDate || '',
+      status: item.status || 'Open',
+      to: toStaff,
+      from: fromStaff
+    };
+    const currentFollowups = this.followUps$.value || [];
+    this.followUps$.next([optimisticItem, ...currentFollowups]);
+
+    // Optimistically update studentListRows$
+    if (sId || item.studentName) {
+      const currentRows = this.studentListRows$.value || [];
+      this.studentListRows$.next(currentRows.map(row => {
+        const matches = (sId && row.slNo === sId) || (item.studentName && row.name.toLowerCase() === item.studentName.toLowerCase());
+        if (matches) {
+          return {
+            ...row,
+            nextFollowUp: item.nextFollowUpDate ? this.fmtDate(item.nextFollowUpDate) : row.nextFollowUp,
+            status: item.status || row.status,
+            to: toStaff,
+            from: fromStaff
+          };
+        }
+        return row;
+      }));
+    }
+    queueMicrotask(() => this.appRef.tick());
+
+    this.api.createFollowUp(payload).subscribe({
+      next: () => {
+        this.refreshFollowUps();
+        this.refreshStudents();
+      },
+      error: e => {
+        console.error('[DataService] createFollowUp failed:', e);
+        this.refreshFollowUps();
+        this.refreshStudents();
+      }
+    });
   }
   updateFollowUp(id: string, updated: Partial<StudentFollowUp>) {
     this.api.updateFollowUp(Number(id), {

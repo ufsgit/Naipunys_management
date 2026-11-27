@@ -1387,15 +1387,28 @@ export class StudentDetailComponent implements OnInit {
           });
           this.mockDataService.getFollowUps().subscribe(items => {
             this.historyList = items
-              .filter(f => String(f.studentName || '').toLowerCase() === student.name.toLowerCase())
+              .filter(f =>
+                (this.studentId && Number(f.studentId) === this.studentId) ||
+                String(f.studentName || '').toLowerCase() === student.name.toLowerCase()
+              )
               .map(f => ({
                 nextFollowup: f.nextFollowUpDate || '',
-                department: '',
+                department: this.studentDepartment || '',
                 status: f.status || '',
-                to: f.type || '',
-                from: '',
+                to: f.to || f.type || 'admin',
+                from: f.from || 'admin',
                 isOverdue: false
               }));
+            if (this.historyList.length > 0) {
+              const latest = this.historyList[0];
+              if (!this.followupData.nextDate && latest.nextFollowup) {
+                this.followupData.nextDate = latest.nextFollowup;
+              }
+              if (!this.followupData.status && latest.status) {
+                this.followupData.status = latest.status;
+              }
+            }
+            this.cdr.markForCheck();
           });
         });
       }
@@ -1508,8 +1521,56 @@ export class StudentDetailComponent implements OnInit {
   studentBranch = '';
   studentDepartment = '';
 
+  private fmtDate(d: string | null | undefined): string {
+    if (!d) return '';
+    const date = new Date(d);
+    if (isNaN(date.getTime())) return String(d);
+    const day = String(date.getDate()).padStart(2, '0');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${day}-${months[date.getMonth()]}-${date.getFullYear()}`;
+  }
+
   onSave() {
     if (!this.studentId) return;
+
+    if (this.activeTab === 'followup') {
+      const today = new Date().toISOString().slice(0, 10);
+      const nextDate = this.followupData.nextDate || '';
+
+      const rawUser = localStorage.getItem('naipunya_user');
+      const currentUser = rawUser ? JSON.parse(rawUser).username || 'admin' : 'admin';
+      const toStaff = this.followupData.toStaff || 'admin';
+      const fromStaff = currentUser;
+
+      this.mockDataService.addFollowUp({
+        studentId: String(this.studentId),
+        studentName: this.details.name || this.studentName,
+        phone: this.details.mobile || '',
+        course: this.courseData.course || '',
+        date: today,
+        type: toStaff,
+        to: toStaff,
+        from: fromStaff,
+        enquirySource: this.details.enquirySource || '',
+        remark: this.followupData.comments || '',
+        nextFollowUpDate: nextDate,
+        status: this.followupData.status || 'Open'
+      });
+
+      this.historyList.unshift({
+        nextFollowup: nextDate ? this.fmtDate(nextDate) : today,
+        department: this.studentDepartment || '',
+        status: this.followupData.status || 'Open',
+        to: toStaff,
+        from: fromStaff,
+        isOverdue: false
+      });
+
+      this.notify.show(`Follow-up saved successfully for ${this.details.name || this.studentName}`, 'Success', 'primary');
+      this.cdr.markForCheck();
+      return;
+    }
+
     const totalFees = Number(this.courseData.totalFees) || Number(this.courseData.fees) || 0;
     this.mockDataService.updateStudentDetail(this.studentId, {
       name: this.details.name || this.studentName,

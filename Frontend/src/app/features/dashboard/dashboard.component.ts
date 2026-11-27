@@ -1313,8 +1313,9 @@ export class DashboardComponent implements OnInit {
       ? this.allStudents
       : this.allStudents.filter(s => (s.branch || '') === this.selectedBranch);
 
+    const studentsWithPendingFollowup = filteredStudents.filter(s => !!s.nextFollowUp && s.nextFollowUp.trim() !== '');
     this.totalStudents = filteredStudents.length;
-    this.followUpsDueCount = filteredStudents.filter(s => !!s.nextFollowUp).length;
+    this.followUpsDueCount = studentsWithPendingFollowup.length;
 
     const chartColors = ['#0284c7', '#6366f1', '#10b981', '#f59e0b', '#ec4899', '#0891b2', '#7c3aed', '#db2777'];
     const maxCount = Math.max(1, ...this.branchesList.map(b => filteredStudents.filter(s => s.branch === b.name).length));
@@ -1337,7 +1338,9 @@ export class DashboardComponent implements OnInit {
       { bg: '#fefce8', color: '#b45309' }
     ];
 
-    this.pendingFollowUps = filteredStudents.slice(0, 4).map((r, i) => {
+    const displayList = studentsWithPendingFollowup.length > 0 ? studentsWithPendingFollowup : filteredStudents;
+
+    this.pendingFollowUps = displayList.slice(0, 4).map((r, i) => {
       const parts = r.name.trim().split(/\s+/);
       const initials = parts.length > 1
         ? (parts[0][0] + parts[1][0]).toUpperCase()
@@ -1349,7 +1352,7 @@ export class DashboardComponent implements OnInit {
         name: r.name,
         note: r.note,
         mobile: r.mobile,
-        nextFollowUp: r.nextFollowUp
+        nextFollowUp: r.nextFollowUp || '-'
       };
     });
 

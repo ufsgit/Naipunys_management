@@ -236,27 +236,6 @@ import { NotificationService } from '../../core/notification.service';
                 />
               </div>
             </div>
-
-            <!-- Row 3: Course Type & Batch -->
-            <div class="first-call-field">
-              <label class="field-label">Course Type</label>
-              <div class="field-control">
-                <select class="input-select" [(ngModel)]="student.courseType">
-                  <option value="">Select</option>
-                  <option *ngFor="let ct of courseTypes" [value]="ct">{{ ct }}</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="first-call-field">
-              <label class="field-label">Batch</label>
-              <div class="field-control">
-                <select class="input-select" [(ngModel)]="student.batch">
-                  <option value="">Select</option>
-                  <option *ngFor="let b of batches" [value]="b">{{ b }}</option>
-                </select>
-              </div>
-            </div>
           </div>
 
           <!-- Remarks Row -->
@@ -620,7 +599,12 @@ export class StudentCreateComponent implements OnInit {
       whatsapp: this.student.whatsapp,
       address: this.student.address,
       facebook: this.student.facebook,
-      altEmail: this.student.altEmail
+      altEmail: this.student.altEmail,
+      nextFollowupDate: this.student.nextFollowupDate,
+      followupRemarks: this.student.remarks,
+      toStaff: this.student.assignedTo,
+      followupType: this.student.followupType,
+      followupStatus: this.student.status || 'Open'
     });
 
     this.showSuccess = true;

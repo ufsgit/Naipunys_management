@@ -23,11 +23,29 @@ module.exports = {
   getById: (id) =>
     callProcedure('GetFollowUpById', [id]),
 
-  create: (data) =>
-    callProcedure('CreateFollowUp', [
-      data.student_id, data.assigned_to_id, data.followup_type_id,
-      data.followup_date, data.remarks, data.next_followup_date, data.status
-    ]),
+  create: async (data) => {
+    try {
+      const [res] = await pool.query(
+        'INSERT INTO follow_ups (student_id, assigned_to_id, followup_type_id, followup_date, remarks, next_followup_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [
+          data.student_id,
+          data.assigned_to_id || null,
+          data.followup_type_id || null,
+          data.followup_date || new Date().toISOString().slice(0, 10),
+          data.remarks || '',
+          data.next_followup_date || null,
+          data.status || 'Open'
+        ]
+      );
+      return [{ id: res.insertId }];
+    } catch (err) {
+      console.warn('[FollowUp.create] direct insert fallback:', err.message);
+      return callProcedure('CreateFollowUp', [
+        data.student_id, data.assigned_to_id, data.followup_type_id,
+        data.followup_date, data.remarks, data.next_followup_date, data.status
+      ]);
+    }
+  },
 
   update: (id, data) =>
     callProcedure('UpdateFollowUp', [
