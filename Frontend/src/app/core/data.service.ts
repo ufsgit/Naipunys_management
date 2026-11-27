@@ -678,21 +678,21 @@ export class DataService {
   }
 
   // Force reload wrappers used after CRUD operations.
-  private refreshBranchOptions() { return this.loadBranches(true); }
-  private refreshDepartments() { return this.loadDepartments(true); }
-  private refreshCourses() { return this.loadCourses(true); }
-  private refreshStudents() { return this.loadStudentData(true); }
-  private refreshAccounts() { return this.loadAccounts(true); }
-  private refreshReceipts() { return this.loadReceipts(true); }
-  private refreshPayments() { return this.loadPayments(true); }
-  private refreshFeePending() { return this.loadFeePending(true); }
-  private refreshFollowUps() { return this.loadFollowUps(true); }
-  private refreshUsers() { return this.loadUsers(true); }
-  private refreshRoles() { return this.loadRoles(true); }
-  private refreshFollowupTypes() { return this.loadFollowupTypes(true); }
-  private refreshEnquirySources() { return this.loadEnquirySources(true); }
-  private refreshStatusSettings() { return this.loadStatus(true); }
-  private refreshCompanyInfo() { return this.loadCompanyInfo(true); }
+  private refreshBranchOptions() { this.loadBranches(true).subscribe(); }
+  private refreshDepartments() { this.loadDepartments(true).subscribe(); }
+  private refreshCourses() { this.loadCourses(true).subscribe(); }
+  private refreshStudents() { this.loadStudentData(true).subscribe(); }
+  private refreshAccounts() { this.loadAccounts(true).subscribe(); }
+  private refreshReceipts() { this.loadReceipts(true).subscribe(); }
+  private refreshPayments() { this.loadPayments(true).subscribe(); }
+  private refreshFeePending() { this.loadFeePending(true).subscribe(); }
+  private refreshFollowUps() { this.loadFollowUps(true).subscribe(); }
+  private refreshUsers() { this.loadUsers(true).subscribe(); }
+  private refreshRoles() { this.loadRoles(true).subscribe(); }
+  private refreshFollowupTypes() { this.loadFollowupTypes(true).subscribe(); }
+  private refreshEnquirySources() { this.loadEnquirySources(true).subscribe(); }
+  private refreshStatusSettings() { this.loadStatus(true).subscribe(); }
+  private refreshCompanyInfo() { this.loadCompanyInfo(true).subscribe(); }
 
   // ---------- Observables used by components ----------
   getStudentListRows(): Observable<StudentListRow[]> {
@@ -809,30 +809,106 @@ export class DataService {
 
   // ---------- Settings CRUD ----------
   addDepartmentItem(item: Omit<DepartmentItem, 'slNo'>) {
+    const tempId = Date.now();
+    const tempItem: DepartmentItem = {
+      slNo: tempId,
+      name: item.name,
+      followUp: item.followUp || 'yes',
+      order: Number(item.order) || tempId
+    };
+    const current = this.departmentItems$.value || [];
+    this.departmentItems$.next([...current, tempItem]);
+    const currentBranchDept = this.branchDeptOptions$.value || [];
+    this.branchDeptOptions$.next([...currentBranchDept, { slNo: tempId, selected: false, name: item.name }]);
+    queueMicrotask(() => this.appRef.tick());
+
     this.api.createDepartment({ code: `DEP-${Date.now()}`, name: item.name, head_of_department_id: null })
-      .subscribe({ next: () => this.refreshDepartments(), error: e => console.error(e) });
+      .subscribe({
+        next: () => {
+          this.refreshDepartments();
+        },
+        error: e => {
+          console.error('[ApiService] create department failed:', e);
+          this.notify.show(e?.error?.message || 'Failed to create department.', 'Error', 'danger');
+          this.refreshDepartments();
+        }
+      });
   }
   updateDepartmentItem(slNo: number, updated: Partial<DepartmentItem>) {
+    const current = this.departmentItems$.value || [];
+    this.departmentItems$.next(current.map(d => d.slNo === slNo ? { ...d, ...updated } : d));
+    queueMicrotask(() => this.appRef.tick());
     this.api.updateDepartment(slNo, { code: `DEP-${slNo}`, name: updated.name || '', head_of_department_id: null, status: 'Active' })
       .subscribe({ next: () => this.refreshDepartments(), error: e => console.error(e) });
   }
   deleteDepartmentItem(slNo: number) {
-    this.api.deleteDepartment(slNo).subscribe({ next: () => this.refreshDepartments(), error: e => console.error(e) });
+    const current = this.departmentItems$.value || [];
+    this.departmentItems$.next(current.filter(d => d.slNo !== slNo));
+    queueMicrotask(() => this.appRef.tick());
+    this.api.deleteDepartment(slNo).subscribe({
+      next: () => this.refreshDepartments(),
+      error: e => {
+        console.error(e);
+        this.refreshDepartments();
+      }
+    });
   }
 
   addBranchItem(item: Omit<BranchItem, 'slNo'>) {
+    const tempId = Date.now();
+    const newItem: BranchItem = { slNo: tempId, name: item.name };
+    const current = this.branchItems$.value || [];
+    this.branchItems$.next([...current, newItem]);
+    queueMicrotask(() => this.appRef.tick());
+
     this.api.createBranch({ code: `BR-${Date.now()}`, name: item.name, city: item.name, phone: '', address: '' })
-      .subscribe({ next: () => this.refreshBranchOptions(), error: e => console.error(e) });
+      .subscribe({
+        next: () => {
+          this.refreshBranchOptions();
+        },
+        error: e => {
+          console.error('[ApiService] create branch failed:', e);
+          this.notify.show(e?.error?.message || 'Failed to create branch.', 'Error', 'danger');
+          this.refreshBranchOptions();
+        }
+      });
   }
   updateBranchItem(slNo: number, updated: Partial<BranchItem>) {
+    const current = this.branchItems$.value || [];
+    this.branchItems$.next(current.map(b => b.slNo === slNo ? { ...b, ...updated } : b));
+    queueMicrotask(() => this.appRef.tick());
     this.api.updateBranch(slNo, { code: `BR-${slNo}`, name: updated.name || '', city: updated.name || '', phone: '', address: '', status: 'Active' })
       .subscribe({ next: () => this.refreshBranchOptions(), error: e => console.error(e) });
   }
   deleteBranchItem(slNo: number) {
-    this.api.deleteBranch(slNo).subscribe({ next: () => this.refreshBranchOptions(), error: e => console.error(e) });
+    const current = this.branchItems$.value || [];
+    this.branchItems$.next(current.filter(b => b.slNo !== slNo));
+    queueMicrotask(() => this.appRef.tick());
+    this.api.deleteBranch(slNo).subscribe({
+      next: () => this.refreshBranchOptions(),
+      error: e => {
+        console.error(e);
+        this.refreshBranchOptions();
+      }
+    });
   }
 
   addCourseItem(item: Omit<CourseItem, 'slNo'>) {
+    const tempId = Date.now();
+    const newItem: CourseItem = {
+      slNo: tempId,
+      name: item.name,
+      department: item.department || '',
+      duration: item.duration || '',
+      fees: item.fees || 0,
+      status: item.status || 'Active',
+      hasDelete: true,
+      hasEdit: true
+    };
+    const current = this.courseItems$.value || [];
+    this.courseItems$.next([...current, newItem]);
+    queueMicrotask(() => this.appRef.tick());
+
     this.api.createCourse({
       code: `C-${Date.now()}`,
       name: item.name,
@@ -840,9 +916,18 @@ export class DataService {
       duration: item.duration || '',
       fee: item.fees || 0,
       status: item.status || 'Active'
-    }).subscribe({ next: () => this.refreshCourses(), error: e => console.error(e) });
+    }).subscribe({
+      next: () => this.refreshCourses(),
+      error: e => {
+        console.error(e);
+        this.refreshCourses();
+      }
+    });
   }
   updateCourseItem(slNo: number, updated: Partial<CourseItem>) {
+    const current = this.courseItems$.value || [];
+    this.courseItems$.next(current.map(c => c.slNo === slNo ? { ...c, ...updated } : c));
+    queueMicrotask(() => this.appRef.tick());
     this.api.updateCourse(slNo, {
       code: `C-${slNo}`, name: updated.name || '',
       department_id: updated.department ? this.departmentIdByName[updated.department] || null : null,
@@ -851,7 +936,16 @@ export class DataService {
     }).subscribe({ next: () => this.refreshCourses(), error: e => console.error(e) });
   }
   deleteCourseItem(slNo: number) {
-    this.api.deleteCourse(slNo).subscribe({ next: () => this.refreshCourses(), error: e => console.error(e) });
+    const current = this.courseItems$.value || [];
+    this.courseItems$.next(current.filter(c => c.slNo !== slNo));
+    queueMicrotask(() => this.appRef.tick());
+    this.api.deleteCourse(slNo).subscribe({
+      next: () => this.refreshCourses(),
+      error: e => {
+        console.error(e);
+        this.refreshCourses();
+      }
+    });
   }
 
   addStudentListRow(row: Omit<StudentListRow, 'slNo'>) {
@@ -894,10 +988,38 @@ export class DataService {
     );
   }
   deleteStudentListRow(slNo: number) {
-    this.api.deleteStudent(slNo).subscribe({ next: () => this.refreshStudents(), error: e => console.error(e) });
+    const currentRows = this.studentListRows$.value || [];
+    this.studentListRows$.next(currentRows.filter(s => s.slNo !== slNo));
+    const currentStudents = this.students$.value || [];
+    this.students$.next(currentStudents.filter(s => Number(s.id) !== slNo));
+    queueMicrotask(() => this.appRef.tick());
+    this.api.deleteStudent(slNo).subscribe({
+      next: () => {
+        this.refreshStudents();
+        this.loadFeePending(true).subscribe();
+      },
+      error: e => {
+        console.error(e);
+        this.refreshStudents();
+      }
+    });
   }
 
   addUserRow(user: Omit<UserRow, 'slNo'> & { password?: string; email?: string; role?: string }) {
+    const tempId = Date.now();
+    const newItem: UserRow = {
+      slNo: tempId,
+      userName: user.userName,
+      userType: user.userType,
+      branch: user.branch || '',
+      phoneNo: user.phoneNo || '',
+      hasDelete: true,
+      hasEdit: true
+    };
+    const current = this.users$.value || [];
+    this.users$.next([...current, newItem]);
+    queueMicrotask(() => this.appRef.tick());
+
     const matchedRole = user.role
       ? this.roles$.value.find(r => r.role.toLowerCase() === String(user.role).toLowerCase())
       : null;
@@ -917,15 +1039,64 @@ export class DataService {
       password: user.password || 'admin123',
       password_hash: user.password || 'admin123'
     }).subscribe({
-      next: () => this.refreshUsers(),
+      next: () => {
+        this.refreshUsers();
+      },
       error: e => {
         console.error('[ApiService] create user failed:', e);
         this.notify.show(e?.error?.message || 'Failed to create user. Please check if username already exists.', 'Error', 'danger');
+        this.refreshUsers();
+      }
+    });
+  }
+
+  updateUserRow(slNo: number, user: Partial<UserRow> & { password?: string; email?: string; role?: string }) {
+    const current = this.users$.value || [];
+    this.users$.next(current.map(u => u.slNo === slNo ? { ...u, ...user } : u));
+    queueMicrotask(() => this.appRef.tick());
+
+    const matchedRole = user.role
+      ? this.roles$.value.find(r => r.role.toLowerCase() === String(user.role).toLowerCase())
+      : null;
+    const roleId = matchedRole ? matchedRole.slNo : (String(user.userType).toLowerCase() === 'admin' ? 1 : 2);
+    const matchedBranch = user.branch
+      ? this.branchesCache.find(b => String(b.name).toLowerCase() === String(user.branch).toLowerCase())
+      : null;
+    const branchId = matchedBranch ? Number(matchedBranch.id) : null;
+
+    const payload: any = {
+      username: user.userName,
+      full_name: user.userName,
+      email: user.email || '',
+      phone: user.phoneNo || '',
+      role_id: roleId,
+      branch_id: branchId,
+      status: 'Active'
+    };
+    if (user.password && user.password.trim() && !user.password.includes('•')) {
+      payload.password = user.password.trim();
+    }
+
+    this.api.updateUser(slNo, payload).subscribe({
+      next: () => this.refreshUsers(),
+      error: e => {
+        console.error('[ApiService] update user failed:', e);
+        this.notify.show(e?.error?.message || 'Failed to update user.', 'Error', 'danger');
+        this.refreshUsers();
       }
     });
   }
   deleteUserRow(slNo: number) {
-    this.api.deleteUser(slNo).subscribe({ next: () => this.refreshUsers(), error: e => console.error(e) });
+    const current = this.users$.value || [];
+    this.users$.next(current.filter(u => u.slNo !== slNo));
+    queueMicrotask(() => this.appRef.tick());
+    this.api.deleteUser(slNo).subscribe({
+      next: () => this.refreshUsers(),
+      error: e => {
+        console.error(e);
+        this.refreshUsers();
+      }
+    });
   }
 
   addRoleRow(role: Omit<RoleRow, 'slNo'>) {
@@ -937,45 +1108,74 @@ export class DataService {
       .subscribe({ next: () => this.refreshRoles(), error: e => console.error(e) });
   }
   deleteRoleRow(slNo: number) {
-    this.api.deleteRole(slNo).subscribe({ next: () => this.refreshRoles(), error: e => console.error(e) });
+    const current = this.roles$.value || [];
+    this.roles$.next(current.filter(r => r.slNo !== slNo));
+    queueMicrotask(() => this.appRef.tick());
+    this.api.deleteRole(slNo).subscribe({
+      next: () => this.refreshRoles(),
+      error: e => {
+        console.error(e);
+        this.refreshRoles();
+      }
+    });
   }
 
   private addSetting(type: string, name: string, subject: any, refreshFn: () => void) {
+    const tempItem = { slNo: Date.now(), name };
+    const current = subject.value || [];
+    subject.next([...current, tempItem]);
+    queueMicrotask(() => this.appRef.tick());
+
     const shortCode = `${type.substring(0, 3).toUpperCase()}-${String(Date.now()).slice(-8)}`;
     this.api.createSetting(type, { code: shortCode, name, sort_order: 0 })
       .subscribe({
-        next: (res: any) => {
-          const newItem = { slNo: res?.data?.id || Date.now(), name };
-          const current = subject.value || [];
-          subject.next([...current, newItem]);
-          queueMicrotask(() => this.appRef.tick());
+        next: () => {
           refreshFn();
         },
         error: (e: any) => {
           console.error(`[ApiService] add ${type} failed:`, e?.message || e);
           this.notify.show(`Failed to add ${type}. Please try again.`, 'Error', 'danger');
+          refreshFn();
         }
       });
   }
-  private updateSetting(type: string, slNo: number, name: string, refreshFn: () => void) {
+  private updateSetting(subject: BehaviorSubject<any>, type: string, slNo: number, name: string, refreshFn: () => void) {
+    const current = subject.value || [];
+    subject.next(current.map((item: any) => item.slNo === slNo ? { ...item, name } : item));
+    queueMicrotask(() => this.appRef.tick());
     this.api.updateSetting(slNo, { name, sort_order: 0, status: 'Active' })
-      .subscribe({ next: () => refreshFn(), error: e => console.error(e) });
+      .subscribe({
+        next: () => refreshFn(),
+        error: e => {
+          console.error(e);
+          refreshFn();
+        }
+      });
   }
-  private deleteSettingItem(slNo: number, refreshFn: () => void) {
-    this.api.deleteSetting(slNo).subscribe({ next: () => refreshFn(), error: e => console.error(e) });
+  private deleteSettingItem(subject: BehaviorSubject<any>, slNo: number, refreshFn: () => void) {
+    const current = subject.value || [];
+    subject.next(current.filter((item: any) => item.slNo !== slNo));
+    queueMicrotask(() => this.appRef.tick());
+    this.api.deleteSetting(slNo).subscribe({
+      next: () => refreshFn(),
+      error: e => {
+        console.error(e);
+        refreshFn();
+      }
+    });
   }
 
   addFollowupTypeItem(name: string) { this.addSetting('followup_type', name, this.followupTypeItems$, () => this.refreshFollowupTypes()); }
-  updateFollowupTypeItem(slNo: number, name: string) { this.updateSetting('followup_type', slNo, name, () => this.refreshFollowupTypes()); }
-  deleteFollowupTypeItem(slNo: number) { this.deleteSettingItem(slNo, () => this.refreshFollowupTypes()); }
+  updateFollowupTypeItem(slNo: number, name: string) { this.updateSetting(this.followupTypeItems$, 'followup_type', slNo, name, () => this.refreshFollowupTypes()); }
+  deleteFollowupTypeItem(slNo: number) { this.deleteSettingItem(this.followupTypeItems$, slNo, () => this.refreshFollowupTypes()); }
 
   addEnquirySourceItem(name: string) { this.addSetting('enquiry_source', name, this.enquirySourceItems$, () => this.refreshEnquirySources()); }
-  updateEnquirySourceItem(slNo: number, name: string) { this.updateSetting('enquiry_source', slNo, name, () => this.refreshEnquirySources()); }
-  deleteEnquirySourceItem(slNo: number) { this.deleteSettingItem(slNo, () => this.refreshEnquirySources()); }
+  updateEnquirySourceItem(slNo: number, name: string) { this.updateSetting(this.enquirySourceItems$, 'enquiry_source', slNo, name, () => this.refreshEnquirySources()); }
+  deleteEnquirySourceItem(slNo: number) { this.deleteSettingItem(this.enquirySourceItems$, slNo, () => this.refreshEnquirySources()); }
 
   addStatusSettingsItem(name: string) { this.addSetting('status', name, this.statusSettingsItems$, () => this.refreshStatusSettings()); }
-  updateStatusSettingsItem(slNo: number, name: string) { this.updateSetting('status', slNo, name, () => this.refreshStatusSettings()); }
-  deleteStatusSettingsItem(slNo: number) { this.deleteSettingItem(slNo, () => this.refreshStatusSettings()); }
+  updateStatusSettingsItem(slNo: number, name: string) { this.updateSetting(this.statusSettingsItems$, 'status', slNo, name, () => this.refreshStatusSettings()); }
+  deleteStatusSettingsItem(slNo: number) { this.deleteSettingItem(this.statusSettingsItems$, slNo, () => this.refreshStatusSettings()); }
 
   updateCompanyInfo(info: CompanyInfo) {
     this.api.updateCompanyInfo({
@@ -1000,7 +1200,16 @@ export class DataService {
     }).subscribe({ next: () => this.refreshAccounts(), error: e => console.error(e) });
   }
   deleteAccount(id: string) {
-    this.api.deleteAccount(Number(id)).subscribe({ next: () => this.refreshAccounts(), error: e => console.error(e) });
+    const current = this.accounts$.value || [];
+    this.accounts$.next(current.filter(a => a.id !== id));
+    queueMicrotask(() => this.appRef.tick());
+    this.api.deleteAccount(Number(id)).subscribe({
+      next: () => this.refreshAccounts(),
+      error: e => {
+        console.error(e);
+        this.refreshAccounts();
+      }
+    });
   }
 
   addReceipt(receipt: Omit<Receipt, 'id' | 'receiptNo'>): Receipt {
@@ -1068,12 +1277,18 @@ export class DataService {
     });
   }
   deleteReceipt(id: string) {
+    const current = this.receipts$.value || [];
+    this.receipts$.next(current.filter(r => r.id !== id));
+    queueMicrotask(() => this.appRef.tick());
     this.api.deleteReceipt(Number(id)).subscribe({
       next: () => {
         this.refreshReceipts();
         this.loadFeePending(true).subscribe();
       },
-      error: e => console.error(e)
+      error: e => {
+        console.error(e);
+        this.refreshReceipts();
+      }
     });
   }
 
@@ -1092,6 +1307,15 @@ export class DataService {
     }).subscribe({ next: () => this.refreshFollowUps(), error: e => console.error(e) });
   }
   deleteFollowUp(id: string) {
-    this.api.deleteFollowUp(Number(id)).subscribe({ next: () => this.refreshFollowUps(), error: e => console.error(e) });
+    const current = this.followUps$.value || [];
+    this.followUps$.next(current.filter(f => f.id !== id));
+    queueMicrotask(() => this.appRef.tick());
+    this.api.deleteFollowUp(Number(id)).subscribe({
+      next: () => this.refreshFollowUps(),
+      error: e => {
+        console.error(e);
+        this.refreshFollowUps();
+      }
+    });
   }
 }

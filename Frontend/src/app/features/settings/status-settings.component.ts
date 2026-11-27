@@ -351,8 +351,14 @@ export class StatusSettingsComponent implements OnInit {
     if (!this.formName.trim()) return;
 
     if (this.isEditMode && this.editingItem) {
-      this.mockDataService.updateStatusSettingsItem(this.editingItem.slNo, this.formName.trim());
+      const targetSlNo = this.editingItem.slNo;
+      this.items = this.items.map(item => item.slNo === targetSlNo ? { ...item, name: this.formName.trim() } : item);
+      this.cdr.markForCheck();
+      this.mockDataService.updateStatusSettingsItem(targetSlNo, this.formName.trim());
     } else {
+      const tempSlNo = this.items.length > 0 ? Math.max(...this.items.map(i => i.slNo)) + 1 : 1;
+      this.items = [...this.items, { slNo: tempSlNo, name: this.formName.trim() }];
+      this.cdr.markForCheck();
       this.mockDataService.addStatusSettingsItem(this.formName.trim());
     }
 
@@ -375,7 +381,10 @@ export class StatusSettingsComponent implements OnInit {
 
   confirmDelete() {
     if (this.itemToDelete) {
-      this.mockDataService.deleteStatusSettingsItem(this.itemToDelete.slNo);
+      const targetSlNo = this.itemToDelete.slNo;
+      this.items = this.items.filter(i => i.slNo !== targetSlNo);
+      this.cdr.markForCheck();
+      this.mockDataService.deleteStatusSettingsItem(targetSlNo);
     }
     this.isDeleteModalOpen = false;
     this.itemToDelete = null;

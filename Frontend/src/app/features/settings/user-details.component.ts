@@ -110,16 +110,20 @@ import { DataService, UserRow, DepartmentPermRow, MenuPermRow, Branch, RoleRow }
                   class="form-input"
                   [(ngModel)]="userForm.userName"
                   placeholder="Enter user name"
+                  autocomplete="off"
                 />
               </div>
 
               <div class="form-row">
-                <label class="form-label required">Password <span class="req">*</span></label>
+                <label class="form-label required">Password <span class="req" *ngIf="!isEditMode">*</span></label>
                 <input
                   type="password"
                   class="form-input password-input"
                   [(ngModel)]="userForm.password"
-                  placeholder="Enter password"
+                  [placeholder]="isEditMode ? '••••••••' : 'Enter password'"
+                  autocomplete="new-password"
+                  (focus)="onPasswordFocus()"
+                  (blur)="onPasswordBlur()"
                 />
               </div>
 
@@ -923,8 +927,11 @@ export class UserDetailsComponent implements OnInit {
     });
   }
 
+  editingUserSlNo: number | null = null;
+
   openCreateModal() {
     this.isEditMode = false;
+    this.editingUserSlNo = null;
     this.userForm = {
       userName: '',
       password: '',
@@ -948,6 +955,7 @@ export class UserDetailsComponent implements OnInit {
 
   openEditModal(u: UserRow) {
     this.isEditMode = true;
+    this.editingUserSlNo = u.slNo;
     this.userForm = {
       userName: u.userName,
       password: '••••••••',
@@ -967,6 +975,18 @@ export class UserDetailsComponent implements OnInit {
     this.mockDataService.getDepartmentPerms().subscribe(data => { this.departmentPerms = data; this.cdr.markForCheck(); });
     this.mockDataService.getMenuPerms().subscribe(data => { this.menuPerms = data; this.cdr.markForCheck(); });
     this.isModalOpen = true;
+  }
+
+  onPasswordFocus() {
+    if (this.isEditMode && this.userForm.password === '••••••••') {
+      this.userForm.password = '';
+    }
+  }
+
+  onPasswordBlur() {
+    if (this.isEditMode && !this.userForm.password.trim()) {
+      this.userForm.password = '••••••••';
+    }
   }
 
   closeModal() {
@@ -991,17 +1011,51 @@ export class UserDetailsComponent implements OnInit {
   saveUser() {
     if (!this.userForm.userName.trim()) return;
 
-    this.mockDataService.addUserRow({
-      userName: this.userForm.userName,
-      password: this.userForm.password,
-      email: this.userForm.email,
-      role: this.userForm.role,
-      userType: this.userForm.userType,
-      branch: this.userForm.branch,
-      phoneNo: this.userForm.phone,
-      hasDelete: true,
-      hasEdit: false
-    });
+    if (this.isEditMode && this.editingUserSlNo !== null) {
+      const targetSlNo = this.editingUserSlNo;
+      this.users = this.users.map(u => u.slNo === targetSlNo ? {
+        ...u,
+        userName: this.userForm.userName,
+        userType: this.userForm.userType,
+        branch: this.userForm.branch,
+        phoneNo: this.userForm.phone
+      } : u);
+      this.cdr.markForCheck();
+      this.mockDataService.updateUserRow(targetSlNo, {
+        userName: this.userForm.userName,
+        password: this.userForm.password,
+        email: this.userForm.email,
+        role: this.userForm.role,
+        userType: this.userForm.userType,
+        branch: this.userForm.branch,
+        phoneNo: this.userForm.phone,
+        hasDelete: true,
+        hasEdit: true
+      });
+    } else {
+      const tempSlNo = this.users.length > 0 ? Math.max(...this.users.map(u => u.slNo)) + 1 : 1;
+      this.users = [...this.users, {
+        slNo: tempSlNo,
+        userName: this.userForm.userName,
+        userType: this.userForm.userType,
+        branch: this.userForm.branch,
+        phoneNo: this.userForm.phone,
+        hasDelete: true,
+        hasEdit: true
+      }];
+      this.cdr.markForCheck();
+      this.mockDataService.addUserRow({
+        userName: this.userForm.userName,
+        password: this.userForm.password,
+        email: this.userForm.email,
+        role: this.userForm.role,
+        userType: this.userForm.userType,
+        branch: this.userForm.branch,
+        phoneNo: this.userForm.phone,
+        hasDelete: true,
+        hasEdit: true
+      });
+    }
 
     this.closeModal();
   }
@@ -1016,7 +1070,10 @@ export class UserDetailsComponent implements OnInit {
 
   confirmDelete() {
     if (this.userToDelete) {
-      this.mockDataService.deleteUserRow(this.userToDelete.slNo);
+      const targetSlNo = this.userToDelete.slNo;
+      this.users = this.users.filter(u => u.slNo !== targetSlNo);
+      this.cdr.markForCheck();
+      this.mockDataService.deleteUserRow(targetSlNo);
     }
     this.isDeleteModalOpen = false;
     this.userToDelete = null;

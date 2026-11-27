@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
@@ -525,11 +525,17 @@ export class DepartmentsComponent implements OnInit {
     order: 8
   };
 
-  constructor(private mockDataService: DataService) {}
+  constructor(private mockDataService: DataService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
-    this.mockDataService.getDepartmentItems().subscribe(data => this.departments = data);
-    this.mockDataService.getDeptStatusOptions().subscribe(data => this.statusOptions = data);
+    this.mockDataService.getDepartmentItems().subscribe(data => {
+      this.departments = data;
+      this.cdr.markForCheck();
+    });
+    this.mockDataService.getDeptStatusOptions().subscribe(data => {
+      this.statusOptions = data;
+      this.cdr.markForCheck();
+    });
   }
 
   openCreateModal() {
@@ -563,12 +569,28 @@ export class DepartmentsComponent implements OnInit {
     if (!this.deptForm.name.trim()) return;
 
     if (this.isEditMode && this.editingIndex > -1) {
-      this.mockDataService.updateDepartmentItem(this.departments[this.editingIndex].slNo, {
+      const targetSlNo = this.departments[this.editingIndex].slNo;
+      this.departments = this.departments.map((d, i) => i === this.editingIndex ? {
+        ...d,
+        name: this.deptForm.name,
+        followUp: this.deptForm.followUp,
+        order: Number(this.deptForm.order) || d.order
+      } : d);
+      this.cdr.markForCheck();
+      this.mockDataService.updateDepartmentItem(targetSlNo, {
         name: this.deptForm.name,
         followUp: this.deptForm.followUp,
         order: this.deptForm.order
       });
     } else {
+      const tempSlNo = this.departments.length > 0 ? Math.max(...this.departments.map(d => d.slNo)) + 1 : 1;
+      this.departments = [...this.departments, {
+        slNo: tempSlNo,
+        name: this.deptForm.name,
+        followUp: this.deptForm.followUp,
+        order: Number(this.deptForm.order) || tempSlNo
+      }];
+      this.cdr.markForCheck();
       this.mockDataService.addDepartmentItem({
         name: this.deptForm.name,
         followUp: this.deptForm.followUp,
@@ -589,7 +611,10 @@ export class DepartmentsComponent implements OnInit {
 
   confirmDelete() {
     if (this.deptToDelete) {
-      this.mockDataService.deleteDepartmentItem(this.deptToDelete.slNo);
+      const targetSlNo = this.deptToDelete.slNo;
+      this.departments = this.departments.filter(d => d.slNo !== targetSlNo);
+      this.cdr.markForCheck();
+      this.mockDataService.deleteDepartmentItem(targetSlNo);
     }
     this.isDeleteModalOpen = false;
     this.deptToDelete = null;

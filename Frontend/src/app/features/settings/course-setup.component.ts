@@ -477,12 +477,31 @@ export class CourseSetupComponent implements OnInit {
     if (!this.courseForm.name.trim()) return;
 
     if (this.isEditMode && this.editingCourseSlNo !== null) {
-      this.mockDataService.updateCourseItem(this.editingCourseSlNo, {
+      const targetSlNo = this.editingCourseSlNo;
+      this.courses = this.courses.map(c => c.slNo === targetSlNo ? {
+        ...c,
+        name: this.courseForm.name,
+        fees: this.courseForm.fees
+      } : c);
+      this.cdr.markForCheck();
+      this.mockDataService.updateCourseItem(targetSlNo, {
         name: this.courseForm.name,
         fees: this.courseForm.fees,
         status: 'Active'
       });
     } else {
+      const tempSlNo = this.courses.length > 0 ? Math.max(...this.courses.map(c => c.slNo)) + 1 : 1;
+      this.courses = [...this.courses, {
+        slNo: tempSlNo,
+        name: this.courseForm.name,
+        department: '',
+        duration: '',
+        fees: this.courseForm.fees,
+        hasDelete: true,
+        hasEdit: true,
+        status: 'Active'
+      }];
+      this.cdr.markForCheck();
       this.mockDataService.addCourseItem({
         name: this.courseForm.name,
         department: '',
@@ -507,7 +526,10 @@ export class CourseSetupComponent implements OnInit {
 
   confirmDelete() {
     if (this.courseToDelete) {
-      this.mockDataService.deleteCourseItem(this.courseToDelete.slNo);
+      const targetSlNo = this.courseToDelete.slNo;
+      this.courses = this.courses.filter(c => c.slNo !== targetSlNo);
+      this.cdr.markForCheck();
+      this.mockDataService.deleteCourseItem(targetSlNo);
     }
     this.isDeleteModalOpen = false;
     this.courseToDelete = null;

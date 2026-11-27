@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../shared/components/icon.component';
@@ -584,11 +584,17 @@ export class BranchesComponent implements OnInit {
     email: ''
   };
 
-  constructor(private mockDataService: DataService) {}
+  constructor(private mockDataService: DataService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
-    this.mockDataService.getBranchItems().subscribe(data => this.branches = data);
-    this.mockDataService.getBranchDeptOptions().subscribe(data => this.departmentOptions = data);
+    this.mockDataService.getBranchItems().subscribe(data => {
+      this.branches = data;
+      this.cdr.markForCheck();
+    });
+    this.mockDataService.getBranchDeptOptions().subscribe(data => {
+      this.departmentOptions = data;
+      this.cdr.markForCheck();
+    });
   }
 
   openCreateModal() {
@@ -634,10 +640,16 @@ export class BranchesComponent implements OnInit {
     if (!this.branchForm.name.trim()) return;
 
     if (this.isEditMode && this.editingIndex > -1) {
-      this.mockDataService.updateBranchItem(this.branches[this.editingIndex].slNo, {
+      const targetSlNo = this.branches[this.editingIndex].slNo;
+      this.branches = this.branches.map((b, i) => i === this.editingIndex ? { ...b, name: this.branchForm.name } : b);
+      this.cdr.markForCheck();
+      this.mockDataService.updateBranchItem(targetSlNo, {
         name: this.branchForm.name
       });
     } else {
+      const tempSlNo = this.branches.length > 0 ? Math.max(...this.branches.map(b => b.slNo)) + 1 : 1;
+      this.branches = [...this.branches, { slNo: tempSlNo, name: this.branchForm.name }];
+      this.cdr.markForCheck();
       this.mockDataService.addBranchItem({
         name: this.branchForm.name
       });
@@ -656,7 +668,10 @@ export class BranchesComponent implements OnInit {
 
   confirmDelete() {
     if (this.branchToDelete) {
-      this.mockDataService.deleteBranchItem(this.branchToDelete.slNo);
+      const targetSlNo = this.branchToDelete.slNo;
+      this.branches = this.branches.filter(b => b.slNo !== targetSlNo);
+      this.cdr.markForCheck();
+      this.mockDataService.deleteBranchItem(targetSlNo);
     }
     this.isDeleteModalOpen = false;
     this.branchToDelete = null;
