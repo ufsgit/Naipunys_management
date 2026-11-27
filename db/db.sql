@@ -99,7 +99,7 @@ CREATE TABLE `branches` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -108,7 +108,7 @@ CREATE TABLE `branches` (
 
 LOCK TABLES `branches` WRITE;
 /*!40000 ALTER TABLE `branches` DISABLE KEYS */;
-INSERT INTO `branches` VALUES (1,'BR-ERN','Ernakulam','Ernakulam','0484 235 8890','MG Road, Ravipuram','Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(2,'BR-KAL','Kaloor','Kaloor','0484 235 8891','Kaloor Junction','Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(3,'BR-ANG','Angamaly','Angamaly','0484 235 8892','Angamaly Town','Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(4,'BR-THR','Thrikkakara','Thrikkakara','0484 235 8893','Thrikkakara','Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(5,'BR-PAL','Pala','Pala','0484 235 8894','Pala Town','Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(6,'BR-OVS','Naipunya Overseas','Kochi','0484 235 8895','Kochi','Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(8,'BR-1795684637976','Test','Test','','','Active','2026-11-26 09:17:17','2026-11-26 09:17:17'),(9,'BR-1795751893292','Test1','Test1','','','Active','2026-11-27 03:58:13','2026-11-27 03:58:13');
+INSERT INTO `branches` VALUES (1,'BR-ERN','Ernakulam','Ernakulam','0484 235 8890','MG Road, Ravipuram','Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(2,'BR-KAL','Kaloor','Kaloor','0484 235 8891','Kaloor Junction','Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(3,'BR-ANG','Angamaly','Angamaly','0484 235 8892','Angamaly Town','Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(4,'BR-THR','Thrikkakara','Thrikkakara','0484 235 8893','Thrikkakara','Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(5,'BR-PAL','Pala','Pala','0484 235 8894','Pala Town','Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(6,'BR-OVS','Naipunya Overseas','Kochi','0484 235 8895','Kochi','Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(12,'BR-1795771551547','test','test','','','Active','2026-11-27 09:25:51','2026-11-27 09:25:51');
 /*!40000 ALTER TABLE `branches` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -192,7 +192,7 @@ CREATE TABLE `courses` (
   UNIQUE KEY `code` (`code`),
   KEY `department_id` (`department_id`),
   CONSTRAINT `courses_ibfk_1` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -201,7 +201,7 @@ CREATE TABLE `courses` (
 
 LOCK TABLES `courses` WRITE;
 /*!40000 ALTER TABLE `courses` DISABLE KEYS */;
-INSERT INTO `courses` VALUES (1,'A01','IELTS REGULAR',NULL,'1 Month',0.00,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(2,'A02','IELTS 2 MONTHS',NULL,'2 Months',0.00,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(3,'A03','IELTS CRASH',NULL,'Crash',0.00,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(4,'A04','IELTS Extn (ONE MONTH)',NULL,'1 Month',0.00,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(5,'A05','IELTS Extn (2 WEEKS)',NULL,'2 Weeks',0.00,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(6,'A06','OET',NULL,'1 Month',0.00,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(7,'A07','COMMUNICATIVE ENGLISH 1 MONTH',NULL,'1 Month',0.00,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(8,'A08','OET (2 Weeks)',NULL,'2 Weeks',0.00,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(18,'C-1795683788086','test',NULL,'',0.00,'Active','2026-11-26 09:03:08','2026-11-26 09:03:08'),(19,'C-1795751729340','Test1',NULL,'',0.00,'Active','2026-11-27 03:55:29','2026-11-27 03:55:29');
+INSERT INTO `courses` VALUES (1,'A01','IELTS REGULAR',NULL,'1 Month',0.00,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(2,'A02','IELTS 2 MONTHS',NULL,'2 Months',0.00,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(3,'A03','IELTS CRASH',NULL,'Crash',0.00,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(4,'A04','IELTS Extn (ONE MONTH)',NULL,'1 Month',0.00,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(5,'A05','IELTS Extn (2 WEEKS)',NULL,'2 Weeks',0.00,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(6,'A06','OET',NULL,'1 Month',0.00,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(7,'A07','COMMUNICATIVE ENGLISH 1 MONTH',NULL,'1 Month',0.00,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(8,'A08','OET (2 Weeks)',NULL,'2 Weeks',0.00,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(22,'C-1795771503260','test',NULL,'',0.00,'Active','2026-11-27 09:25:03','2026-11-27 09:25:03');
 /*!40000 ALTER TABLE `courses` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -250,7 +250,7 @@ CREATE TABLE `departments` (
   UNIQUE KEY `code` (`code`),
   KEY `head_of_department_id` (`head_of_department_id`),
   CONSTRAINT `departments_ibfk_1` FOREIGN KEY (`head_of_department_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -259,7 +259,7 @@ CREATE TABLE `departments` (
 
 LOCK TABLES `departments` WRITE;
 /*!40000 ALTER TABLE `departments` DISABLE KEYS */;
-INSERT INTO `departments` VALUES (1,'DEP-ACC','Accounts',NULL,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(2,'DEP-ADM','Admission',NULL,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(3,'DEP-CLO','CLOSED',NULL,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(4,'DEP-FOL','Follow Up',NULL,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(5,'DEP-JOI','JOINED',NULL,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(6,'DEP-MAR','Marketing',NULL,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(7,'DEP-VIS','Visa',NULL,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(9,'DEP-1795684593600','Test',NULL,'Active','2026-11-26 09:16:33','2026-11-26 09:16:33'),(10,'DEP-1795751839872','Test1',NULL,'Active','2026-11-27 03:57:19','2026-11-27 03:57:19');
+INSERT INTO `departments` VALUES (1,'DEP-ACC','Accounts',NULL,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(2,'DEP-ADM','Admission',NULL,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(3,'DEP-CLO','CLOSED',NULL,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(4,'DEP-FOL','Follow Up',NULL,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(5,'DEP-JOI','JOINED',NULL,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(6,'DEP-MAR','Marketing',NULL,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(7,'DEP-VIS','Visa',NULL,'Active','2026-11-25 08:01:35','2026-11-25 08:01:35'),(14,'DEP-1795771524780','Test',NULL,'Active','2026-11-27 09:25:24','2026-11-27 09:25:24');
 /*!40000 ALTER TABLE `departments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -288,7 +288,7 @@ CREATE TABLE `follow_ups` (
   CONSTRAINT `follow_ups_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE CASCADE,
   CONSTRAINT `follow_ups_ibfk_2` FOREIGN KEY (`assigned_to_id`) REFERENCES `users` (`id`),
   CONSTRAINT `follow_ups_ibfk_3` FOREIGN KEY (`followup_type_id`) REFERENCES `settings` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -297,6 +297,7 @@ CREATE TABLE `follow_ups` (
 
 LOCK TABLES `follow_ups` WRITE;
 /*!40000 ALTER TABLE `follow_ups` DISABLE KEYS */;
+INSERT INTO `follow_ups` VALUES (2,7,NULL,NULL,'2026-11-27','intrest','2026-11-30','Interested','2026-11-27 10:14:02','2026-11-27 10:14:02'),(3,8,NULL,NULL,'2026-11-27','','2026-12-03','test','2026-11-27 10:29:55','2026-11-27 10:29:55'),(4,8,1,NULL,'2026-11-27','done','2026-12-03','Interested','2026-11-27 10:30:31','2026-11-27 10:30:31');
 /*!40000 ALTER TABLE `follow_ups` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -353,7 +354,7 @@ CREATE TABLE `payments` (
   KEY `branch_id` (`branch_id`),
   CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`),
   CONSTRAINT `payments_ibfk_2` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -362,6 +363,7 @@ CREATE TABLE `payments` (
 
 LOCK TABLES `payments` WRITE;
 /*!40000 ALTER TABLE `payments` DISABLE KEYS */;
+INSERT INTO `payments` VALUES (1,'802','2026-11-27','hi','clean',1,1,2400.00,'Cash','clean','2026-11-27 08:24:48','2026-11-27 08:24:48');
 /*!40000 ALTER TABLE `payments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -398,7 +400,7 @@ CREATE TABLE `receipts` (
   CONSTRAINT `receipts_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`),
   CONSTRAINT `receipts_ibfk_2` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`),
   CONSTRAINT `receipts_ibfk_3` FOREIGN KEY (`to_account_id`) REFERENCES `accounts` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -407,7 +409,7 @@ CREATE TABLE `receipts` (
 
 LOCK TABLES `receipts` WRITE;
 /*!40000 ALTER TABLE `receipts` DISABLE KEYS */;
-INSERT INTO `receipts` VALUES (3,'1795681294293','2026-11-24','new',3,'IELTS REGULAR',1,1000.00,'','',3,'Fees','','','2026-11-26 08:21:34','2026-11-26 08:34:04'),(4,'1795681308898','2026-11-25','new',3,'IELTS REGULAR',1,1000.00,'','',2,'Fees','','','2026-11-26 08:21:48','2026-11-26 08:34:13'),(9,'1795683156959','2026-11-26','Test',4,'IELTS 2 MONTHS',3,1000.00,'','',3,'Fees','','','2026-11-26 08:52:36','2026-11-26 08:52:36'),(10,'1795683340571','2026-11-26','mns',2,'OET',1,1000.00,'','',1,'Book Amount','','','2026-11-26 08:55:40','2026-11-26 08:55:40'),(13,'1795685127258','2026-11-26','mns',2,'OET',1,1000.00,'','fees',3,'','','','2026-11-26 09:25:27','2026-11-26 09:25:27'),(14,'1795751186206','2026-11-27','new',3,'IELTS REGULAR',1,3000.00,'','',3,'Fees','','','2026-11-27 03:46:26','2026-11-27 03:46:26'),(15,'1795751677728','2026-11-27','Test1',5,'IELTS Extn (2 WEEKS)',2,2000.00,'','',1,'Fees','','','2026-11-27 03:54:37','2026-11-27 03:54:37');
+INSERT INTO `receipts` VALUES (10,'1795683340571','2026-11-26','mns',NULL,'OET',1,1000.00,'','',1,'Book Amount','','','2026-11-26 08:55:40','2026-11-27 10:27:24'),(13,'1795685127258','2026-11-26','mns',NULL,'OET',1,1000.00,'','fees',3,'','','','2026-11-26 09:25:27','2026-11-27 10:27:24'),(15,'1795751677728','2026-11-27','Test1',NULL,'IELTS Extn (2 WEEKS)',2,2000.00,'','',1,'Fees','','','2026-11-27 03:54:37','2026-11-27 09:06:15'),(16,'1795770773388','2026-11-27','Test',NULL,'COMMUNICATIVE ENGLISH 1 MONTH',3,1000.00,'','',2,'Book Amount','','','2026-11-27 09:12:53','2026-11-27 09:14:25'),(17,'1795771084967','2026-11-27','Manasa',7,'IELTS Extn (2 WEEKS)',5,1000.00,'','',2,'Fees','','','2026-11-27 09:18:04','2026-11-27 09:18:04'),(18,'1795771635887','2026-11-27','manasa',7,'IELTS Extn (2 WEEKS)',5,2000.00,'','Fess',1,'','','','2026-11-27 09:27:15','2026-11-27 09:27:15'),(19,'1795775496969','2026-11-27','New',8,'IELTS CRASH',3,10000.00,'','',1,'Fees','','','2026-11-27 10:31:36','2026-11-27 10:31:36');
 /*!40000 ALTER TABLE `receipts` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -457,7 +459,7 @@ CREATE TABLE `settings` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -466,7 +468,7 @@ CREATE TABLE `settings` (
 
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
-INSERT INTO `settings` VALUES (1,'followup_type','FT-01','e-mail','Active',1,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(2,'followup_type','FT-02','Incoming Call','Active',2,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(3,'followup_type','FT-03','Outgoing Call','Active',3,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(4,'followup_type','FT-04','Walkin','Active',4,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(5,'enquiry_source','SRC-01','Advertisement','Active',1,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(6,'enquiry_source','SRC-02','Walkin','Active',2,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(7,'enquiry_source','SRC-03','Referral','Active',3,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(8,'enquiry_source','SRC-04','Social Media','Active',4,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(9,'enquiry_source','SRC-05','Website','Active',5,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(10,'status','ST-01','Interested','Active',1,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(11,'status','ST-02','Not Interested','Active',2,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(12,'status','ST-03','Payment Pending','Active',3,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(13,'status','ST-04','Payment Received','Active',4,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(14,'status','ST-05','Unknown','Active',5,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(26,'followup_type','FOL-84537151','test','Active',0,'2026-11-26 09:15:37','2026-11-26 09:15:37'),(27,'enquiry_source','ENQ-84549273','test','Active',0,'2026-11-26 09:15:49','2026-11-26 09:15:49'),(28,'status','STA-84562974','test','Active',0,'2026-11-26 09:16:02','2026-11-26 09:16:02'),(29,'followup_type','FOL-51806168','Test1','Active',0,'2026-11-27 03:56:46','2026-11-27 03:56:46'),(30,'enquiry_source','ENQ-51814486','Test1','Active',0,'2026-11-27 03:56:54','2026-11-27 03:56:54'),(31,'status','STA-51825037','Test1','Active',0,'2026-11-27 03:57:05','2026-11-27 03:57:05');
+INSERT INTO `settings` VALUES (1,'followup_type','FT-01','e-mail','Active',1,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(2,'followup_type','FT-02','Incoming Call','Active',2,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(3,'followup_type','FT-03','Outgoing Call','Active',3,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(4,'followup_type','FT-04','Walkin','Active',4,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(5,'enquiry_source','SRC-01','Advertisement','Active',1,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(6,'enquiry_source','SRC-02','Walkin','Active',2,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(7,'enquiry_source','SRC-03','Referral','Active',3,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(8,'enquiry_source','SRC-04','Social Media','Active',4,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(9,'enquiry_source','SRC-05','Website','Active',5,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(10,'status','ST-01','Interested','Active',1,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(11,'status','ST-02','Not Interested','Active',2,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(12,'status','ST-03','Payment Pending','Active',3,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(13,'status','ST-04','Payment Received','Active',4,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(14,'status','ST-05','Unknown','Active',5,'2026-11-25 08:01:35','2026-11-25 08:01:35'),(39,'followup_type','FOL-72500763','Test','Active',0,'2026-11-27 09:41:40','2026-11-27 09:41:40'),(40,'enquiry_source','ENQ-72512614','Test','Active',0,'2026-11-27 09:41:52','2026-11-27 09:41:52'),(41,'status','STA-72524747','test','Active',0,'2026-11-27 09:42:04','2026-11-27 09:42:04');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -510,7 +512,7 @@ CREATE TABLE `students` (
   CONSTRAINT `students_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`),
   CONSTRAINT `students_ibfk_2` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`),
   CONSTRAINT `students_ibfk_3` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -519,7 +521,7 @@ CREATE TABLE `students` (
 
 LOCK TABLES `students` WRITE;
 /*!40000 ALTER TABLE `students` DISABLE KEYS */;
-INSERT INTO `students` VALUES (2,'STU-1795608024015','mns','7898567412','','','','','','','','',6,1,NULL,'','2026-11-25',6000.00,1000.00,'Active','2026-11-25 12:00:24','2026-11-26 08:55:42'),(3,'STU-1795675654034','new','7898586947','','','','','','','','',1,1,NULL,'','2026-11-26',50000.00,5000.00,'Active','2026-11-26 06:47:34','2026-11-27 03:46:28'),(4,'STU-1795682465112','Test','9153742563','','','','','','','','',2,3,2,'','2026-11-26',10000.00,1000.00,'Active','2026-11-26 08:41:05','2026-11-26 08:52:42'),(5,'STU-1795751631351','Test1','7485962536','','','','','','','','',5,2,1,'','2026-11-27',10000.00,2000.00,'Active','2026-11-27 03:53:51','2026-11-27 03:54:41');
+INSERT INTO `students` VALUES (7,'STU-1795770913982','Manasa','7485963614','','7898654512','','','','','','COURSE',5,5,2,'','2026-11-27',10000.00,3000.00,'Active','2026-11-27 09:15:14','2026-11-27 09:58:19'),(8,'STU-1795775395956','New','7898564525','','9674852536','','','','','Referral','RECRUITMENT',3,3,1,'','2026-11-27',30000.00,10000.00,'Active','2026-11-27 10:29:55','2026-11-27 10:32:08');
 /*!40000 ALTER TABLE `students` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -548,7 +550,7 @@ CREATE TABLE `users` (
   KEY `branch_id` (`branch_id`),
   CONSTRAINT `users_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`),
   CONSTRAINT `users_ibfk_2` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -557,7 +559,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'admin','Administrator','admin@naipunya.edu.in',NULL,1,1,'240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9','Active','2026-11-25 08:01:35','2026-11-26 06:25:07'),(5,'new','new','','',1,1,'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3','Active','2026-11-26 06:46:44','2026-11-26 06:46:44'),(6,'test','test','','',3,3,'b3a8e0e1f9ab1bfe3a36f231f676f78bb30a519d2b21e6c530c0eee8ebb4a5d0','Active','2026-11-26 09:12:06','2026-11-26 09:12:06'),(7,'Test1','Test1','','',3,4,'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3','Active','2026-11-27 03:56:29','2026-11-27 03:56:29');
+INSERT INTO `users` VALUES (1,'admin','Administrator','admin@naipunya.edu.in',NULL,1,1,'240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9','Active','2026-11-25 08:01:35','2026-11-26 06:25:07'),(5,'new','new','','',2,1,'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3','Active','2026-11-26 06:46:44','2026-11-27 06:16:16'),(10,'Test','Test','','',6,3,'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad','Active','2026-11-27 09:42:51','2026-11-27 09:42:51');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -570,4 +572,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-11-27  9:39:29
+-- Dump completed on 2026-11-27 16:36:52
