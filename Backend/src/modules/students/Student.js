@@ -1,4 +1,4 @@
-const { callProcedure } = require('../../config/db');
+const { pool, callProcedure } = require('../../config/db');
 
 module.exports = {
   getAll: (branchId, status, limit, offset) =>
@@ -22,6 +22,22 @@ module.exports = {
       data.department_id, data.fees_total, data.fees_paid, data.status
     ]),
 
-  remove: (id) =>
-    callProcedure('DeleteStudent', [id])
+  remove: async (id) => {
+    try {
+      const [students] = await pool.query('SELECT name FROM students WHERE id = ?', [id]);
+      const studentName = students[0]?.name;
+
+      await pool.query('DELETE FROM follow_ups WHERE student_id = ?', [id]);
+      if (studentName) {
+        await pool.query('DELETE FROM follow_ups WHERE student_id IN (SELECT id FROM students WHERE LOWER(name) = LOWER(?))', [studentName]);
+      }
+      await pool.query('UPDATE receipts SET student_id = NULL WHERE student_id = ?', [id]);
+      const [res] = await pool.query('DELETE FROM students WHERE id = ?', [id]);
+      return [{ affected: res.affectedRows }];
+    } catch (err) {
+      console.warn('[Student.remove] direct delete fallback to procedure:', err.message);
+      return callProcedure('DeleteStudent', [id]);
+    }
+  }
 };
+

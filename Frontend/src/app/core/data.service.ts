@@ -1,6 +1,6 @@
 import { ApplicationRef, Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, forkJoin, of } from 'rxjs';
-import { catchError, finalize, filter, map, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { catchError, finalize, filter, map, shareReplay, switchMap, take, tap } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { NotificationService } from './notification.service';
 
@@ -18,6 +18,8 @@ export interface Student {
   feesTotal: number;
   feesPaid: number;
   status: 'Active' | 'Pending' | 'Completed' | 'Transferred';
+  enquiryType?: string;
+  enquirySource?: string;
 }
 
 export interface StudentListRow {
@@ -33,6 +35,7 @@ export interface StudentListRow {
   to: string;
   from: string;
   branch?: string;
+  enquiryType?: string;
 }
 
 export interface StudentFollowUp {
@@ -488,7 +491,8 @@ export class DataService {
       status: s.status || '',
       to: '',
       from: '',
-      branch: s.branch_name || ''
+      branch: s.branch_name || '',
+      enquiryType: s.enquiry_type || ''
     }));
   }
 
@@ -506,7 +510,9 @@ export class DataService {
       admissionDate: s.admission_date || '',
       feesTotal: Number(s.fees_total) || 0,
       feesPaid: Number(s.fees_paid) || 0,
-      status: s.status || 'Active'
+      status: s.status || 'Active',
+      enquiryType: s.enquiry_type || '',
+      enquirySource: s.enquiry_source || ''
     }));
   }
 
@@ -723,6 +729,9 @@ export class DataService {
       .pipe(map(items => items.map(m => ({ ...m }))));
   }
   getFollowupTypeItems(): Observable<FollowupTypeItem[]> { return this.cached('settings:followup_type', () => this.loadFollowupTypes(), this.followupTypeItems$); }
+  getEnquiryTypes(): Observable<string[]> { return of(['COURSE', 'RECRUITMENT', 'STUDY']); }
+  getCourseTypes(): Observable<string[]> { return of(['Full Time', 'Part Time']); }
+  getBatches(): Observable<string[]> { return of(['Morning', 'Evening', 'Sunday', 'Saturday']); }
   getEnquirySourceItems(): Observable<EnquirySourceItem[]> { return this.cached('settings:enquiry_source', () => this.loadEnquirySources(), this.enquirySourceItems$); }
   getStatusSettingsItems(): Observable<StatusItem[]> { return this.cached('settings:status', () => this.loadStatus(), this.statusSettingsItems$); }
   getCompanyInfo(): Observable<CompanyInfo> { return this.cached('company-info', () => this.loadCompanyInfo(), this.companyInfo$); }
@@ -987,22 +996,95 @@ export class DataService {
       })
     );
   }
-  deleteStudentListRow(slNo: number) {
-    const currentRows = this.studentListRows$.value || [];
-    this.studentListRows$.next(currentRows.filter(s => s.slNo !== slNo));
-    const currentStudents = this.students$.value || [];
-    this.students$.next(currentStudents.filter(s => Number(s.id) !== slNo));
-    queueMicrotask(() => this.appRef.tick());
-    this.api.deleteStudent(slNo).subscribe({
-      next: () => {
-        this.refreshStudents();
-        this.loadFeePending(true).subscribe();
-      },
-      error: e => {
-        console.error(e);
-        this.refreshStudents();
+  deleteStudent(idOrName: number | string) {
+    let studentId: number | null = null;
+    let studentName = '';
+
+    if (typeof idOrName === 'number') {
+      studentId = idOrName;
+      const found = (this.students$.value || []).find(s => Number(s.id) === idOrName);
+      if (found) studentName = found.name;
+    } else {
+      studentName = String(idOrName || '').trim();
+      const num = Number(studentName);
+      if (!isNaN(num) && num > 0 && (this.students$.value || []).some(s => Number(s.id) === num)) {
+        studentId = num;
+        const found = (this.students$.value || []).find(s => Number(s.id) === num);
+        if (found) studentName = found.name;
+      } else {
+        const found = (this.students$.value || []).find(s => String(s.name || '').trim().toLowerCase() === studentName.toLowerCase());
+        if (found) {
+          studentId = Number(found.id) || null;
+        }
       }
-    });
+    }
+
+    // 1. Remove from studentListRows$
+    const currentRows = this.studentListRows$.value || [];
+    this.studentListRows$.next(currentRows.filter(s => {
+      if (studentId && s.slNo === studentId) return false;
+      if (studentName && s.name.toLowerCase() === studentName.toLowerCase()) return false;
+      return true;
+    }));
+
+    // 2. Remove from students$
+    const currentStudents = this.students$.value || [];
+    this.students$.next(currentStudents.filter(s => {
+      if (studentId && Number(s.id) === studentId) return false;
+      if (studentName && s.name.toLowerCase() === studentName.toLowerCase()) return false;
+      return true;
+    }));
+
+    // 3. Remove from feePendingEntries$ (Fees Pending Report)
+    const currentFeePending = this.feePendingEntries$.value || [];
+    this.feePendingEntries$.next(currentFeePending.filter(f => {
+      if (studentName && (f.studentName || '').trim().toLowerCase() === studentName.toLowerCase()) return false;
+      return true;
+    }));
+
+    // 4. Remove from followUps$ (Pending Followup)
+    const currentFollowUps = this.followUps$.value || [];
+    this.followUps$.next(currentFollowUps.filter(f => {
+      if (studentId && Number(f.studentId) === studentId) return false;
+      if (studentName && (f.studentName || '').trim().toLowerCase() === studentName.toLowerCase()) return false;
+      return true;
+    }));
+
+    queueMicrotask(() => this.appRef.tick());
+
+    if (studentId) {
+      this.api.deleteStudent(studentId).subscribe({
+        next: () => {
+          this.refreshStudents();
+          this.refreshFollowUps();
+          this.loadFeePending(true).subscribe();
+        },
+        error: e => {
+          console.error('[DataService] deleteStudent failed:', e);
+          this.refreshStudents();
+        }
+      });
+    } else if (studentName) {
+      this.getStudentByName(studentName).pipe(take(1)).subscribe(st => {
+        if (st && st.id) {
+          this.api.deleteStudent(Number(st.id)).subscribe({
+            next: () => {
+              this.refreshStudents();
+              this.refreshFollowUps();
+              this.loadFeePending(true).subscribe();
+            },
+            error: e => {
+              console.error('[DataService] deleteStudent by name failed:', e);
+              this.refreshStudents();
+            }
+          });
+        }
+      });
+    }
+  }
+
+  deleteStudentListRow(slNo: number) {
+    this.deleteStudent(slNo);
   }
 
   addUserRow(user: Omit<UserRow, 'slNo'> & { password?: string; email?: string; role?: string }) {
@@ -1317,5 +1399,105 @@ export class DataService {
         this.refreshFollowUps();
       }
     });
+  }
+
+  addPayment(payment: Omit<Payment, 'id'>): Payment {
+    const local = { ...payment, id: String(Date.now()) } as Payment;
+    const current = this.payments$.value || [];
+    this.payments$.next([local, ...current]);
+    queueMicrotask(() => this.appRef.tick());
+
+    const matchedAcc = payment.account
+      ? this.accounts$.value.find(a => a.name.toLowerCase() === String(payment.account).toLowerCase())
+      : null;
+    const accountId = matchedAcc ? Number(matchedAcc.id) : null;
+
+    const matchedBranch = payment.branch
+      ? this.branchesCache.find(b => String(b.name).toLowerCase() === String(payment.branch).toLowerCase())
+      : null;
+    const branchId = matchedBranch ? Number(matchedBranch.id) : null;
+
+    this.api.createPayment({
+      voucher_no: payment.voucherNo || `VCH-${Date.now()}`,
+      payment_date: payment.date ? this.toYMD(payment.date) : null,
+      paid_to: payment.paidTo || '',
+      category: payment.category || 'General',
+      account_id: accountId,
+      branch_id: branchId,
+      amount: Number(payment.amount) || 0,
+      payment_mode: payment.paymentMode || 'Cash',
+      remarks: payment.remarks || ''
+    }).subscribe({
+      next: () => this.refreshPayments(),
+      error: e => {
+        console.error('[ApiService] create payment failed:', e);
+        this.notify.show(e?.error?.message || 'Failed to create payment.', 'Error', 'danger');
+        this.refreshPayments();
+      }
+    });
+    return local;
+  }
+
+  updatePayment(id: string, payment: Partial<Payment>): void {
+    const current = this.payments$.value || [];
+    this.payments$.next(current.map(p => p.id === id ? { ...p, ...payment } : p));
+    queueMicrotask(() => this.appRef.tick());
+
+    const matchedAcc = payment.account
+      ? this.accounts$.value.find(a => a.name.toLowerCase() === String(payment.account).toLowerCase())
+      : null;
+    const accountId = matchedAcc ? Number(matchedAcc.id) : null;
+
+    const matchedBranch = payment.branch
+      ? this.branchesCache.find(b => String(b.name).toLowerCase() === String(payment.branch).toLowerCase())
+      : null;
+    const branchId = matchedBranch ? Number(matchedBranch.id) : null;
+
+    this.api.updatePayment(Number(id), {
+      voucher_no: payment.voucherNo,
+      payment_date: payment.date ? this.toYMD(payment.date) : null,
+      paid_to: payment.paidTo || '',
+      category: payment.category || 'General',
+      account_id: accountId,
+      branch_id: branchId,
+      amount: Number(payment.amount) || 0,
+      payment_mode: payment.paymentMode || 'Cash',
+      remarks: payment.remarks || ''
+    }).subscribe({
+      next: () => this.refreshPayments(),
+      error: e => {
+        console.error('[ApiService] update payment failed:', e);
+        this.notify.show(e?.error?.message || 'Failed to update payment.', 'Error', 'danger');
+        this.refreshPayments();
+      }
+    });
+  }
+
+  deletePayment(id: string): void {
+    const current = this.payments$.value || [];
+    this.payments$.next(current.filter(p => p.id !== id));
+    queueMicrotask(() => this.appRef.tick());
+    this.api.deletePayment(Number(id)).subscribe({
+      next: () => this.refreshPayments(),
+      error: e => {
+        console.error(e);
+        this.refreshPayments();
+      }
+    });
+  }
+
+  getBranchAccountReport(from?: string, to?: string, branchId?: number): Observable<any[]> {
+    return this.api.getBranchAccountReport(from ? this.toYMD(from) : undefined, to ? this.toYMD(to) : undefined, branchId).pipe(
+      map(res => this.unwrap(res).map((r, i) => ({
+        slNo: i + 1,
+        date: this.fmtDate(r.date),
+        details: r.details || '',
+        voucherNumber: r.voucherNumber || '',
+        payment: Number(r.payment) || 0,
+        receipt: Number(r.receipt) || 0,
+        description: r.description || '',
+        branchName: r.branch_name || ''
+      })))
+    );
   }
 }

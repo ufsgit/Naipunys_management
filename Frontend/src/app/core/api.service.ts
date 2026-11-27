@@ -76,7 +76,7 @@ export class ApiService {
   deleteReceipt(id: number): Observable<any> { return this.http.delete<any>(`${this.base}/receipts/${id}`); }
 
   // Payments
-  getPayments(): Observable<any> { return this.http.get<any>(`${this.base}/payments`); }
+  getPayments(params?: any): Observable<any> { return this.http.get<any>(`${this.base}/payments`, { params }); }
   createPayment(data: any): Observable<any> { return this.http.post<any>(`${this.base}/payments`, data); }
   updatePayment(id: number, data: any): Observable<any> { return this.http.put<any>(`${this.base}/payments/${id}`, data); }
   deletePayment(id: number): Observable<any> { return this.http.delete<any>(`${this.base}/payments/${id}`); }
@@ -111,6 +111,13 @@ export class ApiService {
   }
   getFeeReceiptReport(from: string, to: string): Observable<any> {
     return this.http.get<any>(`${this.base}/reports/fee-receipt`, { params: { from, to } });
+  }
+  getBranchAccountReport(from?: string, to?: string, branchId?: number): Observable<any> {
+    const params: any = {};
+    if (from) params.from = from;
+    if (to) params.to = to;
+    if (branchId) params.branch_id = branchId;
+    return this.http.get<any>(`${this.base}/reports/branch-account`, { params });
   }
 
   // Company Info

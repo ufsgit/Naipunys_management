@@ -14,14 +14,23 @@ import { DataService } from './data.service';
       <header class="topbar-navbar">
         <!-- Left: Logo & Navigation Items -->
         <div class="topbar-left-zone">
-          <!-- Brand Logo: Blue Graduation Cap + Naipunya text -->
-          <a routerLink="/dashboard" class="brand-link">
-            <app-icon name="graduation-cap" [size]="21" customClass="text-brand-blue"></app-icon>
-            <span class="brand-name">Naipunya</span>
+          <!-- Brand Logo: Naipunnya International Logo -->
+          <a routerLink="/dashboard" class="brand-link" title="Naipunnya International">
+            <img src="logo.webp" alt="Naipunnya International" class="brand-logo-img" />
           </a>
 
           <!-- Navigation Menu -->
           <nav class="top-nav-menu">
+            <!-- Dashboard -->
+            <a
+              routerLink="/dashboard"
+              class="top-menu-btn"
+              [class.active-dashboard]="isDashboardActive()"
+            >
+              <app-icon name="dashboard" [size]="14"></app-icon>
+              <span>Dashboard</span>
+            </a>
+
             <!-- Create New (Primary blue pill when active, clean subtle pill otherwise) -->
             <a
               routerLink="/students/create"
@@ -65,20 +74,34 @@ import { DataService } from './data.service';
                 </div>
 
                 <div class="accounts-menu-body">
-                  <div class="category-capsule capsule-teal">TRANSACTIONS & RECEIPTS</div>
+                  <div class="category-capsule capsule-teal">TRANSACTIONS & FINANCIALS</div>
                   <div class="mega-items-list">
                     <a routerLink="/accounts" class="mega-item item-hover-teal" (click)="closeDropdowns()">
                       <div class="item-icon-badge badge-teal">
                         <app-icon name="credit-card" [size]="16"></app-icon>
                       </div>
-                      <span class="item-label">Accounts Management</span>
+                      <span class="item-label">Accounts</span>
                     </a>
 
                     <a routerLink="/receipts" class="mega-item item-hover-amber" (click)="closeDropdowns()">
                       <div class="item-icon-badge badge-amber">
                         <app-icon name="receipt" [size]="16"></app-icon>
                       </div>
-                      <span class="item-label">Receipt Management</span>
+                      <span class="item-label">Receipt</span>
+                    </a>
+
+                    <a routerLink="/accounts/payment" class="mega-item item-hover-green" (click)="closeDropdowns()">
+                      <div class="item-icon-badge badge-green">
+                        <app-icon name="dollar-sign" [size]="16"></app-icon>
+                      </div>
+                      <span class="item-label">Payment</span>
+                    </a>
+
+                    <a routerLink="/accounts/branch-report" class="mega-item item-hover-blue" (click)="closeDropdowns()">
+                      <div class="item-icon-badge badge-blue">
+                        <app-icon name="file-text" [size]="16"></app-icon>
+                      </div>
+                      <span class="item-label">Account Report</span>
                     </a>
                   </div>
                 </div>
@@ -293,18 +316,20 @@ import { DataService } from './data.service';
     .brand-link {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
       text-decoration: none;
       user-select: none;
+      padding: 0.15rem 0;
     }
-    .text-brand-blue {
-      color: #2563eb;
+    .brand-logo-img {
+      height: 38px;
+      width: auto;
+      max-width: 175px;
+      object-fit: contain;
+      border-radius: 4px;
+      transition: opacity 0.15s ease;
     }
-    .brand-name {
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: #1e293b;
-      letter-spacing: -0.01em;
+    .brand-logo-img:hover {
+      opacity: 0.92;
     }
 
     /* Navigation Menu */
@@ -336,6 +361,17 @@ import { DataService } from './data.service';
     .top-menu-btn:hover {
       background-color: #f1f5f9;
       color: #0f172a;
+    }
+
+    /* 0. Dashboard Active: Indigo / Violet Blue matching the icon theme */
+    .top-menu-btn.active-dashboard {
+      background-color: #4338ca !important;
+      color: #ffffff !important;
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(67, 56, 202, 0.25);
+    }
+    .top-menu-btn.active-dashboard:hover {
+      background-color: #3730a3 !important;
     }
 
     /* 1. Create New Active: Royal Blue */
@@ -728,6 +764,10 @@ export class LayoutComponent {
   activeDropdown: string | null = null;
 
   constructor(public router: Router, private data: DataService) {}
+
+  isDashboardActive(): boolean {
+    return this.router.url === '/' || this.router.url.startsWith('/dashboard');
+  }
 
   isCreateNewActive(): boolean {
     return this.router.url.startsWith('/students/create');

@@ -15,4 +15,11 @@ const getFeeReceipt = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { getFeePending, getFeeReceipt };
+const getBranchAccountReport = async (req, res, next) => {
+  try {
+    const { from, to, branch_id } = req.query;
+    return success(res, await reportService.getBranchAccountReport(from, to, branch_id), 'Branch account report');
+  } catch (err) { next(err); }
+};
+
+module.exports = { getFeePending, getFeeReceipt, getBranchAccountReport };

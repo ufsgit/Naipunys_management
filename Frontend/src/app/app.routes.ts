@@ -41,6 +41,19 @@ export const routes: Routes = [
         path: 'accounts',
         loadComponent: () => import('./features/accounts/accounts.component').then(m => m.AccountsComponent)
       },
+      {
+        path: 'accounts/payment',
+        loadComponent: () => import('./features/accounts/payment.component').then(m => m.PaymentComponent)
+      },
+      {
+        path: 'accounts/branch-report',
+        loadComponent: () => import('./features/accounts/branch-account-report.component').then(m => m.BranchAccountReportComponent)
+      },
+      {
+        path: 'payments',
+        redirectTo: 'accounts/payment',
+        pathMatch: 'full'
+      },
 
       // 3. Receipts
       {

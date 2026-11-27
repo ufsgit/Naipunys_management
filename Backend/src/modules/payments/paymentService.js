@@ -4,7 +4,9 @@ const { getPagination, buildPaginationMeta } = require('../../utils/pagination')
 const listPayments = async (query) => {
   const { page, limit, offset } = getPagination(query);
   const branchId = query.branch_id || null;
-  const rows = await Payment.getAll(branchId, limit, offset);
+  const fromDate = query.from || null;
+  const toDate = query.to || null;
+  const rows = await Payment.getAll(branchId, limit, offset, fromDate, toDate);
   return { rows, pagination: buildPaginationMeta(page, limit, rows.length) };
 };
 

@@ -150,15 +150,12 @@ DELIMITER ;
 
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `DeleteSetting`(IN p_id INT)
-BEGIN DELETE FROM settings WHERE id = p_id; SELECT ROW_COUNT() AS affected; END$$
+BEGIN UPDATE follow_ups SET followup_type_id = NULL WHERE followup_type_id = p_id; DELETE FROM settings WHERE id = p_id; SELECT ROW_COUNT() AS affected; END$$
 DELIMITER ;
 
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `DeleteStudent`(IN p_id INT)
-BEGIN
-    DELETE FROM students WHERE id = p_id;
-    SELECT ROW_COUNT() AS affected;
-END$$
+BEGIN DELETE FROM follow_ups WHERE student_id = p_id; UPDATE receipts SET student_id = NULL WHERE student_id = p_id; DELETE FROM students WHERE id = p_id; SELECT ROW_COUNT() AS affected; END$$
 DELIMITER ;
 
 DELIMITER $$

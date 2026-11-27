@@ -47,6 +47,11 @@ import { CommonModule } from '@angular/common';
         <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
         <line x1="1" y1="10" x2="23" y2="10"></line>
       </g>
+      <g *ngSwitchCase="'dashboard'">
+        <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+        <path d="M9 3v18"></path>
+        <path d="M9 12h12"></path>
+      </g>
       <g *ngSwitchCase="'pie-chart'">
         <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
         <path d="M22 12A10 10 0 0 0 12 2v10z"></path>

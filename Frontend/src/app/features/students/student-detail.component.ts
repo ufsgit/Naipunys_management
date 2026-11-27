@@ -71,6 +71,7 @@ import { NotificationService } from '../../core/notification.service';
                   <label class="field-label required">Enquiry Type</label>
                   <div class="field-control">
                     <select class="input-select" [(ngModel)]="details.enquiryType">
+                      <option value="">Select</option>
                       <option *ngFor="let t of enquiryTypes" [value]="t">{{ t }}</option>
                     </select>
                   </div>
@@ -188,8 +189,7 @@ import { NotificationService } from '../../core/notification.service';
                 <div class="field-control">
                   <select class="input-select" [(ngModel)]="courseData.courseType">
                     <option value="Select">Select</option>
-                    <option value="Regular">Regular</option>
-                    <option value="Crash">Crash</option>
+                    <option *ngFor="let ct of courseTypes" [value]="ct">{{ ct }}</option>
                   </select>
                 </div>
               </div>
@@ -200,8 +200,7 @@ import { NotificationService } from '../../core/notification.service';
                 <div class="field-control">
                   <select class="input-select" [(ngModel)]="courseData.batch">
                     <option value="Select">Select</option>
-                    <option value="Batch A">Batch A</option>
-                    <option value="Batch B">Batch B</option>
+                    <option *ngFor="let b of batches" [value]="b">{{ b }}</option>
                   </select>
                 </div>
               </div>
@@ -1341,14 +1340,9 @@ export class StudentDetailComponent implements OnInit {
     });
     this.mockDataService.getCourseItems().subscribe(c => {
       this.courses = c;
-      const types = new Set<string>();
-      c.forEach(item => {
-        const name = item.name.toLowerCase();
-        if (name.includes('visa')) types.add('VISA');
-        else types.add('COURSE');
-      });
-      this.enquiryTypes = [...types];
-      if (!this.enquiryTypes.length) this.enquiryTypes = [];
+    });
+    this.mockDataService.getEnquiryTypes().subscribe(t => {
+      this.enquiryTypes = t;
     });
     this.mockDataService.getEnquirySourceItems().subscribe(s => this.enquirySources = s);
     this.mockDataService.getStatusSettingsItems().subscribe(s => this.statuses = s);
@@ -1367,6 +1361,8 @@ export class StudentDetailComponent implements OnInit {
           this.details.mobile = student.phone;
           this.details.email = student.email;
           this.details.date = student.admissionDate;
+          this.details.enquiryType = student.enquiryType || '';
+          this.details.enquirySource = student.enquirySource || '';
           this.courseData.course = student.course;
           this.courseData.batch = student.batch;
           this.courseData.totalFees = student.feesTotal;
@@ -1550,6 +1546,11 @@ export class StudentDetailComponent implements OnInit {
 
   confirmDelete() {
     this.isDeleteModalOpen = false;
+    const target = this.studentId || this.studentName;
+    if (target) {
+      this.mockDataService.deleteStudent(target);
+      this.notify.show('Student deleted successfully', 'Success', 'primary');
+    }
     this.router.navigate(['/students/list']);
   }
 
@@ -1562,7 +1563,9 @@ export class StudentDetailComponent implements OnInit {
   enquirySources: EnquirySourceItem[] = [];
   statuses: StatusItem[] = [];
   followupTypes: FollowupTypeItem[] = [];
-  enquiryTypes: string[] = [];
+  enquiryTypes: string[] = ['COURSE', 'RECRUITMENT', 'STUDY'];
+  courseTypes: string[] = ['Full Time', 'Part Time'];
+  batches: string[] = ['Morning', 'Evening', 'Sunday', 'Saturday'];
 
   viewHistory() {
     this.showHistoryModal = true;

@@ -54,10 +54,11 @@ import { DataService, FollowupTypeItem } from '../../core/data.service';
                 <button
                   type="button"
                   class="btn-action-edit"
+                  [ngClass]="getEditClass(i)"
                   (click)="openEdit(item, i)"
                   title="Edit FollowUp Type"
                 >
-                  <app-icon name="edit" [size]="15"></app-icon>
+                  <app-icon name="edit" [size]="14"></app-icon>
                 </button>
               </td>
               <td style="text-align: center;">
@@ -263,27 +264,64 @@ import { DataService, FollowupTypeItem } from '../../core/data.service';
     /* Action Buttons */
     .btn-action-edit,
     .btn-action-delete {
-      width: 28px;
-      height: 28px;
-      border-radius: 4px;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       border: none;
-      background: transparent;
-      color: #64748b;
       cursor: pointer;
       transition: all 0.15s ease;
     }
 
+    .btn-action-edit {
+      background-color: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+    }
+
     .btn-action-edit:hover {
-      color: #0b62b6;
-      background-color: #f0f7ff;
+      background-color: #1d4ed8;
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .btn-purple {
+      background-color: #7c3aed;
+      color: #ffffff;
+      box-shadow: 0 1px 2px rgba(124, 58, 237, 0.2);
+    }
+
+    .btn-purple:hover {
+      background-color: #6d28d9;
+      box-shadow: 0 2px 4px rgba(124, 58, 237, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .btn-blue {
+      background-color: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+    }
+
+    .btn-blue:hover {
+      background-color: #1d4ed8;
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .btn-action-delete {
+      border: 1px solid #fee2e2;
+      background-color: #fef2f2;
+      color: #dc2626;
     }
 
     .btn-action-delete:hover {
-      color: #dc2626;
-      background-color: #fef2f2;
+      background-color: #dc2626;
+      color: #ffffff;
+      border-color: #dc2626;
+      transform: translateY(-1px);
     }
 
     .empty-state {
@@ -322,6 +360,10 @@ export class FollowupTypesComponent implements OnInit {
   isEditMode = false;
   editingItem: FollowupTypeItem | null = null;
   isLoading = true;
+
+  getEditClass(index: number): string {
+    return index % 2 === 1 ? 'btn-blue' : 'btn-purple';
+  }
 
   constructor(private mockDataService: DataService, private cdr: ChangeDetectorRef) {}
 

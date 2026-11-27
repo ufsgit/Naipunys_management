@@ -6,6 +6,6 @@ const { adminOnly } = require('../../middleware/rbac');
 router.use(auth);
 
 router.get('/', controller.get);
-router.put('/', adminOnly, controller.update);
+router.put('/', controller.update);
 
 module.exports = router;

@@ -40,6 +40,7 @@ import { NotificationService } from '../../core/notification.service';
                 <label class="field-label required">Enquiry Type</label>
                 <div class="field-control">
                   <select class="input-select" [(ngModel)]="student.enquiryType">
+                    <option value="">Select</option>
                     <option *ngFor="let t of enquiryTypes" [value]="t">{{ t }}</option>
                   </select>
                 </div>
@@ -233,6 +234,27 @@ import { NotificationService } from '../../core/notification.service';
                   class="input-text"
                   [(ngModel)]="student.nextFollowupDate"
                 />
+              </div>
+            </div>
+
+            <!-- Row 3: Course Type & Batch -->
+            <div class="first-call-field">
+              <label class="field-label">Course Type</label>
+              <div class="field-control">
+                <select class="input-select" [(ngModel)]="student.courseType">
+                  <option value="">Select</option>
+                  <option *ngFor="let ct of courseTypes" [value]="ct">{{ ct }}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="first-call-field">
+              <label class="field-label">Batch</label>
+              <div class="field-control">
+                <select class="input-select" [(ngModel)]="student.batch">
+                  <option value="">Select</option>
+                  <option *ngFor="let b of batches" [value]="b">{{ b }}</option>
+                </select>
               </div>
             </div>
           </div>
@@ -508,11 +530,14 @@ export class StudentCreateComponent implements OnInit {
   enquirySources: EnquirySourceItem[] = [];
   statuses: StatusItem[] = [];
   followupTypes: FollowupTypeItem[] = [];
-  enquiryTypes: string[] = [];
+  enquiryTypes: string[] = ['COURSE', 'RECRUITMENT', 'STUDY'];
+  courseTypes: string[] = ['Full Time', 'Part Time'];
+  batches: string[] = ['Morning', 'Evening', 'Sunday', 'Saturday'];
 
   student = {
     enquirySource: '',
     enquiryType: '',
+    courseType: '',
     name: '',
     mobile: '',
     parentsMobile: '',
@@ -550,15 +575,8 @@ export class StudentCreateComponent implements OnInit {
     this.mockDataService.getEnquirySourceItems().subscribe(s => this.enquirySources = s);
     this.mockDataService.getStatusSettingsItems().subscribe(s => this.statuses = s);
     this.mockDataService.getFollowupTypeItems().subscribe(t => this.followupTypes = t);
-    this.mockDataService.getCourseItems().subscribe(c => {
-      const types = new Set<string>();
-      c.forEach(item => {
-        const name = item.name.toLowerCase();
-        if (name.includes('visa')) types.add('Visa Enquiry');
-        else types.add('Course Enquiry');
-      });
-      this.enquiryTypes = [...types];
-      if (!this.enquiryTypes.length) this.enquiryTypes = [];
+    this.mockDataService.getEnquiryTypes().subscribe(t => {
+      this.enquiryTypes = t;
     });
   }
 
@@ -573,6 +591,8 @@ export class StudentCreateComponent implements OnInit {
     this.student.altEmail = '';
     this.student.whatsapp = '';
     this.student.remarks = '';
+    this.student.enquiryType = '';
+    this.student.enquirySource = '';
     this.showSuccess = false;
   }
 
@@ -593,7 +613,14 @@ export class StudentCreateComponent implements OnInit {
       feesPaid: 0,
       status: 'Active',
       phone: this.student.mobile,
-      email: this.student.email
+      email: this.student.email,
+      enquiryType: this.student.enquiryType,
+      enquirySource: this.student.enquirySource,
+      parentsMobile: this.student.parentsMobile,
+      whatsapp: this.student.whatsapp,
+      address: this.student.address,
+      facebook: this.student.facebook,
+      altEmail: this.student.altEmail
     });
 
     this.showSuccess = true;

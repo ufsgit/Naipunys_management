@@ -617,7 +617,7 @@ export class StudentListComponent implements OnInit {
   departments: DepartmentItem[] = [];
   staffOptions: UserRow[] = [];
   statuses: StatusItem[] = [];
-  enquiryTypes: string[] = [];
+  enquiryTypes: string[] = ['COURSE', 'RECRUITMENT', 'STUDY'];
 
   allStudents: StudentListRow[] = [];
   filteredStudents: StudentListRow[] = [];
@@ -640,15 +640,8 @@ export class StudentListComponent implements OnInit {
     this.mockDataService.getDepartmentItems().subscribe(d => this.departments = d);
     this.mockDataService.getUserRows().subscribe(u => this.staffOptions = u);
     this.mockDataService.getStatusSettingsItems().subscribe(s => this.statuses = s);
-    this.mockDataService.getCourseItems().subscribe(c => {
-      const types = new Set<string>();
-      c.forEach(item => {
-        const name = item.name.toLowerCase();
-        if (name.includes('visa')) types.add('Visa Enquiry');
-        else types.add('Course Enquiry');
-      });
-      this.enquiryTypes = [...types];
-      if (!this.enquiryTypes.length) this.enquiryTypes = [];
+    this.mockDataService.getEnquiryTypes().subscribe(t => {
+      this.enquiryTypes = t;
     });
   }
 
@@ -665,6 +658,7 @@ export class StudentListComponent implements OnInit {
         if (this.searchField === 'Mobile' && !s.mobile.includes(q)) return false;
         if (this.searchField === 'Note' && !s.note.toLowerCase().includes(q)) return false;
       }
+      if (this.enquiryType && this.enquiryType !== 'All' && (s.enquiryType || '').toUpperCase() !== this.enquiryType.toUpperCase()) return false;
       if (this.selectedBranch && s.branch !== this.selectedBranch) return false;
       if (this.selectedDept && s.department !== this.selectedDept) return false;
       if (this.selectedStatus && s.status !== this.selectedStatus) return false;

@@ -16,23 +16,10 @@ import { DataService } from '../../core/data.service';
         <div class="form-shell" [class.has-error]="!!errorMessage">
           <!-- Brand Logo -->
           <div class="brand-row">
-            <div class="brand-icon" aria-hidden="true">
-              <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
-                <rect width="32" height="32" rx="8" fill="url(#brandGrad)" />
-                <path d="M18.5 7.5C18.5 12.2 21.8 15.5 26.5 15.5C21.8 15.5 18.5 18.8 18.5 23.5C18.5 18.8 15.2 15.5 10.5 15.5C15.2 15.5 18.5 12.2 18.5 7.5Z" fill="#ffffff"/>
-                <path d="M9 9.5C12.5 9.5 14.5 11.5 14.5 14.5C11.5 14.5 9 12.5 9 9.5Z" fill="rgba(255,255,255,0.65)"/>
-                <defs>
-                  <linearGradient id="brandGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stop-color="#a855f7" />
-                    <stop offset="100%" stop-color="#6d28d9" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-            <span class="brand-wordmark">NAIPU<span>NYA</span></span>
+            <img src="logo.webp" alt="Naipunnya International" class="login-brand-logo" />
           </div>
 
-          <h1 class="form-title">Sign In to Naipunya</h1>
+          <h1 class="form-title">Sign In to Naipunnya</h1>
 
           
 
@@ -228,15 +215,10 @@ import { DataService } from '../../core/data.service';
       transform: scale(1.15);
     }
 
-    .brand-wordmark {
-      font-size: 19px;
-      font-weight: 800;
-      letter-spacing: 0.14em;
-      color: #1e1b4b;
-    }
-
-    .brand-wordmark span {
-      color: #7c3aed;
+    .login-brand-logo {
+      height: 48px;
+      max-width: 240px;
+      object-fit: contain;
     }
 
     .form-title {
